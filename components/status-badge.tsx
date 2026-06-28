@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { JobStatus, Priority, OppStage } from "@/lib/mock-data"
+import type { JobStatus, Priority, OppStage } from "@/types"
 
 export function JobStatusBadge({ status }: { status: JobStatus }) {
   const config: Record<JobStatus, { label: string; className: string }> = {

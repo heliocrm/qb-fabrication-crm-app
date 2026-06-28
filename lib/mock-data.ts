@@ -1,99 +1,31 @@
-export type JobStatus = "To Do" | "In Progress" | "QC" | "Shipping" | "Delivered"
-export type Priority = "Normal" | "Hot" | "Urgent"
-export type OppStage = "Prospecting" | "Qualification" | "Estimating" | "Proposal" | "Negotiation" | "Won" | "Lost"
+import type {
+  Account,
+  ChangeOrder,
+  Document,
+  Job,
+  Opportunity,
+  Task,
+  Activity,
+  TeamMember,
+} from "@/types"
 
-export interface Job {
-  id: string
-  jobNumber: string
-  poNumber: string
-  customer: string
-  customerId: string
-  description: string
-  status: JobStatus
-  priority: Priority
-  deliveryDate: string
-  startDate: string
-  tonnage: number
-  value: number
-  markNumbers: string[]
-  assignees: string[]
-  progress: number
-  tasks: Task[]
-  documents: Document[]
-  changeOrders: ChangeOrder[]
-  activity: Activity[]
-  notes: string
-}
+export type {
+  Account,
+  Customer,
+  Job,
+  JobStatus,
+  Priority,
+  OppStage,
+  Opportunity,
+  Task,
+  ChangeOrder,
+  Document,
+  Activity,
+  TeamMember,
+} from "@/types"
 
-export interface Task {
-  id: string
-  title: string
-  completed: boolean
-  assignee: string
-  dueDate: string
-  category: "Fabrication" | "QC" | "Logistics" | "Engineering"
-}
-
-export interface Document {
-  id: string
-  name: string
-  type: "Drawing" | "Work Order" | "Inspection" | "Shipping" | "PO"
-  size: string
-  uploadedBy: string
-  uploadedAt: string
-  url: string
-  preview?: boolean
-}
-
-export interface ChangeOrder {
-  id: string
-  type: "Change Order" | "Issue" | "NCR"
-  description: string
-  impact: string
-  status: "Open" | "Resolved" | "Pending Approval"
-  date: string
-  value?: number
-}
-
-export interface Activity {
-  id: string
-  user: string
-  action: string
-  timestamp: string
-  avatar: string
-}
-
-export interface Opportunity {
-  id: string
-  title: string
-  customer: string
-  customerId: string
-  value: number
-  stage: OppStage
-  probability: number
-  closeDate: string
-  assignee: string
-  notes: string
-}
-
-export interface Customer {
-  id: string
-  name: string
-  shortName: string
-  contact: string
-  email: string
-  phone: string
-  city: string
-  state: string
-  totalJobs: number
-  activeJobs: number
-  totalValue: number
-  ytdValue: number
-  status: "Active" | "Inactive"
-}
-
-// ─── Customers ─────────────────────────────────────────────────────────────
-export const customers: Customer[] = [
+// ─── Accounts (BPA, PGE, PSE, etc.) ────────────────────────────────────────
+export const accounts: Account[] = [
   {
     id: "c1",
     name: "Bonneville Power Administration",
@@ -171,7 +103,10 @@ export const customers: Customer[] = [
   },
 ]
 
-// ─── Jobs ───────────────────────────────────────────────────────────────────
+/** @deprecated Use accounts */
+export const customers = accounts
+
+// ─── Jobs (BPA PO 90866, PGE 21706, MK-E series, etc.) ─────────────────────
 export const jobs: Job[] = [
   {
     id: "j1",
@@ -426,7 +361,7 @@ export const opportunities: Opportunity[] = [
   },
 ]
 
-export const teamMembers = [
+export const teamMembers: TeamMember[] = [
   { name: "Ivy Chen", initials: "IC", role: "Project Manager" },
   { name: "James Nguyen", initials: "JN", role: "Lead Fabricator" },
   { name: "Cuong Tran", initials: "CT", role: "Fabricator" },

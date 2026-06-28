@@ -1,20 +1,31 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] })
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "QB Fabrication – Shop Management",
-  description: "Production and project management for QB Fabrication – steel fabrication specialists.",
-  generator: "v0.app",
+  title: {
+    default: "QB Fabrication – Shop Management",
+    template: "%s · QB Fabrication",
+  },
+  description:
+    "Production and project management for QB Fabrication – steel fabrication specialists.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 }
 
 export const viewport: Viewport = {
-  colorScheme: "light",
-  themeColor: "#1e2d5a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1e2d5a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1629" },
+  ],
 }
 
 export default function RootLayout({
@@ -23,9 +34,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+    >
       <body className="font-sans antialiased">
-        {children}
+        <ThemeProvider>
+          {children}
+          <Toaster richColors closeButton position="top-right" />
+        </ThemeProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
