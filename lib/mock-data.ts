@@ -1,0 +1,433 @@
+export type JobStatus = "To Do" | "In Progress" | "QC" | "Shipping" | "Delivered"
+export type Priority = "Normal" | "Hot" | "Urgent"
+export type OppStage = "Prospecting" | "Qualification" | "Estimating" | "Proposal" | "Negotiation" | "Won" | "Lost"
+
+export interface Job {
+  id: string
+  jobNumber: string
+  poNumber: string
+  customer: string
+  customerId: string
+  description: string
+  status: JobStatus
+  priority: Priority
+  deliveryDate: string
+  startDate: string
+  tonnage: number
+  value: number
+  markNumbers: string[]
+  assignees: string[]
+  progress: number
+  tasks: Task[]
+  documents: Document[]
+  changeOrders: ChangeOrder[]
+  activity: Activity[]
+  notes: string
+}
+
+export interface Task {
+  id: string
+  title: string
+  completed: boolean
+  assignee: string
+  dueDate: string
+  category: "Fabrication" | "QC" | "Logistics" | "Engineering"
+}
+
+export interface Document {
+  id: string
+  name: string
+  type: "Drawing" | "Work Order" | "Inspection" | "Shipping" | "PO"
+  size: string
+  uploadedBy: string
+  uploadedAt: string
+  url: string
+  preview?: boolean
+}
+
+export interface ChangeOrder {
+  id: string
+  type: "Change Order" | "Issue" | "NCR"
+  description: string
+  impact: string
+  status: "Open" | "Resolved" | "Pending Approval"
+  date: string
+  value?: number
+}
+
+export interface Activity {
+  id: string
+  user: string
+  action: string
+  timestamp: string
+  avatar: string
+}
+
+export interface Opportunity {
+  id: string
+  title: string
+  customer: string
+  customerId: string
+  value: number
+  stage: OppStage
+  probability: number
+  closeDate: string
+  assignee: string
+  notes: string
+}
+
+export interface Customer {
+  id: string
+  name: string
+  shortName: string
+  contact: string
+  email: string
+  phone: string
+  city: string
+  state: string
+  totalJobs: number
+  activeJobs: number
+  totalValue: number
+  ytdValue: number
+  status: "Active" | "Inactive"
+}
+
+// ─── Customers ─────────────────────────────────────────────────────────────
+export const customers: Customer[] = [
+  {
+    id: "c1",
+    name: "Bonneville Power Administration",
+    shortName: "BPA",
+    contact: "Mark Hendricks",
+    email: "m.hendricks@bpa.gov",
+    phone: "(503) 230-5501",
+    city: "Portland",
+    state: "OR",
+    totalJobs: 42,
+    activeJobs: 3,
+    totalValue: 4_820_000,
+    ytdValue: 1_140_000,
+    status: "Active",
+  },
+  {
+    id: "c2",
+    name: "Pacific Gas & Electric",
+    shortName: "PGE",
+    contact: "Sandra Wu",
+    email: "s.wu@pge.com",
+    phone: "(415) 972-7100",
+    city: "San Francisco",
+    state: "CA",
+    totalJobs: 28,
+    activeJobs: 2,
+    totalValue: 3_250_000,
+    ytdValue: 890_000,
+    status: "Active",
+  },
+  {
+    id: "c3",
+    name: "Puget Sound Energy",
+    shortName: "PSE",
+    contact: "David Carlson",
+    email: "d.carlson@pse.com",
+    phone: "(425) 456-2000",
+    city: "Bellevue",
+    state: "WA",
+    totalJobs: 15,
+    activeJobs: 1,
+    totalValue: 1_760_000,
+    ytdValue: 420_000,
+    status: "Active",
+  },
+  {
+    id: "c4",
+    name: "Portland General Electric",
+    shortName: "PortGE",
+    contact: "Rachel Torres",
+    email: "r.torres@portlandgeneral.com",
+    phone: "(503) 464-8000",
+    city: "Portland",
+    state: "OR",
+    totalJobs: 9,
+    activeJobs: 1,
+    totalValue: 880_000,
+    ytdValue: 210_000,
+    status: "Active",
+  },
+  {
+    id: "c5",
+    name: "Idaho Power Company",
+    shortName: "IDPC",
+    contact: "Tom Bates",
+    email: "t.bates@idahopower.com",
+    phone: "(208) 388-2200",
+    city: "Boise",
+    state: "ID",
+    totalJobs: 6,
+    activeJobs: 0,
+    totalValue: 540_000,
+    ytdValue: 0,
+    status: "Inactive",
+  },
+]
+
+// ─── Jobs ───────────────────────────────────────────────────────────────────
+export const jobs: Job[] = [
+  {
+    id: "j1",
+    jobNumber: "QB-2025-041",
+    poNumber: "BPA PO 90866",
+    customer: "Bonneville Power Administration",
+    customerId: "c1",
+    description: "230kV Substation Crossarm Assembly – McNary Rebuild",
+    status: "In Progress",
+    priority: "Urgent",
+    deliveryDate: "2025-08-15",
+    startDate: "2025-06-01",
+    tonnage: 18.4,
+    value: 312_500,
+    markNumbers: ["MK-230H-01", "MK-230H-02", "MK-230H-03", "MK-230H-04"],
+    assignees: ["James Nguyen", "Cuong Tran"],
+    progress: 62,
+    tasks: [
+      { id: "t1", title: "Review approved drawings (Rev C)", completed: true, assignee: "Ivy Chen", dueDate: "2025-06-05", category: "Engineering" },
+      { id: "t2", title: "Material procurement – A36 plate, ¾\" bolts", completed: true, assignee: "James Nguyen", dueDate: "2025-06-10", category: "Fabrication" },
+      { id: "t3", title: "Cut all plate to DXF", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-18", category: "Fabrication" },
+      { id: "t4", title: "Fit & weld crossarm brackets", completed: true, assignee: "James Nguyen", dueDate: "2025-06-28", category: "Fabrication" },
+      { id: "t5", title: "Galvanize – send to NW Galvanizing", completed: false, assignee: "James Nguyen", dueDate: "2025-07-10", category: "Fabrication" },
+      { id: "t6", title: "Dimensional inspection post-galvanize", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-15", category: "QC" },
+      { id: "t7", title: "Torque bolt verification", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-18", category: "QC" },
+      { id: "t8", title: "Final paint & marking (stencil MK numbers)", completed: false, assignee: "Cuong Tran", dueDate: "2025-07-22", category: "Fabrication" },
+      { id: "t9", title: "Load & strap – flatbed, 40' step deck", completed: false, assignee: "James Nguyen", dueDate: "2025-08-12", category: "Logistics" },
+      { id: "t10", title: "Deliver to BPA McNary Substation", completed: false, assignee: "James Nguyen", dueDate: "2025-08-15", category: "Logistics" },
+    ],
+    documents: [
+      { id: "d1", name: "BPA-90866-Drawings-RevC.pdf", type: "Drawing", size: "4.2 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-02", url: "https://drive.google.com/file/d/example1", preview: true },
+      { id: "d2", name: "QB-2025-041-WorkOrder.pdf", type: "Work Order", size: "1.1 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-03", url: "https://drive.google.com/file/d/example2" },
+      { id: "d3", name: "BPA-PO-90866.pdf", type: "PO", size: "0.8 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-01", url: "https://drive.google.com/file/d/example3" },
+      { id: "d4", name: "Material-Certs-A36-Plate.pdf", type: "Inspection", size: "2.3 MB", uploadedBy: "James Nguyen", uploadedAt: "2025-06-11", url: "https://drive.google.com/file/d/example4" },
+      { id: "d5", name: "Weld-Inspection-Report-06-28.pdf", type: "Inspection", size: "1.4 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-28", url: "https://drive.google.com/file/d/example5" },
+    ],
+    changeOrders: [
+      { id: "co1", type: "Change Order", description: "BPA added 4 additional hanger brackets per Rev D markup", impact: "+$18,200 / +3 days", status: "Pending Approval", date: "2025-06-25", value: 18200 },
+      { id: "co2", type: "NCR", description: "Weld porosity on bracket #MK-230H-03, rework required", impact: "+1 day / no cost", status: "Resolved", date: "2025-06-29" },
+    ],
+    activity: [
+      { id: "a1", user: "Ivy Chen", action: "Uploaded approved drawings Rev C", timestamp: "2025-06-02 08:14", avatar: "IC" },
+      { id: "a2", user: "James Nguyen", action: "Updated task: Material procurement complete", timestamp: "2025-06-10 14:32", avatar: "JN" },
+      { id: "a3", user: "Cuong Tran", action: "Uploaded weld inspection report", timestamp: "2025-06-28 16:05", avatar: "CT" },
+      { id: "a4", user: "Ivy Chen", action: "Created change order: BPA Rev D brackets", timestamp: "2025-06-25 10:22", avatar: "IC" },
+    ],
+    notes: "BPA project manager is Mark Hendricks. Delivery must coordinate with site crew – 48hr notice required. Galvanizer lead time is 5 business days.",
+  },
+  {
+    id: "j2",
+    jobNumber: "QB-2025-038",
+    poNumber: "PGE 21706",
+    customer: "Pacific Gas & Electric",
+    customerId: "c2",
+    description: "115kV Double-Circuit Crossarm – Diablo Canyon Switchyard",
+    status: "QC",
+    priority: "Hot",
+    deliveryDate: "2025-07-30",
+    startDate: "2025-05-15",
+    tonnage: 11.2,
+    value: 198_000,
+    markNumbers: ["MK-115DC-A", "MK-115DC-B"],
+    assignees: ["Cuong Tran"],
+    progress: 85,
+    tasks: [
+      { id: "t11", title: "Engineering review", completed: true, assignee: "Ivy Chen", dueDate: "2025-05-18", category: "Engineering" },
+      { id: "t12", title: "Material cut & prep", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-01", category: "Fabrication" },
+      { id: "t13", title: "Fit & weld assembly", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-20", category: "Fabrication" },
+      { id: "t14", title: "Final dimensional check", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-05", category: "QC" },
+      { id: "t15", title: "Shipping arrangement", completed: false, assignee: "James Nguyen", dueDate: "2025-07-25", category: "Logistics" },
+    ],
+    documents: [
+      { id: "d6", name: "PGE-21706-Drawings.pdf", type: "Drawing", size: "3.8 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-05-16", url: "https://drive.google.com/file/d/example6" },
+      { id: "d7", name: "PGE-PO-21706.pdf", type: "PO", size: "0.9 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-05-15", url: "https://drive.google.com/file/d/example7" },
+    ],
+    changeOrders: [],
+    activity: [
+      { id: "a5", user: "Cuong Tran", action: "Completed weld assembly", timestamp: "2025-06-20 11:30", avatar: "CT" },
+    ],
+    notes: "Rush order – expedited delivery required.",
+  },
+  {
+    id: "j3",
+    jobNumber: "QB-2025-035",
+    poNumber: "PSE-44912",
+    customer: "Puget Sound Energy",
+    customerId: "c3",
+    description: "MK-E Series Pedestal Bases – Clearwater Substation",
+    status: "To Do",
+    priority: "Normal",
+    deliveryDate: "2025-09-10",
+    startDate: "2025-07-15",
+    tonnage: 24.7,
+    value: 445_000,
+    markNumbers: ["MK-E-P01", "MK-E-P02", "MK-E-P03", "MK-E-P04", "MK-E-P05", "MK-E-P06"],
+    assignees: ["James Nguyen", "Ivy Chen"],
+    progress: 5,
+    tasks: [
+      { id: "t16", title: "Receive stamped drawings from PSE", completed: true, assignee: "Ivy Chen", dueDate: "2025-07-10", category: "Engineering" },
+      { id: "t17", title: "Program CNC for MK-E profiles", completed: false, assignee: "Cuong Tran", dueDate: "2025-07-20", category: "Fabrication" },
+    ],
+    documents: [
+      { id: "d8", name: "PSE-44912-Pedestals-Spec.pdf", type: "Drawing", size: "5.1 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-07-01", url: "https://drive.google.com/file/d/example8" },
+    ],
+    changeOrders: [],
+    activity: [],
+    notes: "Large tonnage job. Coordinate with shipping for multi-load delivery.",
+  },
+  {
+    id: "j4",
+    jobNumber: "QB-2025-031",
+    poNumber: "BPA PO 89102",
+    customer: "Bonneville Power Administration",
+    customerId: "c1",
+    description: "500kV Tower Base Plates – John Day Corridor",
+    status: "Shipping",
+    priority: "Normal",
+    deliveryDate: "2025-07-05",
+    startDate: "2025-04-10",
+    tonnage: 52.1,
+    value: 672_000,
+    markNumbers: ["MK-500-BP01", "MK-500-BP02", "MK-500-BP03"],
+    assignees: ["James Nguyen"],
+    progress: 95,
+    tasks: [],
+    documents: [],
+    changeOrders: [],
+    activity: [],
+    notes: "Oversized load – permits required for OR and WA highway.",
+  },
+  {
+    id: "j5",
+    jobNumber: "QB-2025-027",
+    poNumber: "PortGE-3881",
+    customer: "Portland General Electric",
+    customerId: "c4",
+    description: "Distribution Pole Hardware – Sellwood Circuit",
+    status: "Delivered",
+    priority: "Normal",
+    deliveryDate: "2025-06-20",
+    startDate: "2025-05-01",
+    tonnage: 6.8,
+    value: 89_500,
+    markNumbers: ["MK-DPH-S1", "MK-DPH-S2"],
+    assignees: ["Cuong Tran"],
+    progress: 100,
+    tasks: [],
+    documents: [],
+    changeOrders: [],
+    activity: [],
+    notes: "Completed on time. Customer satisfied.",
+  },
+]
+
+// ─── Opportunities ──────────────────────────────────────────────────────────
+export const opportunities: Opportunity[] = [
+  {
+    id: "o1",
+    title: "BPA – Celilo Converter Station Retrofit",
+    customer: "Bonneville Power Administration",
+    customerId: "c1",
+    value: 1_250_000,
+    stage: "Estimating",
+    probability: 60,
+    closeDate: "2025-09-30",
+    assignee: "Ivy Chen",
+    notes: "Large retrofit – need full BOM before final estimate",
+  },
+  {
+    id: "o2",
+    title: "PGE – Humboldt Bay Switching Station",
+    customer: "Pacific Gas & Electric",
+    customerId: "c2",
+    value: 540_000,
+    stage: "Proposal",
+    probability: 75,
+    closeDate: "2025-08-15",
+    assignee: "James Nguyen",
+    notes: "Strong relationship. Awaiting final rev from PGE engineering.",
+  },
+  {
+    id: "o3",
+    title: "PSE – South King County Rebuild",
+    customer: "Puget Sound Energy",
+    customerId: "c3",
+    value: 320_000,
+    stage: "Qualification",
+    probability: 40,
+    closeDate: "2025-10-15",
+    assignee: "Ivy Chen",
+    notes: "Competing with two other shops",
+  },
+  {
+    id: "o4",
+    title: "BPA – Columbia River Corridor Phase 2",
+    customer: "Bonneville Power Administration",
+    customerId: "c1",
+    value: 2_100_000,
+    stage: "Prospecting",
+    probability: 20,
+    closeDate: "2026-01-30",
+    assignee: "James Nguyen",
+    notes: "Early stage – RFI received",
+  },
+  {
+    id: "o5",
+    title: "IDPC – Magic Valley Substation",
+    customer: "Idaho Power Company",
+    customerId: "c5",
+    value: 180_000,
+    stage: "Negotiation",
+    probability: 85,
+    closeDate: "2025-07-31",
+    assignee: "Ivy Chen",
+    notes: "Price negotiation ongoing – likely to close",
+  },
+  {
+    id: "o6",
+    title: "PortGE – East Portland Dist Upgrade",
+    customer: "Portland General Electric",
+    customerId: "c4",
+    value: 95_000,
+    stage: "Won",
+    probability: 100,
+    closeDate: "2025-06-01",
+    assignee: "Cuong Tran",
+    notes: "Won – converting to job",
+  },
+  {
+    id: "o7",
+    title: "PSE – Ellensburg Transmission Tap",
+    customer: "Puget Sound Energy",
+    customerId: "c3",
+    value: 210_000,
+    stage: "Lost",
+    probability: 0,
+    closeDate: "2025-06-10",
+    assignee: "James Nguyen",
+    notes: "Lost on price – Ace Fabrication undercut by 12%",
+  },
+  {
+    id: "o8",
+    title: "BPA – Hanford Site Distribution",
+    customer: "Bonneville Power Administration",
+    customerId: "c1",
+    value: 760_000,
+    stage: "Estimating",
+    probability: 55,
+    closeDate: "2025-09-01",
+    assignee: "Ivy Chen",
+    notes: "Complex scope – nuclear site access requirements",
+  },
+]
+
+export const teamMembers = [
+  { name: "Ivy Chen", initials: "IC", role: "Project Manager" },
+  { name: "James Nguyen", initials: "JN", role: "Lead Fabricator" },
+  { name: "Cuong Tran", initials: "CT", role: "Fabricator" },
+]
