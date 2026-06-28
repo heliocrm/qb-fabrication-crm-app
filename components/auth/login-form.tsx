@@ -5,11 +5,8 @@ import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import {
-  signInWithEmail,
-  signUpWithEmail,
-  signInWithGoogle,
-} from "@/lib/auth-actions"
+import { signInWithEmail, signUpWithEmail } from "@/lib/auth-actions"
+import { createClient } from "@/lib/supabase/client"
 
 interface LoginFormProps {
   redirectTo: string
@@ -19,6 +16,7 @@ interface LoginFormProps {
 export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin")
   const [loading, setLoading] = useState<"email" | "google" | null>(null)
+  const [googleError, setGoogleError] = useState<string | null>(null)
 
   async function handleEmailSubmit(formData: FormData) {
     setLoading("email")
@@ -32,9 +30,32 @@ export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
   }
 
   async function handleGoogleSignIn() {
+    setGoogleError(null)
     setLoading("google")
-    await signInWithGoogle(redirectTo)
-    setLoading(null)
+    try {
+      const supabase = createClient()
+      const callbackUrl = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: callbackUrl },
+      })
+
+      if (error) {
+        setGoogleError(error.message)
+        setLoading(null)
+        return
+      }
+
+      if (data.url) {
+        window.location.assign(data.url)
+      } else {
+        setGoogleError("Could not start Google sign-in. Please try again.")
+        setLoading(null)
+      }
+    } catch {
+      setGoogleError("Could not start Google sign-in. Please try again.")
+      setLoading(null)
+    }
   }
 
   if (!supabaseReady) {
@@ -99,6 +120,12 @@ export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
           or
         </span>
       </div>
+
+      {googleError && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {googleError}
+        </div>
+      )}
 
       <Button
         type="button"
