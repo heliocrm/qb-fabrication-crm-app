@@ -61,13 +61,10 @@ export function JobDetailStats({ job, tasks, lineItemCount }: JobDetailStatsProp
         <div className="flex items-center gap-1.5 ml-auto">
           <Users className="size-4 text-muted-foreground" />
           <div className="flex -space-x-1.5">
-            {job.assignees.map((name) => (
-              <Avatar key={name} className="size-6 border-2 border-card">
+            {job.assignedUsers?.map((user) => (
+              <Avatar key={user.id} className="size-6 border-2 border-card">
                 <AvatarFallback className="text-[9px] font-bold bg-[var(--orange)] text-white">
-                  {name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                  {user.avatarInitials}
                 </AvatarFallback>
               </Avatar>
             ))}

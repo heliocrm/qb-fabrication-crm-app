@@ -60,7 +60,7 @@ for (const j of jobs) {
   const id = SEED_JOB_IDS[j.id as keyof typeof SEED_JOB_IDS]
   const accountId = SEED_ACCOUNT_IDS[j.customerId as keyof typeof SEED_ACCOUNT_IDS]
   const marks = `{${j.markNumbers.map((m) => `"${esc(m)}"`).join(",")}}`
-  const assignees = `{${j.assignees.map((a) => `"${esc(a)}"`).join(",")}}`
+  const assignees = `{${(j.assignees ?? []).map((a) => `"${esc(a)}"`).join(",")}}`
   lines.push(
     `insert into public.jobs (id, organization_id, account_id, job_number, po_number, description, status, priority, delivery_date, start_date, tonnage, value, mark_numbers, assignees, progress, notes, google_drive_folder_id) values ('${id}', '${SEED_ORG_ID}', '${accountId}', '${esc(j.jobNumber)}', '${esc(j.poNumber)}', '${esc(j.description)}', '${j.status}', '${j.priority}', '${j.deliveryDate}', '${j.startDate}', ${j.tonnage}, ${j.value}, '${marks}', '${assignees}', ${j.progress}, ${j.notes ? `'${esc(j.notes)}'` : "null"}, 'mock-folder-${j.jobNumber.replace(/-/g, "")}') on conflict (id) do nothing;`
   )

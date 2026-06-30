@@ -4,6 +4,7 @@ import {
   Building2,
   LayoutDashboard,
   Settings,
+  Shield,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react"
@@ -53,6 +54,13 @@ export const mainNavItems: NavItem[] = [
     description: "Team and preferences",
   },
 ]
+
+export const adminNavItem: NavItem = {
+  label: "Admin",
+  href: "/admin",
+  icon: Shield,
+  description: "User management and organization",
+}
 
 export function isNavActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/"

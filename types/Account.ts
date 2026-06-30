@@ -45,16 +45,8 @@ export interface OrganizationRow {
   updated_at: string
 }
 
-export interface ProfileRow {
-  id: string
-  user_id: string
-  organization_id: string
-  full_name: string | null
-  role: string
-  avatar_initials: string | null
-  created_at: string
-  updated_at: string
-}
+/** @deprecated Use ProfileRow from types/Profile.ts */
+export type { ProfileRow } from "./Profile"
 
 export interface TeamMember {
   name: string

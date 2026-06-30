@@ -33,4 +33,4 @@ export type ChangeOrderStatus = "Open" | "Resolved" | "Pending Approval"
 
 export type AccountStatus = "Active" | "Inactive"
 
-export type OrganizationRole = "owner" | "admin" | "manager" | "member" | "viewer"
+export type OrganizationRole = "admin" | "manager" | "member" | "viewer"

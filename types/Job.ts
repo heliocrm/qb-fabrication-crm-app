@@ -1,3 +1,4 @@
+import type { ProfileSummary } from "./Profile"
 import type { ChangeOrder } from "./ChangeOrder"
 import type { Document } from "./Document"
 import type { JobStatus, JobTemplateType, Priority } from "./enums"
@@ -46,7 +47,10 @@ export interface Job {
   tonnage: number
   value: number
   markNumbers: string[]
-  assignees: string[]
+  /** @deprecated Use assignedUsers — legacy text[] from jobs.assignees */
+  assignees?: string[]
+  /** Profile-linked shop team (from job_assignees) */
+  assignedUsers?: ProfileSummary[]
   progress: number
   notes: string
   organizationId?: string
@@ -139,5 +143,8 @@ export interface JobListItem {
   tonnage: number
   value: number
   progress: number
-  assignees: string[]
+  /** @deprecated Use assignedUsers */
+  assignees?: string[]
+  /** Profile-linked shop team (from job_assignees) */
+  assignedUsers?: ProfileSummary[]
 }

@@ -61,11 +61,17 @@ export type {
 } from "./Job"
 
 export type {
+  ProfileSummary,
+  OrgUser,
+  ProfileRow,
+  JobAssigneeRow,
+} from "./Profile"
+
+export type {
   Account,
   Customer,
   AccountRow,
   OrganizationRow,
-  ProfileRow,
   TeamMember,
 } from "./Account"
 

@@ -41,9 +41,15 @@ interface JobDocumentsTabProps {
   job: Job
   jobId?: string
   dataSource?: "supabase" | "mock"
+  readOnly?: boolean
 }
 
-export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps) {
+export function JobDocumentsTab({
+  job,
+  jobId,
+  dataSource,
+  readOnly = false,
+}: JobDocumentsTabProps) {
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
   const [docFilter, setDocFilter] = useState<"all" | "job" | string>("all")
   const [uploadScope, setUploadScope] = useState<"job" | string>("job")
@@ -138,7 +144,7 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {useLiveDrive && (
+          {useLiveDrive && !readOnly && (
             <CreateJobFolderButton
               folderId={activeFolderId}
               onCreateFolder={createFolder}
@@ -193,7 +199,7 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
               <ExternalLink className="size-3.5" data-icon="inline-start" />
               Open Drive
             </Button>
-          ) : useLiveDrive ? (
+          ) : useLiveDrive && !readOnly ? (
             <CreateJobFolderButton
               folderId={activeFolderId}
               onCreateFolder={createFolder}
@@ -243,7 +249,7 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
         </p>
       )}
 
-      {useLiveDrive && (
+      {useLiveDrive && !readOnly && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">Upload scope:</span>

@@ -19,6 +19,7 @@ export interface UserProfile {
   email?: string
   role: string
   initials: string
+  organizationRole?: string
 }
 
 interface UserMenuProps {

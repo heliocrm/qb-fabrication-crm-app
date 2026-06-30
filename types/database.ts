@@ -57,6 +57,7 @@ export interface Database {
           organization_id: string
           full_name: string | null
           role: string
+          is_active: boolean
           avatar_initials: string | null
           created_at: string
           updated_at: string
@@ -67,6 +68,7 @@ export interface Database {
           organization_id: string
           full_name?: string | null
           role?: string
+          is_active?: boolean
           avatar_initials?: string | null
           created_at?: string
           updated_at?: string
@@ -77,6 +79,7 @@ export interface Database {
           organization_id?: string
           full_name?: string | null
           role?: string
+          is_active?: boolean
           avatar_initials?: string | null
           created_at?: string
           updated_at?: string
@@ -606,6 +609,42 @@ export interface Database {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_assignees: {
+        Row: {
+          job_id: string
+          profile_id: string
+          assigned_at: string
+          assigned_by: string | null
+        }
+        Insert: {
+          job_id: string
+          profile_id: string
+          assigned_at?: string
+          assigned_by?: string | null
+        }
+        Update: {
+          job_id?: string
+          profile_id?: string
+          assigned_at?: string
+          assigned_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_assignees_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assignees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

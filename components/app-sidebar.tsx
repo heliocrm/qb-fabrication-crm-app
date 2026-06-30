@@ -18,7 +18,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UserMenu, type UserProfile } from "@/components/user-menu"
-import { mainNavItems, isNavActive } from "@/lib/nav-config"
+import { mainNavItems, adminNavItem, isNavActive } from "@/lib/nav-config"
 import { cn } from "@/lib/utils"
 
 interface AppSidebarProps {
@@ -98,6 +98,16 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   />
                 </SidebarMenuItem>
               ))}
+              {user?.organizationRole === "admin" && (
+                <SidebarMenuItem>
+                  <NavLink
+                    href={adminNavItem.href}
+                    label={adminNavItem.label}
+                    icon={adminNavItem.icon}
+                    isActive={isNavActive(pathname, adminNavItem.href)}
+                  />
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

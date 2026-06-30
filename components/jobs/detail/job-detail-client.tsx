@@ -16,9 +16,16 @@ import type { Job, LineItem } from "@/types"
 interface JobDetailClientProps {
   job: Job
   dataSource?: "supabase" | "mock"
+  canWrite?: boolean
+  canManageAssignees?: boolean
 }
 
-export function JobDetailClient({ job, dataSource }: JobDetailClientProps) {
+export function JobDetailClient({
+  job,
+  dataSource,
+  canWrite = true,
+  canManageAssignees = false,
+}: JobDetailClientProps) {
   const [lineItems, setLineItems] = useState<LineItem[]>(job.lineItems ?? [])
   const tasks = useMemo(() => flattenLineItemTasks(lineItems), [lineItems])
   const openTasks = tasks.filter((t) => !t.completed).length
@@ -64,14 +71,19 @@ export function JobDetailClient({ job, dataSource }: JobDetailClientProps) {
           </TabsList>
 
           <TabsContent value="overview">
-            <JobOverviewTab job={job} lineItems={lineItems} tasks={tasks} />
+            <JobOverviewTab
+              job={job}
+              lineItems={lineItems}
+              tasks={tasks}
+              canManageAssignees={canManageAssignees && dataSource === "supabase"}
+            />
           </TabsContent>
 
           <TabsContent value="line-items">
             <JobLineItemsTab
               lineItems={lineItems}
               onLineItemsChange={setLineItems}
-              jobId={dataSource === "supabase" ? job.id : undefined}
+              jobId={dataSource === "supabase" && canWrite ? job.id : undefined}
               jobTemplate={job.jobTemplate}
             />
           </TabsContent>
@@ -81,6 +93,7 @@ export function JobDetailClient({ job, dataSource }: JobDetailClientProps) {
               job={{ ...job, lineItems }}
               jobId={dataSource === "supabase" ? job.id : undefined}
               dataSource={dataSource}
+              readOnly={!canWrite}
             />
           </TabsContent>
 

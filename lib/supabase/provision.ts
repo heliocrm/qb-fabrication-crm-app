@@ -3,6 +3,18 @@ import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { Tables } from "@/lib/supabase/schema"
 import type { UserProfile } from "@/components/user-menu"
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  manager: "Manager",
+  member: "Member",
+  viewer: "Viewer",
+}
+
+function formatRoleLabel(role: string | undefined): string {
+  if (!role) return "Member"
+  return ROLE_LABELS[role] ?? role
+}
+
 /**
  * Ensures the signed-in user has a profile linked to QB Fabrication org.
  * Safe to call on every authenticated request (idempotent RPC).
@@ -39,9 +51,11 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
     const { data: profile } = await supabase
       .from(Tables.profiles)
-      .select("full_name, role, avatar_initials")
+      .select("full_name, role, avatar_initials, is_active")
       .eq("user_id", user.id)
       .maybeSingle()
+
+    if (profile && profile.is_active === false) return null
 
     const meta = user.user_metadata ?? {}
     const name =
@@ -63,8 +77,9 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     return {
       name,
       email: user.email,
-      role: profile?.role ?? meta.role ?? "Team Member",
+      role: formatRoleLabel(profile?.role ?? meta.role),
       initials,
+      organizationRole: profile?.role,
     }
   } catch {
     return null

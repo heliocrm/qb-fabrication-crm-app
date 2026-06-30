@@ -17,17 +17,27 @@ import type {
   LineItemRow,
   Opportunity,
   OpportunityRow,
+  OrganizationRole,
+  ProfileSummary,
   Task,
   TaskInsert,
   TaskRow,
 } from "@/types"
 
-type JobWithAccount = JobRow & {
-  accounts: { id: string; name: string; short_name: string } | null
+type JobAssigneeJoinRow = {
+  profile_id: string
+  profiles: {
+    id: string
+    full_name: string | null
+    role: string
+    avatar_initials: string | null
+    is_active: boolean
+  } | null
 }
 
-type OpportunityWithAccount = OpportunityRow & {
+type JobListRow = JobRow & {
   accounts: { id: string; name: string; short_name: string } | null
+  job_assignees?: JobAssigneeJoinRow[]
 }
 
 type JobWithRelationsRow = JobRow & {
@@ -36,6 +46,11 @@ type JobWithRelationsRow = JobRow & {
   documents: DocumentRow[]
   change_orders: ChangeOrderRow[]
   activity_logs: ActivityRow[]
+  job_assignees?: JobAssigneeJoinRow[]
+}
+
+type OpportunityWithAccount = OpportunityRow & {
+  accounts: { id: string; name: string; short_name: string } | null
 }
 
 function formatBytes(bytes: number | null | undefined): string | undefined {
@@ -186,7 +201,39 @@ export function mapActivityRow(row: ActivityRow): Activity {
   }
 }
 
-export function mapJobListItem(row: JobWithAccount): JobListItem {
+export function mapProfileSummaryFromJoin(row: {
+  id: string
+  full_name: string | null
+  role: string
+  avatar_initials: string | null
+  is_active: boolean
+}): ProfileSummary {
+  const fullName = row.full_name ?? "Unknown"
+  return {
+    id: row.id,
+    fullName,
+    role: row.role as OrganizationRole,
+    avatarInitials:
+      row.avatar_initials ??
+      fullName
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase(),
+    isActive: row.is_active,
+  }
+}
+
+function mapAssignedUsers(rows: JobAssigneeJoinRow[] | undefined): ProfileSummary[] {
+  return (rows ?? [])
+    .map((ja) => ja.profiles)
+    .filter((p): p is NonNullable<typeof p> => p != null)
+    .map(mapProfileSummaryFromJoin)
+}
+
+export function mapJobListItem(row: JobListRow): JobListItem {
+  const assignedUsers = mapAssignedUsers(row.job_assignees)
   return {
     id: row.id,
     jobNumber: row.job_number,
@@ -201,7 +248,8 @@ export function mapJobListItem(row: JobWithAccount): JobListItem {
     tonnage: Number(row.tonnage ?? 0),
     value: Number(row.value),
     progress: row.progress,
-    assignees: row.assignees ?? [],
+    assignees: assignedUsers.map((u) => u.fullName),
+    assignedUsers,
   }
 }
 
@@ -234,6 +282,8 @@ export function mapJobRow(
     )
     .map(mapActivityRow)
 
+  const assignedUsers = mapAssignedUsers(row.job_assignees)
+
   return {
     id: row.id,
     jobNumber: row.job_number,
@@ -250,7 +300,8 @@ export function mapJobRow(
     tonnage: Number(row.tonnage ?? 0),
     value: Number(row.value),
     markNumbers: row.mark_numbers ?? [],
-    assignees: row.assignees ?? [],
+    assignees: assignedUsers.map((u) => u.fullName),
+    assignedUsers,
     progress: row.progress,
     notes: row.notes ?? "",
     organizationId: row.organization_id,
@@ -285,7 +336,6 @@ export function toJobInsert(
     tonnage: job.tonnage ?? null,
     value: job.value ?? 0,
     mark_numbers: job.markNumbers ?? [],
-    assignees: job.assignees ?? [],
     progress: job.progress ?? 0,
     notes: job.notes ?? null,
     google_drive_folder_id: job.googleDriveFolderId ?? null,

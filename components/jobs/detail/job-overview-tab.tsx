@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ShopTeamCard } from "@/components/jobs/detail/shop-team-card"
 import {
   TASK_CATEGORIES,
   formatJobCurrency,
@@ -29,9 +29,15 @@ interface JobOverviewTabProps {
   job: Job
   lineItems: LineItem[]
   tasks: Task[]
+  canManageAssignees?: boolean
 }
 
-export function JobOverviewTab({ job, lineItems, tasks }: JobOverviewTabProps) {
+export function JobOverviewTab({
+  job,
+  lineItems,
+  tasks,
+  canManageAssignees = false,
+}: JobOverviewTabProps) {
   const account = accounts.find((a) => a.id === job.customerId)
 
   return (
@@ -202,33 +208,11 @@ export function JobOverviewTab({ job, lineItems, tasks }: JobOverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Shop Team</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {job.assignees.map((name) => {
-              const roles: Record<string, string> = {
-                "Ivy Chen": "Project Manager",
-                "James Nguyen": "Lead Fabricator",
-                "Cuong Tran": "Fabricator",
-              }
-              return (
-                <div key={name} className="flex items-center gap-3">
-                  <Avatar className="size-9">
-                    <AvatarFallback className="text-xs font-bold bg-[var(--orange)] text-white">
-                      {name.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{name}</p>
-                    <p className="text-xs text-muted-foreground">{roles[name] ?? "Team Member"}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
+        <ShopTeamCard
+          jobId={job.id}
+          assignedUsers={job.assignedUsers ?? []}
+          canManage={canManageAssignees}
+        />
 
         <Card className="border shadow-sm">
           <CardHeader className="pb-3">

@@ -14,6 +14,7 @@ import {
 } from "@/lib/supabase/mappers"
 import type { Job, JobInsert, JobListFilters, JobListItem, JobUpdate, JobWithRelations, JobRow, DocumentRow, ChangeOrderRow, ActivityRow, LineItemRow, TaskRow, JobTemplateType } from "@/types"
 import { getDefaultLineItemTitle } from "@/lib/job-templates"
+import { addJobAssignees } from "@/lib/supabase/services/job-assignees"
 import { createLineItemWithTemplateTasks } from "@/lib/supabase/services/line-items"
 
 type JobListRow = JobRow & {
@@ -142,6 +143,7 @@ export interface CreateJobFromTemplateInput {
   tonnage?: number
   value?: number
   notes?: string
+  assigneeProfileIds?: string[]
   additionalLineItems?: {
     title: string
     quantity?: number
@@ -201,6 +203,11 @@ export async function createJobFromTemplate(
   }
 
   await syncJobProgress(jobId)
+
+  const assigneeIds = input.assigneeProfileIds ?? []
+  if (assigneeIds.length > 0) {
+    await addJobAssignees(jobId, assigneeIds)
+  }
 
   const created = await getJobById(jobId)
   if (!created) {

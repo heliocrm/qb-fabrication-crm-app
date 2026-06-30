@@ -1,7 +1,11 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { isSupabaseConfigured } from "@/lib/supabase/env"
+import {
+  canCreateJobs,
+  requireManagerOrAdmin,
+  requireSessionContext,
+} from "@/lib/auth/session"
 import {
   createJobFromDomain,
   createJobFromTemplate,
@@ -16,6 +20,8 @@ import {
   deleteLineItem,
   updateLineItem,
 } from "@/lib/supabase/services/line-items"
+import { setJobAssignees } from "@/lib/supabase/services/job-assignees"
+import { listOrgUsersForPicker } from "@/lib/supabase/services/profiles"
 import {
   createTaskFromDomain,
   deleteTask,
@@ -24,6 +30,7 @@ import {
   updateTask,
 } from "@/lib/supabase/services/tasks"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
+import { isSupabaseConfigured } from "@/lib/supabase/env"
 import type {
   Job,
   JobListFilters,
@@ -75,13 +82,25 @@ export async function fetchJobsAction(filters?: JobListFilters) {
 export async function createJobAction(
   input: Partial<Job> & { jobNumber: string; poNumber: string; description: string }
 ) {
-  const result = await safeAction(() => createJobFromDomain(input))
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    if (!canCreateJobs(ctx.role)) {
+      throw new Error("Only managers and admins can create jobs")
+    }
+    return createJobFromDomain(input)
+  })
   if (result.data) revalidateJobPaths(result.data.id)
   return result
 }
 
 export async function createJobFromTemplateAction(input: CreateJobFromTemplateInput) {
-  const result = await safeAction(() => createJobFromTemplate(input))
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    if (!canCreateJobs(ctx.role)) {
+      throw new Error("Only managers and admins can create jobs")
+    }
+    return createJobFromTemplate(input)
+  })
   if (result.data) revalidateJobPaths(result.data.id)
   return result
 }
@@ -181,7 +200,26 @@ export async function reorderTasksAction(
   orderedTaskIds: string[],
   jobId: string
 ) {
-  const result = await safeAction(() => reorderTasks(lineItemId, orderedTaskIds))
+  const result = await safeAction(async () => {
+    await requireSessionContext()
+    return reorderTasks(lineItemId, orderedTaskIds)
+  })
   if (result.data) revalidateJobPaths(jobId)
   return result
+}
+
+export async function setJobAssigneesAction(jobId: string, profileIds: string[]) {
+  const result = await safeAction(async () => {
+    const ctx = await requireManagerOrAdmin()
+    return setJobAssignees(jobId, profileIds, ctx.profileId)
+  })
+  if (result.data) revalidateJobPaths(jobId)
+  return result
+}
+
+export async function listOrgUsersForPickerAction() {
+  return safeAction(async () => {
+    await requireManagerOrAdmin()
+    return listOrgUsersForPicker()
+  })
 }

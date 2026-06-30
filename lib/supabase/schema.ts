@@ -45,7 +45,21 @@ export const Tables = {
   documents: "documents",
   change_orders: "change_orders",
   activity_logs: "activity_logs",
+  job_assignees: "job_assignees",
 } as const
+
+const JOB_ASSIGNEES_SELECT = `
+  job_assignees (
+    profile_id,
+    profiles:profile_id (
+      id,
+      full_name,
+      role,
+      avatar_initials,
+      is_active
+    )
+  )
+` as const
 
 /** Job detail select — loads all relations in one query */
 export const JOB_WITH_RELATIONS_SELECT = `
@@ -54,13 +68,15 @@ export const JOB_WITH_RELATIONS_SELECT = `
   line_items ( *, tasks ( * ) ),
   documents ( * ),
   change_orders ( * ),
-  activity_logs ( * )
+  activity_logs ( * ),
+  ${JOB_ASSIGNEES_SELECT}
 ` as const
 
 /** List view select — join account name only */
 export const JOB_LIST_SELECT = `
   *,
-  accounts:account_id ( id, name, short_name )
+  accounts:account_id ( id, name, short_name ),
+  ${JOB_ASSIGNEES_SELECT}
 ` as const
 
 /** Opportunity list select — join account for customer name */

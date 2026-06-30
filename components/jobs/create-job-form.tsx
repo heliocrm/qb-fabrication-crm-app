@@ -1,18 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { createJobFromTemplateAction } from "@/lib/actions/jobs"
+import { createJobFromTemplateAction, listOrgUsersForPickerAction } from "@/lib/actions/jobs"
 import { JOB_TEMPLATE_OPTIONS } from "@/lib/job-templates"
 import { resolveAccountId } from "@/lib/seed-ids"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-import type { Account, JobTemplateType } from "@/types"
+import type { Account, JobTemplateType, ProfileSummary } from "@/types"
 
 interface ExtraLineItem {
   key: string
@@ -31,6 +31,15 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [template, setTemplate] = useState<JobTemplateType>("crossarm")
   const [extraLineItems, setExtraLineItems] = useState<ExtraLineItem[]>([])
+  const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
+  const [assigneeIds, setAssigneeIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (dataSource !== "supabase") return
+    void listOrgUsersForPickerAction().then((result) => {
+      if (result.data) setOrgUsers(result.data)
+    })
+  }, [dataSource])
 
   function addExtraLineItem() {
     setExtraLineItems((prev) => [
@@ -76,6 +85,7 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
       tonnage: fd.get("tonnage") ? Number(fd.get("tonnage")) : undefined,
       value: fd.get("value") ? Number(fd.get("value")) : undefined,
       notes: String(fd.get("notes") ?? "") || undefined,
+      assigneeProfileIds: [...assigneeIds],
       additionalLineItems: extraLineItems
         .filter((li) => li.title.trim())
         .map((li) => ({
@@ -217,6 +227,39 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {dataSource === "supabase" && orgUsers.length > 0 && (
+        <Card className="border shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base">Assign team</CardTitle>
+            <CardDescription>Optional — members only see jobs they are assigned to</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 max-h-48 overflow-y-auto">
+            {orgUsers.map((user) => (
+              <label
+                key={user.id}
+                className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/40 rounded px-2 py-1"
+              >
+                <input
+                  type="checkbox"
+                  checked={assigneeIds.has(user.id)}
+                  onChange={() => {
+                    setAssigneeIds((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(user.id)) next.delete(user.id)
+                      else next.add(user.id)
+                      return next
+                    })
+                  }}
+                  className="rounded border-input"
+                />
+                <span>{user.fullName}</span>
+                <span className="text-xs text-muted-foreground ml-auto capitalize">{user.role}</span>
+              </label>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border shadow-sm">
         <CardHeader className="flex flex-row items-start justify-between gap-4">

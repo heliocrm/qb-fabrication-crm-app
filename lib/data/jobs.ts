@@ -22,6 +22,7 @@ function listItemToJob(item: JobListItem): Job {
     value: item.value,
     markNumbers: [],
     assignees: item.assignees,
+    assignedUsers: item.assignedUsers,
     progress: item.progress,
     notes: "",
     lineItems: [],

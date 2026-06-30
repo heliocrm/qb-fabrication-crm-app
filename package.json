@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "seed": "tsx scripts/seed-database.ts",
     "seed:sql": "tsx scripts/generate-seed-sql.ts",
-    "verify:line-items": "tsx scripts/verify-line-items.ts"
+    "verify:line-items": "tsx scripts/verify-line-items.ts",
+    "verify:roles": "tsx scripts/verify-roles.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

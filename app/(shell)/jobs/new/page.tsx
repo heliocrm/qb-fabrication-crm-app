@@ -1,7 +1,14 @@
+import { redirect } from "next/navigation"
 import { CreateJobForm } from "@/components/jobs/create-job-form"
+import { canCreateJobs, getSessionContext } from "@/lib/auth/session"
 import { loadCustomersData } from "@/lib/data/accounts"
 
 export default async function NewJobPage() {
+  const ctx = await getSessionContext()
+  if (!ctx || !canCreateJobs(ctx.role)) {
+    redirect("/jobs")
+  }
+
   const { customers, source } = await loadCustomersData()
 
   return (

@@ -7,6 +7,8 @@ Run migrations in order in the [SQL Editor](https://supabase.com/dashboard/proje
 3. `003_provision_and_backfill.sql` — QB Fabrication org seed, backfill, auto-provision RPC
 4. `004_seed_data.sql` — demo accounts, jobs, tasks, documents (optional but recommended)
 5. `005_line_items_and_templates.sql` — line items, job templates, task categories, backfill
+6. `006_fix_document_scoping.sql` — correct job-level vs line-item document scoping on seed jobs
+7. `007_user_roles_and_assignees.sql` — roles, `job_assignees`, RLS helpers, admin bootstrap
 
 ## Seed demo data
 
