@@ -13,9 +13,10 @@ import type { Job, Task } from "@/types"
 interface JobDetailStatsProps {
   job: Job
   tasks: Task[]
+  lineItemCount?: number
 }
 
-export function JobDetailStats({ job, tasks }: JobDetailStatsProps) {
+export function JobDetailStats({ job, tasks, lineItemCount }: JobDetailStatsProps) {
   const completedTasks = tasks.filter((t) => t.completed).length
   const totalTasks = tasks.length
 
@@ -29,8 +30,11 @@ export function JobDetailStats({ job, tasks }: JobDetailStatsProps) {
     },
     {
       icon: CheckSquare,
-      label: "Tasks",
-      value: `${completedTasks}/${totalTasks}`,
+      label: lineItemCount != null ? "Line Items" : "Tasks",
+      value:
+        lineItemCount != null
+          ? `${lineItemCount} · ${completedTasks}/${totalTasks} tasks`
+          : `${completedTasks}/${totalTasks}`,
     },
   ]
 

@@ -3,6 +3,8 @@ import type {
   ChangeOrder,
   Document,
   Job,
+  JobTemplateType,
+  LineItem,
   Opportunity,
   Task,
   Activity,
@@ -106,8 +108,43 @@ export const accounts: Account[] = [
 /** @deprecated Use accounts */
 export const customers = accounts
 
+function mapLegacyCategory(category: string): Task["category"] {
+  if (category === "Engineering") return "Programming"
+  if (category === "QC") return "Quality Assurance"
+  if (category === "Logistics") return "Shipping"
+  return category as Task["category"]
+}
+
+function buildJobWithLineItems(
+  job: Omit<Job, "lineItems" | "tasks"> & {
+    lineItem: Omit<LineItem, "tasks" | "jobId">
+    rawTasks: Array<
+      Pick<Task, "id" | "title" | "completed" | "assignee" | "dueDate"> & {
+        category: string
+      }
+    >
+    jobTemplate?: JobTemplateType
+  }
+): Job {
+  const tasks: Task[] = job.rawTasks.map((t) => ({
+    ...t,
+    category: mapLegacyCategory(t.category),
+    jobId: job.id,
+    lineItemId: job.lineItem.id,
+  }))
+  const lineItems: LineItem[] = [
+    {
+      ...job.lineItem,
+      jobId: job.id,
+      tasks,
+    },
+  ]
+  const { rawTasks: _r, lineItem: _l, ...rest } = job
+  return { ...rest, lineItems, tasks }
+}
+
 // ─── Jobs (BPA PO 90866, PGE 21706, MK-E series, etc.) ─────────────────────
-export const jobs: Job[] = [
+const rawJobs: Job[] = [
   {
     id: "j1",
     jobNumber: "QB-2025-041",
@@ -124,24 +161,44 @@ export const jobs: Job[] = [
     markNumbers: ["MK-230H-01", "MK-230H-02", "MK-230H-03", "MK-230H-04"],
     assignees: ["James Nguyen", "Cuong Tran"],
     progress: 62,
-    tasks: [
-      { id: "t1", title: "Review approved drawings (Rev C)", completed: true, assignee: "Ivy Chen", dueDate: "2025-06-05", category: "Engineering" },
-      { id: "t2", title: "Material procurement – A36 plate, ¾\" bolts", completed: true, assignee: "James Nguyen", dueDate: "2025-06-10", category: "Fabrication" },
-      { id: "t3", title: "Cut all plate to DXF", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-18", category: "Fabrication" },
-      { id: "t4", title: "Fit & weld crossarm brackets", completed: true, assignee: "James Nguyen", dueDate: "2025-06-28", category: "Fabrication" },
-      { id: "t5", title: "Galvanize – send to NW Galvanizing", completed: false, assignee: "James Nguyen", dueDate: "2025-07-10", category: "Fabrication" },
-      { id: "t6", title: "Dimensional inspection post-galvanize", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-15", category: "QC" },
-      { id: "t7", title: "Torque bolt verification", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-18", category: "QC" },
-      { id: "t8", title: "Final paint & marking (stencil MK numbers)", completed: false, assignee: "Cuong Tran", dueDate: "2025-07-22", category: "Fabrication" },
-      { id: "t9", title: "Load & strap – flatbed, 40' step deck", completed: false, assignee: "James Nguyen", dueDate: "2025-08-12", category: "Logistics" },
-      { id: "t10", title: "Deliver to BPA McNary Substation", completed: false, assignee: "James Nguyen", dueDate: "2025-08-15", category: "Logistics" },
-    ],
+    jobTemplate: "crossarm",
+    ...(() => {
+      const lineItemId = "li-j1"
+      const tasks: Task[] = [
+        { id: "t1", title: "Review approved drawings (Rev C)", completed: true, assignee: "Ivy Chen", dueDate: "2025-06-05", category: "Programming", lineItemId },
+        { id: "t2", title: "Material procurement – A36 plate, ¾\" bolts", completed: true, assignee: "James Nguyen", dueDate: "2025-06-10", category: "Fabrication", lineItemId },
+        { id: "t3", title: "Cut all plate to DXF", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-18", category: "Fabrication", lineItemId },
+        { id: "t4", title: "Fit & weld crossarm brackets", completed: true, assignee: "James Nguyen", dueDate: "2025-06-28", category: "Fabrication", lineItemId },
+        { id: "t5", title: "Galvanize – send to NW Galvanizing", completed: false, assignee: "James Nguyen", dueDate: "2025-07-10", category: "Shipping", lineItemId },
+        { id: "t6", title: "Dimensional inspection post-galvanize", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-15", category: "Quality Assurance", lineItemId },
+        { id: "t7", title: "Torque bolt verification", completed: false, assignee: "Ivy Chen", dueDate: "2025-07-18", category: "Quality Assurance", lineItemId },
+        { id: "t8", title: "Final paint & marking (stencil MK numbers)", completed: false, assignee: "Cuong Tran", dueDate: "2025-07-22", category: "Fabrication", lineItemId },
+        { id: "t9", title: "Load & strap – flatbed, 40' step deck", completed: false, assignee: "James Nguyen", dueDate: "2025-08-12", category: "Shipping", lineItemId },
+        { id: "t10", title: "Deliver to BPA McNary Substation", completed: false, assignee: "James Nguyen", dueDate: "2025-08-15", category: "Shipping", lineItemId },
+      ].map((t) => ({ ...t, jobId: "j1" })) as Task[]
+      return {
+        tasks,
+        lineItems: [
+          {
+            id: lineItemId,
+            jobId: "j1",
+            title: "4 ea MK-230H Crossarm Assembly",
+            quantity: 4,
+            lineItemNumber: "MK-230H",
+            wipStatus: "Doing" as const,
+            sortOrder: 0,
+            deliveryDate: "2025-08-15",
+            tasks,
+          },
+        ],
+      }
+    })(),
     documents: [
       { id: "d1", name: "BPA-90866-Drawings-RevC.pdf", type: "Drawing", size: "4.2 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-02", url: "https://drive.google.com/file/d/example1", preview: true },
       { id: "d2", name: "QB-2025-041-WorkOrder.pdf", type: "Work Order", size: "1.1 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-03", url: "https://drive.google.com/file/d/example2" },
       { id: "d3", name: "BPA-PO-90866.pdf", type: "PO", size: "0.8 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-01", url: "https://drive.google.com/file/d/example3" },
-      { id: "d4", name: "Material-Certs-A36-Plate.pdf", type: "Inspection", size: "2.3 MB", uploadedBy: "James Nguyen", uploadedAt: "2025-06-11", url: "https://drive.google.com/file/d/example4" },
-      { id: "d5", name: "Weld-Inspection-Report-06-28.pdf", type: "Inspection", size: "1.4 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-28", url: "https://drive.google.com/file/d/example5" },
+      { id: "d4", name: "Material-Certs-A36-Plate.pdf", type: "Inspection", size: "2.3 MB", uploadedBy: "James Nguyen", uploadedAt: "2025-06-11", url: "https://drive.google.com/file/d/example4", lineItemId: "li-j1" },
+      { id: "d5", name: "Weld-Inspection-Report-06-28.pdf", type: "Inspection", size: "1.4 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-06-28", url: "https://drive.google.com/file/d/example5", lineItemId: "li-j1" },
     ],
     changeOrders: [
       { id: "co1", type: "Change Order", description: "BPA added 4 additional hanger brackets per Rev D markup", impact: "+$18,200 / +3 days", status: "Pending Approval", date: "2025-06-25", value: 18200 },
@@ -155,7 +212,7 @@ export const jobs: Job[] = [
     ],
     notes: "BPA project manager is Mark Hendricks. Delivery must coordinate with site crew – 48hr notice required. Galvanizer lead time is 5 business days.",
   },
-  {
+  buildJobWithLineItems({
     id: "j2",
     jobNumber: "QB-2025-038",
     poNumber: "PGE 21706",
@@ -171,7 +228,17 @@ export const jobs: Job[] = [
     markNumbers: ["MK-115DC-A", "MK-115DC-B"],
     assignees: ["Cuong Tran"],
     progress: 85,
-    tasks: [
+    jobTemplate: "crossarm",
+    lineItem: {
+      id: "li2",
+      title: "2 ea MK-115DC Crossarm",
+      quantity: 2,
+      lineItemNumber: "MK-115DC",
+      wipStatus: "Doing",
+      sortOrder: 0,
+      deliveryDate: "2025-07-30",
+    },
+    rawTasks: [
       { id: "t11", title: "Engineering review", completed: true, assignee: "Ivy Chen", dueDate: "2025-05-18", category: "Engineering" },
       { id: "t12", title: "Material cut & prep", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-01", category: "Fabrication" },
       { id: "t13", title: "Fit & weld assembly", completed: true, assignee: "Cuong Tran", dueDate: "2025-06-20", category: "Fabrication" },
@@ -187,8 +254,8 @@ export const jobs: Job[] = [
       { id: "a5", user: "Cuong Tran", action: "Completed weld assembly", timestamp: "2025-06-20 11:30", avatar: "CT" },
     ],
     notes: "Rush order – expedited delivery required.",
-  },
-  {
+  }),
+  buildJobWithLineItems({
     id: "j3",
     jobNumber: "QB-2025-035",
     poNumber: "PSE-44912",
@@ -204,17 +271,27 @@ export const jobs: Job[] = [
     markNumbers: ["MK-E-P01", "MK-E-P02", "MK-E-P03", "MK-E-P04", "MK-E-P05", "MK-E-P06"],
     assignees: ["James Nguyen", "Ivy Chen"],
     progress: 5,
-    tasks: [
+    jobTemplate: "pedestal",
+    lineItem: {
+      id: "li3",
+      title: "6 ea MK-E Pedestal Bases",
+      quantity: 6,
+      lineItemNumber: "MK-E-P",
+      wipStatus: "To Do",
+      sortOrder: 0,
+      deliveryDate: "2025-09-10",
+    },
+    rawTasks: [
       { id: "t16", title: "Receive stamped drawings from PSE", completed: true, assignee: "Ivy Chen", dueDate: "2025-07-10", category: "Engineering" },
       { id: "t17", title: "Program CNC for MK-E profiles", completed: false, assignee: "Cuong Tran", dueDate: "2025-07-20", category: "Fabrication" },
     ],
     documents: [
-      { id: "d8", name: "PSE-44912-Pedestals-Spec.pdf", type: "Drawing", size: "5.1 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-07-01", url: "https://drive.google.com/file/d/example8" },
+      { id: "d8", name: "PSE-44912-Pedestals-Spec.pdf", type: "Drawing", size: "5.1 MB", uploadedBy: "Ivy Chen", uploadedAt: "2025-07-01", url: "https://drive.google.com/file/d/example8", lineItemId: "li3" },
     ],
     changeOrders: [],
     activity: [],
     notes: "Large tonnage job. Coordinate with shipping for multi-load delivery.",
-  },
+  }),
   {
     id: "j4",
     jobNumber: "QB-2025-031",
@@ -231,6 +308,7 @@ export const jobs: Job[] = [
     markNumbers: ["MK-500-BP01", "MK-500-BP02", "MK-500-BP03"],
     assignees: ["James Nguyen"],
     progress: 95,
+    lineItems: [],
     tasks: [],
     documents: [],
     changeOrders: [],
@@ -253,6 +331,7 @@ export const jobs: Job[] = [
     markNumbers: ["MK-DPH-S1", "MK-DPH-S2"],
     assignees: ["Cuong Tran"],
     progress: 100,
+    lineItems: [],
     tasks: [],
     documents: [],
     changeOrders: [],
@@ -260,6 +339,8 @@ export const jobs: Job[] = [
     notes: "Completed on time. Customer satisfied.",
   },
 ]
+
+export const jobs: Job[] = rawJobs
 
 // ─── Opportunities ──────────────────────────────────────────────────────────
 export const opportunities: Opportunity[] = [

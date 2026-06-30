@@ -12,6 +12,9 @@ import type {
   JobInsert,
   JobListItem,
   JobRow,
+  LineItem,
+  LineItemInsert,
+  LineItemRow,
   Opportunity,
   OpportunityRow,
   Task,
@@ -29,7 +32,7 @@ type OpportunityWithAccount = OpportunityRow & {
 
 type JobWithRelationsRow = JobRow & {
   accounts: { id: string; name: string; short_name: string } | null
-  tasks: TaskRow[]
+  line_items: (LineItemRow & { tasks: TaskRow[] })[]
   documents: DocumentRow[]
   change_orders: ChangeOrderRow[]
   activity_logs: ActivityRow[]
@@ -96,6 +99,7 @@ export function mapTaskRow(row: TaskRow): Task {
   return {
     id: row.id,
     jobId: row.job_id,
+    lineItemId: row.line_item_id,
     title: row.title,
     completed: row.completed,
     assignee: row.assignee ?? "",
@@ -108,10 +112,32 @@ export function mapTaskRow(row: TaskRow): Task {
   }
 }
 
+export function mapLineItemRow(row: LineItemRow, tasks: TaskRow[] = []): LineItem {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    title: row.title,
+    description: row.description ?? undefined,
+    quantity: row.quantity,
+    lineItemNumber: row.line_item_number ?? undefined,
+    wipStatus: row.wip_status,
+    sortOrder: row.sort_order,
+    deliveryDate: row.delivery_date ?? undefined,
+    organizationId: row.organization_id,
+    tasks: tasks
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(mapTaskRow),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
 export function mapDocumentRow(row: DocumentRow): Document {
   return {
     id: row.id,
     jobId: row.job_id,
+    lineItemId: row.line_item_id,
     name: row.name,
     type: row.type,
     size: formatBytes(row.size_bytes),
@@ -182,16 +208,19 @@ export function mapJobListItem(row: JobWithAccount): JobListItem {
 export function mapJobRow(
   row: JobWithRelationsRow,
   relations?: {
-    tasks?: TaskRow[]
+    line_items?: (LineItemRow & { tasks?: TaskRow[] })[]
     documents?: DocumentRow[]
     change_orders?: ChangeOrderRow[]
     activity_logs?: ActivityRow[]
   }
 ): Job {
-  const tasks = (relations?.tasks ?? row.tasks ?? [])
+  const lineItemRows = relations?.line_items ?? row.line_items ?? []
+  const lineItems = lineItemRows
     .slice()
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map(mapTaskRow)
+    .map((li) => mapLineItemRow(li, li.tasks ?? []))
+
+  const tasks = lineItems.flatMap((li) => li.tasks)
 
   const documents = (relations?.documents ?? row.documents ?? []).map(mapDocumentRow)
   const changeOrders = (relations?.change_orders ?? row.change_orders ?? []).map(
@@ -226,6 +255,8 @@ export function mapJobRow(
     notes: row.notes ?? "",
     organizationId: row.organization_id,
     googleDriveFolderId: row.google_drive_folder_id,
+    jobTemplate: row.job_template,
+    lineItems,
     tasks,
     documents,
     changeOrders,
@@ -258,6 +289,28 @@ export function toJobInsert(
     progress: job.progress ?? 0,
     notes: job.notes ?? null,
     google_drive_folder_id: job.googleDriveFolderId ?? null,
+    job_template: job.jobTemplate ?? null,
+  }
+}
+
+export function toLineItemInsert(
+  lineItem: Pick<
+    LineItem,
+    "title" | "quantity" | "lineItemNumber" | "wipStatus" | "description" | "deliveryDate"
+  > & Partial<Pick<LineItem, "sortOrder">>,
+  jobId: string,
+  organizationId: string
+): LineItemInsert {
+  return {
+    organization_id: organizationId,
+    job_id: jobId,
+    title: lineItem.title,
+    description: lineItem.description ?? null,
+    quantity: lineItem.quantity ?? 1,
+    line_item_number: lineItem.lineItemNumber ?? null,
+    wip_status: lineItem.wipStatus ?? "To Do",
+    sort_order: lineItem.sortOrder ?? 0,
+    delivery_date: lineItem.deliveryDate || null,
   }
 }
 
@@ -265,11 +318,13 @@ export function toTaskInsert(
   task: Pick<Task, "title" | "assignee" | "dueDate" | "category"> &
     Partial<Pick<Task, "completed" | "sortOrder" | "assigneeId">>,
   jobId: string,
+  lineItemId: string,
   organizationId: string
 ): TaskInsert {
   return {
     organization_id: organizationId,
     job_id: jobId,
+    line_item_id: lineItemId,
     title: task.title,
     completed: task.completed ?? false,
     assignee: task.assignee || null,

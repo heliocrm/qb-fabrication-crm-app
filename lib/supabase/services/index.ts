@@ -11,10 +11,22 @@ export {
   listJobs,
   createJob,
   createJobFromDomain,
+  createJobFromTemplate,
   updateJob,
   deleteJob,
   syncJobProgress,
+  type CreateJobFromTemplateInput,
 } from "./jobs"
+
+export {
+  listLineItemsByJobId,
+  createLineItem,
+  createLineItemFromDomain,
+  createLineItemWithTemplateTasks,
+  updateLineItem,
+  deleteLineItem,
+  seedTasksForLineItem,
+} from "./line-items"
 
 export {
   listTasksByJobId,

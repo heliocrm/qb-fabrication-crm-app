@@ -40,6 +40,7 @@ export const Tables = {
   accounts: "accounts",
   opportunities: "opportunities",
   jobs: "jobs",
+  line_items: "line_items",
   tasks: "tasks",
   documents: "documents",
   change_orders: "change_orders",
@@ -50,7 +51,7 @@ export const Tables = {
 export const JOB_WITH_RELATIONS_SELECT = `
   *,
   accounts:account_id ( id, name, short_name ),
-  tasks ( * ),
+  line_items ( *, tasks ( * ) ),
   documents ( * ),
   change_orders ( * ),
   activity_logs ( * )

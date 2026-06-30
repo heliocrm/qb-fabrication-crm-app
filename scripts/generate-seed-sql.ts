@@ -12,7 +12,7 @@ function esc(s: string): string {
 }
 
 function seedUuid(prefix: string, n: number): string {
-  return `${prefix}0000-0000-4000-8000-${String(n).padStart(12, "0")}`
+  return `${prefix}-0000-4000-8000-${String(n).padStart(12, "0")}`
 }
 
 function parseSizeBytes(size?: string): number | null {
@@ -29,7 +29,7 @@ function parseSizeBytes(size?: string): number | null {
 
 const lines: string[] = [
   "-- QB Fabrication CRM — migration 004",
-  "-- Demo seed data (accounts, opportunities, jobs, tasks, documents, etc.)",
+  "-- Demo seed data (accounts, opportunities, jobs, line items, tasks, documents, etc.)",
   "-- Run in Supabase SQL Editor AFTER 003",
   "",
   `insert into public.organizations (id, name, slug)`,
@@ -66,7 +66,7 @@ for (const j of jobs) {
   )
 }
 
-lines.push("", "-- Tasks")
+lines.push("", "-- Tasks (line_item_id backfilled in migration 005)")
 let taskN = 0
 for (const j of jobs) {
   const jobId = SEED_JOB_IDS[j.id as keyof typeof SEED_JOB_IDS]

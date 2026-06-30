@@ -4,6 +4,7 @@ import type { TaskCategory } from "./enums"
 export interface Task {
   id: string
   jobId?: string
+  lineItemId?: string
   title: string
   completed: boolean
   assignee: string
@@ -20,6 +21,7 @@ export interface TaskRow {
   id: string
   organization_id: string
   job_id: string
+  line_item_id: string
   title: string
   completed: boolean
   assignee: string | null
@@ -34,6 +36,7 @@ export interface TaskRow {
 export interface TaskInsert {
   organization_id: string
   job_id: string
+  line_item_id: string
   title: string
   completed?: boolean
   assignee?: string | null

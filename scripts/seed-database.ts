@@ -26,7 +26,7 @@ function parseSizeBytes(size?: string): number | null {
 }
 
 function seedUuid(prefix: string, n: number): string {
-  return `${prefix}0000-0000-4000-8000-${String(n).padStart(12, "0")}`
+  return `${prefix}-0000-4000-8000-${String(n).padStart(12, "0")}`
 }
 
 async function main() {
@@ -106,28 +106,52 @@ async function main() {
       assignees: j.assignees,
       progress: j.progress,
       notes: j.notes,
+      job_template: j.jobTemplate ?? null,
       google_drive_folder_id: `mock-folder-${j.jobNumber.replace(/-/g, "")}`,
     }))
   )
   if (jobError) throw jobError
 
+  console.log("→ Line items...")
+  if (jobs.some((j) => j.lineItems.length > 0)) {
+    const { error: liError } = await supabase.from("line_items").upsert(
+      jobs.flatMap((j, ji) =>
+        j.lineItems.map((li, lii) => ({
+          id: seedUuid("f0000000", ji * 10 + lii + 1),
+          organization_id: SEED_ORG_ID,
+          job_id: SEED_JOB_IDS[j.id as keyof typeof SEED_JOB_IDS],
+          title: li.title,
+          quantity: li.quantity,
+          line_item_number: li.lineItemNumber ?? null,
+          wip_status: li.wipStatus,
+          sort_order: li.sortOrder ?? 0,
+          delivery_date: li.deliveryDate ?? null,
+        }))
+      )
+    )
+    if (liError) throw liError
+  }
+
   console.log("→ Tasks...")
   let taskN = 0
   const taskRows = jobs.flatMap((j, ji) =>
-    j.tasks.map((t, ti) => {
-      taskN++
-      return {
-        id: seedUuid("b0000000", taskN),
-        organization_id: SEED_ORG_ID,
-        job_id: SEED_JOB_IDS[j.id as keyof typeof SEED_JOB_IDS],
-        title: t.title,
-        completed: t.completed,
-        assignee: t.assignee,
-        due_date: t.dueDate,
-        category: t.category,
-        sort_order: ti,
-      }
-    })
+    j.lineItems.flatMap((li, lii) =>
+      li.tasks.map((t, ti) => {
+        taskN++
+        return {
+          id: seedUuid("b0000000", taskN),
+          organization_id: SEED_ORG_ID,
+          job_id: SEED_JOB_IDS[j.id as keyof typeof SEED_JOB_IDS],
+          line_item_id: seedUuid("f0000000", ji * 10 + lii + 1),
+          title: t.title,
+          completed: t.completed,
+          assignee: t.assignee,
+          due_date: t.dueDate,
+          category: t.category,
+          sort_order: ti,
+        }
+      })
+    )
   )
   if (taskRows.length) {
     const { error: taskError } = await supabase.from("tasks").upsert(taskRows)
@@ -136,13 +160,18 @@ async function main() {
 
   console.log("→ Documents...")
   let docN = 0
-  const docRows = jobs.flatMap((j) =>
+  const docRows = jobs.flatMap((j, ji) =>
     j.documents.map((d) => {
       docN++
+      const lineItemIndex = d.lineItemId
+        ? j.lineItems.findIndex((li) => li.id === d.lineItemId)
+        : -1
       return {
         id: seedUuid("c0000000", docN),
         organization_id: SEED_ORG_ID,
         job_id: SEED_JOB_IDS[j.id as keyof typeof SEED_JOB_IDS],
+        line_item_id:
+          lineItemIndex >= 0 ? seedUuid("f0000000", ji * 10 + lineItemIndex + 1) : null,
         name: d.name,
         type: d.type,
         mime_type: d.name.endsWith(".pdf") ? "application/pdf" : null,

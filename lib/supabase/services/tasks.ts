@@ -27,9 +27,24 @@ export async function listTasksByJobId(jobId: string): Promise<Task[]> {
   return (data ?? []).map(mapTaskRow)
 }
 
+export async function listTasksByLineItemId(lineItemId: string): Promise<Task[]> {
+  const supabase = await getClient()
+  await requireOrganizationId(supabase)
+
+  const { data, error } = await supabase
+    .from(Tables.tasks)
+    .select("*")
+    .eq("line_item_id", lineItemId)
+    .order("sort_order", { ascending: true })
+
+  throwOnError({ data, error })
+  return (data ?? []).map(mapTaskRow)
+}
+
 export async function createTask(
   jobId: string,
-  input: Omit<TaskInsert, "organization_id" | "job_id">
+  lineItemId: string,
+  input: Omit<TaskInsert, "organization_id" | "job_id" | "line_item_id">
 ): Promise<Task> {
   const supabase = await getClient()
   const organizationId = await requireOrganizationId(supabase)
@@ -37,6 +52,7 @@ export async function createTask(
   const payload: TaskInsert = {
     organization_id: organizationId,
     job_id: jobId,
+    line_item_id: lineItemId,
     ...input,
   }
 
@@ -53,12 +69,13 @@ export async function createTask(
 
 export async function createTaskFromDomain(
   jobId: string,
+  lineItemId: string,
   task: Pick<Task, "title" | "assignee" | "dueDate" | "category"> &
     Partial<Pick<Task, "completed" | "sortOrder" | "assigneeId">>
 ): Promise<Task> {
   const supabase = await getClient()
   const organizationId = await requireOrganizationId(supabase)
-  const payload = toTaskInsert(task, jobId, organizationId)
+  const payload = toTaskInsert(task, jobId, lineItemId, organizationId)
 
   const { data, error } = await supabase
     .from(Tables.tasks)
@@ -109,9 +126,9 @@ export async function deleteTask(id: string): Promise<void> {
   await syncJobProgress(task.job_id)
 }
 
-/** Batch update sort_order after drag-and-drop reorder */
+/** Batch update sort_order after drag-and-drop reorder within a line item */
 export async function reorderTasks(
-  jobId: string,
+  lineItemId: string,
   orderedTaskIds: string[]
 ): Promise<Task[]> {
   const supabase = await getClient()
@@ -122,9 +139,9 @@ export async function reorderTasks(
       .from(Tables.tasks)
       .update({ sort_order: index })
       .eq("id", taskId)
-      .eq("job_id", jobId)
+      .eq("line_item_id", lineItemId)
   )
 
   await Promise.all(updates)
-  return listTasksByJobId(jobId)
+  return listTasksByLineItemId(lineItemId)
 }

@@ -9,9 +9,17 @@ export type {
   ChangeOrderStatus,
   AccountStatus,
   OrganizationRole,
+  JobTemplateType,
+  LineItemWipStatus,
 } from "./enums"
 
 // Entities
+export type {
+  LineItem,
+  LineItemRow,
+  LineItemInsert,
+  LineItemUpdate,
+} from "./LineItem"
 export type {
   Task,
   TaskRow,

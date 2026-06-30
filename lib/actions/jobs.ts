@@ -4,11 +4,18 @@ import { revalidatePath } from "next/cache"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import {
   createJobFromDomain,
+  createJobFromTemplate,
   deleteJob,
   getJobById,
   listJobs,
   updateJob,
+  type CreateJobFromTemplateInput,
 } from "@/lib/supabase/services/jobs"
+import {
+  createLineItemWithTemplateTasks,
+  deleteLineItem,
+  updateLineItem,
+} from "@/lib/supabase/services/line-items"
 import {
   createTaskFromDomain,
   deleteTask,
@@ -17,7 +24,16 @@ import {
   updateTask,
 } from "@/lib/supabase/services/tasks"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
-import type { Job, JobListFilters, JobUpdate, Task, TaskUpdate } from "@/types"
+import type {
+  Job,
+  JobListFilters,
+  JobTemplateType,
+  JobUpdate,
+  LineItemUpdate,
+  LineItemWipStatus,
+  Task,
+  TaskUpdate,
+} from "@/types"
 
 function revalidateJobPaths(jobId?: string) {
   revalidatePath("/jobs")
@@ -64,6 +80,12 @@ export async function createJobAction(
   return result
 }
 
+export async function createJobFromTemplateAction(input: CreateJobFromTemplateInput) {
+  const result = await safeAction(() => createJobFromTemplate(input))
+  if (result.data) revalidateJobPaths(result.data.id)
+  return result
+}
+
 export async function updateJobAction(id: string, updates: JobUpdate) {
   const result = await safeAction(() => updateJob(id, updates))
   if (result.data) revalidateJobPaths(id)
@@ -76,6 +98,44 @@ export async function deleteJobAction(id: string) {
     return { id }
   })
   if (!result.error) revalidateJobPaths()
+  return result
+}
+
+// ─── Line item mutations ─────────────────────────────────────────────────────
+
+export async function createLineItemAction(
+  jobId: string,
+  template: JobTemplateType,
+  fields: { title: string; quantity?: number; lineItemNumber?: string }
+) {
+  const result = await safeAction(() =>
+    createLineItemWithTemplateTasks(jobId, template, {
+      title: fields.title,
+      quantity: fields.quantity ?? 1,
+      lineItemNumber: fields.lineItemNumber,
+      wipStatus: "To Do",
+    })
+  )
+  if (result.data) revalidateJobPaths(jobId)
+  return result
+}
+
+export async function updateLineItemWipAction(
+  lineItemId: string,
+  wipStatus: LineItemWipStatus,
+  jobId: string
+) {
+  const result = await safeAction(() => updateLineItem(lineItemId, { wip_status: wipStatus }))
+  if (result.data) revalidateJobPaths(jobId)
+  return result
+}
+
+export async function deleteLineItemAction(lineItemId: string, jobId: string) {
+  const result = await safeAction(async () => {
+    await deleteLineItem(lineItemId)
+    return { lineItemId }
+  })
+  if (!result.error) revalidateJobPaths(jobId)
   return result
 }
 
@@ -99,9 +159,10 @@ export async function updateTaskAction(
 
 export async function createTaskAction(
   jobId: string,
+  lineItemId: string,
   task: Pick<Task, "title" | "assignee" | "dueDate" | "category">
 ) {
-  const result = await safeAction(() => createTaskFromDomain(jobId, task))
+  const result = await safeAction(() => createTaskFromDomain(jobId, lineItemId, task))
   if (result.data) revalidateJobPaths(jobId)
   return result
 }
@@ -115,8 +176,12 @@ export async function deleteTaskAction(taskId: string, jobId: string) {
   return result
 }
 
-export async function reorderTasksAction(jobId: string, orderedTaskIds: string[]) {
-  const result = await safeAction(() => reorderTasks(jobId, orderedTaskIds))
+export async function reorderTasksAction(
+  lineItemId: string,
+  orderedTaskIds: string[],
+  jobId: string
+) {
+  const result = await safeAction(() => reorderTasks(lineItemId, orderedTaskIds))
   if (result.data) revalidateJobPaths(jobId)
   return result
 }

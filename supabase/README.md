@@ -6,6 +6,7 @@ Run migrations in order in the [SQL Editor](https://supabase.com/dashboard/proje
 2. `002_multi_tenant_and_indexes.sql` — organizations, RLS, indexes, Google Drive fields
 3. `003_provision_and_backfill.sql` — QB Fabrication org seed, backfill, auto-provision RPC
 4. `004_seed_data.sql` — demo accounts, jobs, tasks, documents (optional but recommended)
+5. `005_line_items_and_templates.sql` — line items, job templates, task categories, backfill
 
 ## Seed demo data
 

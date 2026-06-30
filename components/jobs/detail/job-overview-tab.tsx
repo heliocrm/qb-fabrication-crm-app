@@ -23,14 +23,15 @@ import {
 } from "@/lib/job-detail-config"
 import { accounts } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
-import type { Job, Task } from "@/types"
+import type { Job, LineItem, Task } from "@/types"
 
 interface JobOverviewTabProps {
   job: Job
+  lineItems: LineItem[]
   tasks: Task[]
 }
 
-export function JobOverviewTab({ job, tasks }: JobOverviewTabProps) {
+export function JobOverviewTab({ job, lineItems, tasks }: JobOverviewTabProps) {
   const account = accounts.find((a) => a.id === job.customerId)
 
   return (
@@ -247,10 +248,19 @@ export function JobOverviewTab({ job, tasks }: JobOverviewTabProps) {
       {/* Progress by category */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Task Progress by Category</CardTitle>
+          <CardTitle className="text-sm font-semibold">Production Progress</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span>{lineItems.length} line items</span>
+            <span>·</span>
+            <span>{lineItems.filter((li) => li.wipStatus === "Done").length} in Done</span>
+            <span>·</span>
+            <span>
+              {tasks.filter((t) => t.completed).length}/{tasks.length} checklist items
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {TASK_CATEGORIES.map((cat) => {
               const catTasks = tasks.filter((t) => t.category === cat)
               const done = catTasks.filter((t) => t.completed).length

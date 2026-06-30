@@ -1,16 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { JobDetailHeader } from "@/components/jobs/detail/job-detail-header"
 import { JobDetailStats } from "@/components/jobs/detail/job-detail-stats"
 import { JobOverviewTab } from "@/components/jobs/detail/job-overview-tab"
-import { JobTasksTab } from "@/components/jobs/detail/job-tasks-tab"
+import { JobLineItemsTab } from "@/components/jobs/detail/job-line-items-tab"
 import { JobDocumentsTab } from "@/components/jobs/detail/job-documents-tab"
 import { JobChangeOrdersTab } from "@/components/jobs/detail/job-change-orders-tab"
 import { JobActivityTab } from "@/components/jobs/detail/job-activity-tab"
-import type { Job } from "@/types"
+import { flattenLineItemTasks } from "@/lib/job-detail-config"
+import type { Job, LineItem } from "@/types"
 
 interface JobDetailClientProps {
   job: Job
@@ -18,18 +19,18 @@ interface JobDetailClientProps {
 }
 
 export function JobDetailClient({ job, dataSource }: JobDetailClientProps) {
-  const [tasks, setTasks] = useState(job.tasks)
-  const completedTasks = tasks.filter((t) => t.completed).length
-  const openTasks = tasks.length - completedTasks
+  const [lineItems, setLineItems] = useState<LineItem[]>(job.lineItems ?? [])
+  const tasks = useMemo(() => flattenLineItemTasks(lineItems), [lineItems])
+  const openTasks = tasks.filter((t) => !t.completed).length
 
   return (
     <div className="flex flex-col min-h-full">
       <JobDetailHeader job={job} />
-      <JobDetailStats job={job} tasks={tasks} />
+      <JobDetailStats job={job} tasks={tasks} lineItemCount={lineItems.length} />
 
       {dataSource === "supabase" && (
         <p className="px-4 sm:px-6 pt-2 text-xs text-[var(--orange)]">
-          Live data · task changes sync to Supabase
+          Live data · line item and task changes sync to Supabase
         </p>
       )}
 
@@ -37,8 +38,8 @@ export function JobDetailClient({ job, dataSource }: JobDetailClientProps) {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="w-full sm:w-auto flex flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="tasks" className="gap-1.5">
-              Tasks
+            <TabsTrigger value="line-items" className="gap-1.5">
+              Line Items
               {openTasks > 0 && (
                 <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                   {openTasks}
@@ -63,20 +64,21 @@ export function JobDetailClient({ job, dataSource }: JobDetailClientProps) {
           </TabsList>
 
           <TabsContent value="overview">
-            <JobOverviewTab job={job} tasks={tasks} />
+            <JobOverviewTab job={job} lineItems={lineItems} tasks={tasks} />
           </TabsContent>
 
-          <TabsContent value="tasks">
-            <JobTasksTab
-              tasks={tasks}
-              onTasksChange={setTasks}
+          <TabsContent value="line-items">
+            <JobLineItemsTab
+              lineItems={lineItems}
+              onLineItemsChange={setLineItems}
               jobId={dataSource === "supabase" ? job.id : undefined}
+              jobTemplate={job.jobTemplate}
             />
           </TabsContent>
 
           <TabsContent value="documents">
             <JobDocumentsTab
-              job={job}
+              job={{ ...job, lineItems }}
               jobId={dataSource === "supabase" ? job.id : undefined}
               dataSource={dataSource}
             />

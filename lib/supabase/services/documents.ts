@@ -60,10 +60,12 @@ export async function syncDriveFileToDocument(
     folderId?: string | null
     documentType: string
   },
-  uploadedBy: string
+  uploadedBy: string,
+  lineItemId?: string | null
 ): Promise<Document> {
   return upsertDocumentFromDrive({
     job_id: jobId,
+    line_item_id: lineItemId ?? null,
     name: file.name,
     type: file.documentType as Document["type"],
     mime_type: file.mimeType,

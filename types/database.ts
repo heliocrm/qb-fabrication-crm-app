@@ -8,6 +8,8 @@ import type {
   ChangeOrderType,
   DocumentType,
   JobStatus,
+  JobTemplateType,
+  LineItemWipStatus,
   OppStage,
   Priority,
   TaskCategory,
@@ -225,6 +227,7 @@ export interface Database {
           progress: number
           notes: string | null
           google_drive_folder_id: string | null
+          job_template: JobTemplateType | null
           created_at: string
           updated_at: string
         }
@@ -247,6 +250,7 @@ export interface Database {
           progress?: number
           notes?: string | null
           google_drive_folder_id?: string | null
+          job_template?: JobTemplateType | null
           created_at?: string
           updated_at?: string
         }
@@ -269,6 +273,7 @@ export interface Database {
           progress?: number
           notes?: string | null
           google_drive_folder_id?: string | null
+          job_template?: JobTemplateType | null
           created_at?: string
           updated_at?: string
         }
@@ -296,11 +301,72 @@ export interface Database {
           },
         ]
       }
+      line_items: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          title: string
+          description: string | null
+          quantity: number
+          line_item_number: string | null
+          wip_status: LineItemWipStatus
+          sort_order: number
+          delivery_date: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          title: string
+          description?: string | null
+          quantity?: number
+          line_item_number?: string | null
+          wip_status?: LineItemWipStatus
+          sort_order?: number
+          delivery_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          title?: string
+          description?: string | null
+          quantity?: number
+          line_item_number?: string | null
+          wip_status?: LineItemWipStatus
+          sort_order?: number
+          delivery_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "line_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           id: string
           organization_id: string
           job_id: string
+          line_item_id: string
           title: string
           completed: boolean
           assignee: string | null
@@ -315,6 +381,7 @@ export interface Database {
           id?: string
           organization_id: string
           job_id: string
+          line_item_id: string
           title: string
           completed?: boolean
           assignee?: string | null
@@ -329,6 +396,7 @@ export interface Database {
           id?: string
           organization_id?: string
           job_id?: string
+          line_item_id?: string
           title?: string
           completed?: boolean
           assignee?: string | null
@@ -361,6 +429,7 @@ export interface Database {
           id: string
           organization_id: string
           job_id: string
+          line_item_id: string | null
           name: string
           type: DocumentType
           mime_type: string | null
@@ -379,6 +448,7 @@ export interface Database {
           id?: string
           organization_id: string
           job_id: string
+          line_item_id?: string | null
           name: string
           type: DocumentType
           mime_type?: string | null
@@ -397,6 +467,7 @@ export interface Database {
           id?: string
           organization_id?: string
           job_id?: string
+          line_item_id?: string | null
           name?: string
           type?: DocumentType
           mime_type?: string | null

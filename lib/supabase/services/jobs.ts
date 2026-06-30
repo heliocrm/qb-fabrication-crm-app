@@ -12,7 +12,9 @@ import {
   mapJobRow,
   toJobInsert,
 } from "@/lib/supabase/mappers"
-import type { Job, JobInsert, JobListFilters, JobListItem, JobUpdate, JobWithRelations, JobRow, TaskRow, DocumentRow, ChangeOrderRow, ActivityRow } from "@/types"
+import type { Job, JobInsert, JobListFilters, JobListItem, JobUpdate, JobWithRelations, JobRow, DocumentRow, ChangeOrderRow, ActivityRow, LineItemRow, TaskRow, JobTemplateType } from "@/types"
+import { getDefaultLineItemTitle } from "@/lib/job-templates"
+import { createLineItemWithTemplateTasks } from "@/lib/supabase/services/line-items"
 
 type JobListRow = JobRow & {
   accounts: { id: string; name: string; short_name: string } | null
@@ -20,7 +22,7 @@ type JobListRow = JobRow & {
 
 type JobDetailRow = JobRow & {
   accounts: { id: string; name: string; short_name: string } | null
-  tasks: TaskRow[]
+  line_items: (LineItemRow & { tasks: TaskRow[] })[]
   documents: DocumentRow[]
   change_orders: ChangeOrderRow[]
   activity_logs: ActivityRow[]
@@ -125,6 +127,86 @@ export async function createJobFromDomain(
 
   throwOnError({ data, error })
   return mapJobRow(data as unknown as JobDetailRow)
+}
+
+export interface CreateJobFromTemplateInput {
+  jobNumber: string
+  poNumber: string
+  description: string
+  accountId?: string | null
+  template: JobTemplateType
+  status?: Job["status"]
+  priority?: Job["priority"]
+  deliveryDate?: string
+  startDate?: string
+  tonnage?: number
+  value?: number
+  notes?: string
+  additionalLineItems?: {
+    title: string
+    quantity?: number
+    lineItemNumber?: string
+  }[]
+}
+
+export async function createJobFromTemplate(
+  input: CreateJobFromTemplateInput
+): Promise<JobWithRelations> {
+  const supabase = await getClient()
+  const organizationId = await requireOrganizationId(supabase)
+
+  const jobPayload: JobInsert = {
+    organization_id: organizationId,
+    account_id: input.accountId ?? null,
+    job_number: input.jobNumber,
+    po_number: input.poNumber,
+    description: input.description,
+    job_template: input.template,
+    status: input.status ?? "To Do",
+    priority: input.priority ?? "Normal",
+    delivery_date: input.deliveryDate || null,
+    start_date: input.startDate || null,
+    tonnage: input.tonnage ?? null,
+    value: input.value ?? 0,
+    notes: input.notes ?? null,
+    progress: 0,
+  }
+
+  const { data: jobRow, error: jobError } = await supabase
+    .from(Tables.jobs)
+    .insert(jobPayload)
+    .select("*")
+    .single()
+
+  const job = throwOnError({ data: jobRow, error: jobError })
+  const jobId = job.id
+
+  await createLineItemWithTemplateTasks(jobId, input.template, {
+    title: getDefaultLineItemTitle(input.template),
+    quantity: 1,
+    wipStatus: "To Do",
+    sortOrder: 0,
+  })
+
+  const extras = input.additionalLineItems ?? []
+  for (let i = 0; i < extras.length; i++) {
+    const extra = extras[i]
+    await createLineItemWithTemplateTasks(jobId, input.template, {
+      title: extra.title,
+      quantity: extra.quantity ?? 1,
+      lineItemNumber: extra.lineItemNumber,
+      wipStatus: "To Do",
+      sortOrder: i + 1,
+    })
+  }
+
+  await syncJobProgress(jobId)
+
+  const created = await getJobById(jobId)
+  if (!created) {
+    throw new Error("Job was created but could not be loaded")
+  }
+  return created
 }
 
 export async function updateJob(id: string, updates: JobUpdate): Promise<JobWithRelations> {

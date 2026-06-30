@@ -13,7 +13,17 @@ export type OppStage =
   | "Won"
   | "Lost"
 
-export type TaskCategory = "Fabrication" | "QC" | "Logistics" | "Engineering"
+export type TaskCategory =
+  | "Programming"
+  | "Machine"
+  | "Fabrication"
+  | "Quality Assurance"
+  | "Shipping"
+  | "Office"
+
+export type JobTemplateType = "qb_project" | "crossarm" | "pedestal" | "miscellaneous"
+
+export type LineItemWipStatus = "To Do" | "Doing" | "Done"
 
 export type DocumentType = "Drawing" | "Work Order" | "Inspection" | "Shipping" | "PO"
 

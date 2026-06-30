@@ -1,6 +1,7 @@
 import type { ChangeOrder } from "./ChangeOrder"
 import type { Document } from "./Document"
-import type { JobStatus, Priority } from "./enums"
+import type { JobStatus, JobTemplateType, Priority } from "./enums"
+import type { LineItem } from "./LineItem"
 import type { Task } from "./Task"
 
 /** Activity log entry (domain) */
@@ -50,6 +51,9 @@ export interface Job {
   notes: string
   organizationId?: string
   googleDriveFolderId?: string | null
+  jobTemplate?: JobTemplateType | null
+  lineItems: LineItem[]
+  /** Flattened tasks across all line items (convenience for stats) */
   tasks: Task[]
   documents: Document[]
   changeOrders: ChangeOrder[]
@@ -81,6 +85,7 @@ export interface JobRow {
   progress: number
   notes: string | null
   google_drive_folder_id: string | null
+  job_template: JobTemplateType | null
   created_at: string
   updated_at: string
 }
@@ -103,6 +108,7 @@ export interface JobInsert {
   progress?: number
   notes?: string | null
   google_drive_folder_id?: string | null
+  job_template?: JobTemplateType | null
 }
 
 export type JobUpdate = Partial<Omit<JobInsert, "organization_id">>

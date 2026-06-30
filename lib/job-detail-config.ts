@@ -1,10 +1,12 @@
-import type { DocumentType, TaskCategory } from "@/types"
+import type { DocumentType, Task, TaskCategory } from "@/types"
 
 export const TASK_CATEGORIES: TaskCategory[] = [
-  "Engineering",
+  "Programming",
+  "Machine",
   "Fabrication",
-  "QC",
-  "Logistics",
+  "Quality Assurance",
+  "Shipping",
+  "Office",
 ]
 
 export const DOCUMENT_CATEGORIES: DocumentType[] = [
@@ -15,11 +17,27 @@ export const DOCUMENT_CATEGORIES: DocumentType[] = [
   "Shipping",
 ]
 
+export const LINE_ITEM_WIP_STATUSES = ["To Do", "Doing", "Done"] as const
+
 export const taskCategoryStyles: Record<TaskCategory, string> = {
-  Fabrication: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
-  QC: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-900",
-  Logistics: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
-  Engineering: "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-900",
+  Programming:
+    "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-900",
+  Machine:
+    "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/50 dark:text-slate-300 dark:border-slate-800",
+  Fabrication:
+    "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
+  "Quality Assurance":
+    "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-900",
+  Shipping:
+    "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
+  Office:
+    "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/50 dark:text-green-300 dark:border-green-900",
+}
+
+export const wipStatusStyles: Record<(typeof LINE_ITEM_WIP_STATUSES)[number], string> = {
+  "To Do": "bg-slate-100 text-slate-700 border-slate-200",
+  Doing: "bg-blue-100 text-blue-800 border-blue-200",
+  Done: "bg-green-100 text-green-800 border-green-200",
 }
 
 export const docTypeMeta: Record<
@@ -49,4 +67,9 @@ export function formatJobDate(date: string): string {
 
 export function getDriveFolderUrl(jobNumber: string): string {
   return `https://drive.google.com/drive/folders/mock-${jobNumber.replace(/-/g, "")}`
+}
+
+/** Flatten all tasks from line items for aggregate stats */
+export function flattenLineItemTasks(lineItems: { tasks: Task[] }[]): Task[] {
+  return lineItems.flatMap((li) => li.tasks)
 }

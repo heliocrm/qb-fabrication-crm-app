@@ -24,6 +24,7 @@ function listItemToJob(item: JobListItem): Job {
     assignees: item.assignees,
     progress: item.progress,
     notes: "",
+    lineItems: [],
     tasks: [],
     documents: [],
     changeOrders: [],

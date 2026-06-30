@@ -151,14 +151,46 @@ export async function listJobDriveFilesAction(
   const folderId = job.googleDriveFolderId
 
   if (isDriveConfigured() && isGoogleDriveFolderId(folderId)) {
+    let dbDocs: Document[] = []
+    try {
+      dbDocs = await listDocumentsByJobId(jobId)
+    } catch {
+      // continue with drive-only metadata
+    }
+
+    const dbByDriveId = new Map(
+      dbDocs
+        .filter((d) => d.googleDriveFileId)
+        .map((d) => [d.googleDriveFileId!, d])
+    )
+
     const driveResult = await safeDriveAction(async () => {
       const drive = await createDriveService()
       const files = await drive.listFolderFiles(folderId!)
-      return files.map((f) => driveFileToDocument(f, jobId, folderId!))
+      return files.map((f) => {
+        const doc = driveFileToDocument(f, jobId, folderId!)
+        const db = dbByDriveId.get(f.id)
+        if (db) {
+          return {
+            ...doc,
+            id: db.id,
+            lineItemId: db.lineItemId ?? null,
+            type: db.type,
+            uploadedBy: db.uploadedBy,
+            preview: db.preview,
+          }
+        }
+        return doc
+      })
     })
 
     if (driveResult.data) {
-      return { data: { files: driveResult.data, source: "drive" } }
+      // Include DB-only rows (e.g. pending sync) not yet in Drive listing
+      const driveIds = new Set(driveResult.data.map((d) => d.googleDriveFileId).filter(Boolean))
+      const dbOnly = dbDocs.filter(
+        (d) => d.googleDriveFileId && !driveIds.has(d.googleDriveFileId)
+      )
+      return { data: { files: [...driveResult.data, ...dbOnly], source: "drive" } }
     }
   }
 
@@ -176,13 +208,16 @@ export async function listJobDriveFilesAction(
 
 export async function uploadJobDriveFileAction(
   jobId: string,
-  formData: FormData
+  formData: FormData,
+  lineItemId?: string | null
 ): Promise<ActionResult<{ document: Document }>> {
   return safeDriveAction(async () => {
     const file = formData.get("file")
     if (!(file instanceof File)) {
       throw new GoogleServiceError("No file provided", "VALIDATION")
     }
+
+    const scopeLineItemId = lineItemId ?? (formData.get("lineItemId") as string | null) ?? null
 
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new GoogleServiceError("File exceeds 50 MB limit", "VALIDATION")
@@ -228,7 +263,8 @@ export async function uploadJobDriveFileAction(
         folderId,
         documentType: uploaded.documentType,
       },
-      uploadedBy
+      uploadedBy,
+      scopeLineItemId || null
     )
 
     revalidateJob(jobId)

@@ -69,13 +69,14 @@ export function useJobDrive({
     })
   }
 
-  function uploadFile(file: File) {
+  function uploadFile(file: File, lineItemId?: string | null) {
     setError(null)
     startTransition(async () => {
       const formData = new FormData()
       formData.append("file", file)
+      if (lineItemId) formData.append("lineItemId", lineItemId)
 
-      const result = await uploadJobDriveFileAction(jobId, formData)
+      const result = await uploadJobDriveFileAction(jobId, formData, lineItemId)
       if (result.error) {
         setError(result.error)
         toast.error("Upload failed", result.error)

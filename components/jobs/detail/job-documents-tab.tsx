@@ -26,7 +26,6 @@ import { CreateJobFolderButton } from "@/components/google/create-job-folder-but
 import { DriveFileUpload } from "@/components/google/drive-file-upload"
 import { useJobDrive } from "@/hooks/use-job-drive"
 import {
-  DOCUMENT_CATEGORIES,
   docTypeMeta,
   formatJobDate,
 } from "@/lib/job-detail-config"
@@ -46,8 +45,11 @@ interface JobDocumentsTabProps {
 
 export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps) {
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
+  const [docFilter, setDocFilter] = useState<"all" | "job" | string>("all")
+  const [uploadScope, setUploadScope] = useState<"job" | string>("job")
   const effectiveJobId = jobId ?? job.id
   const useLiveDrive = dataSource === "supabase" && Boolean(jobId)
+  const lineItems = job.lineItems ?? []
 
   const {
     folderId,
@@ -67,6 +69,22 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
   })
 
   const displayDocs = useLiveDrive ? documents : job.documents
+
+  const filteredDocs = displayDocs.filter((d) => {
+    if (docFilter === "all") return true
+    if (docFilter === "job") return !d.lineItemId
+    return d.lineItemId === docFilter
+  })
+
+  const jobLevelDocs = filteredDocs.filter((d) => !d.lineItemId)
+  const lineItemGroups = lineItems
+    .map((li) => ({
+      lineItem: li,
+      docs: filteredDocs.filter((d) => d.lineItemId === li.id),
+    }))
+    .filter((g) => g.docs.length > 0 || docFilter === g.lineItem.id)
+
+  const uploadLineItemId = uploadScope === "job" ? null : uploadScope
   const activeFolderId = useLiveDrive ? folderId ?? job.googleDriveFolderId : job.googleDriveFolderId
   const folderUrl = isGoogleDriveFolderId(activeFolderId)
     ? driveFolderUrl(activeFolderId!)
@@ -130,6 +148,25 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <FilterChip active={docFilter === "all"} onClick={() => setDocFilter("all")}>
+          All ({displayDocs.length})
+        </FilterChip>
+        <FilterChip active={docFilter === "job"} onClick={() => setDocFilter("job")}>
+          Job-level ({displayDocs.filter((d) => !d.lineItemId).length})
+        </FilterChip>
+        {lineItems.map((li) => (
+          <FilterChip
+            key={li.id}
+            active={docFilter === li.id}
+            onClick={() => setDocFilter(li.id)}
+          >
+            {li.lineItemNumber ?? li.title.slice(0, 20)} (
+            {displayDocs.filter((d) => d.lineItemId === li.id).length})
+          </FilterChip>
+        ))}
+      </div>
+
       {/* Google Drive folder card */}
       <Card className="border shadow-sm bg-blue-50/60 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
         <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 px-4">
@@ -174,32 +211,25 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
           ))}
         </div>
       ) : (
-        DOCUMENT_CATEGORIES.map((docType) => {
-          const docs = displayDocs.filter((d) => d.type === docType)
-          if (!docs.length) return null
-          const meta = docTypeMeta[docType]
-
-          return (
-            <div key={docType}>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2 px-1">
-                {docType}s · {docs.length}
-              </p>
-              <div className="space-y-2">
-                {docs.map((doc) => (
-                  <DocumentRow
-                    key={doc.id}
-                    doc={doc}
-                    meta={meta}
-                    onPreview={() => setPreviewDoc(doc)}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })
+        <>
+          {(docFilter === "all" || docFilter === "job") && jobLevelDocs.length > 0 && (
+            <DocumentSection title="Job-level files" docs={jobLevelDocs} onPreview={setPreviewDoc} />
+          )}
+          {lineItemGroups.map(({ lineItem, docs }) =>
+            docs.length > 0 ? (
+              <DocumentSection
+                key={lineItem.id}
+                title={lineItem.title}
+                subtitle={lineItem.lineItemNumber ? `CID ${lineItem.lineItemNumber}` : undefined}
+                docs={docs}
+                onPreview={setPreviewDoc}
+              />
+            ) : null
+          )}
+        </>
       )}
 
-      {!isLoading && displayDocs.length === 0 && (
+      {!isLoading && filteredDocs.length === 0 && (
         <Card className="border shadow-sm">
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
             No documents yet. Create a Drive folder and upload files to get started.
@@ -214,10 +244,86 @@ export function JobDocumentsTab({ job, jobId, dataSource }: JobDocumentsTabProps
       )}
 
       {useLiveDrive && (
-        <DriveFileUpload onUpload={uploadFile} isPending={isPending} />
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Upload scope:</span>
+            <select
+              value={uploadScope}
+              onChange={(e) => setUploadScope(e.target.value)}
+              className="text-xs rounded-md border border-input bg-transparent px-2 py-1"
+            >
+              <option value="job">Job-level</option>
+              {lineItems.map((li) => (
+                <option key={li.id} value={li.id}>
+                  {li.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <DriveFileUpload
+            onUpload={(file) => uploadFile(file, uploadLineItemId)}
+            isPending={isPending}
+          />
+        </div>
       )}
 
       <PreviewDialog doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+    </div>
+  )
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+        active
+          ? "bg-[var(--orange-muted)] border-[var(--orange)] text-foreground font-medium"
+          : "bg-muted/40 border-transparent text-muted-foreground hover:border-border"
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function DocumentSection({
+  title,
+  subtitle,
+  docs,
+  onPreview,
+}: {
+  title: string
+  subtitle?: string
+  docs: Document[]
+  onPreview: (doc: Document) => void
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2 px-1">
+        {title}
+        {subtitle && <span className="font-normal normal-case ml-2">({subtitle})</span>}
+        <span className="ml-1">· {docs.length}</span>
+      </p>
+      <div className="space-y-2">
+        {docs.map((doc) => (
+          <DocumentRow
+            key={doc.id}
+            doc={doc}
+            meta={docTypeMeta[doc.type]}
+            onPreview={() => onPreview(doc)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

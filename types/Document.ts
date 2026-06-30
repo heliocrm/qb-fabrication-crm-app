@@ -4,6 +4,7 @@ import type { DocumentType } from "./enums"
 export interface Document {
   id: string
   jobId?: string
+  lineItemId?: string | null
   name: string
   type: DocumentType
   /** Human-readable size, e.g. "4.2 MB" — UI only; prefer sizeBytes in DB */
@@ -33,6 +34,7 @@ export interface DocumentRow {
   id: string
   organization_id: string
   job_id: string
+  line_item_id: string | null
   name: string
   type: DocumentType
   mime_type: string | null
@@ -51,6 +53,7 @@ export interface DocumentRow {
 export interface DocumentInsert {
   organization_id: string
   job_id: string
+  line_item_id?: string | null
   name: string
   type: DocumentType
   mime_type?: string | null

@@ -14,9 +14,11 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin")
-  const [loading, setLoading] = useState<"email" | "google" | null>(null)
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin")
+  const [loading, setLoading] = useState<"email" | "google" | "forgot" | null>(null)
   const [googleError, setGoogleError] = useState<string | null>(null)
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null)
+  const [forgotError, setForgotError] = useState<string | null>(null)
 
   async function handleEmailSubmit(formData: FormData) {
     setLoading("email")
@@ -26,6 +28,32 @@ export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
     } else {
       await signUpWithEmail(formData)
     }
+    setLoading(null)
+  }
+
+  async function handleForgotPassword(formData: FormData) {
+    setForgotError(null)
+    setForgotMessage(null)
+    setLoading("forgot")
+
+    const email = String(formData.get("email") ?? "")
+    const callbackUrl = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent("/auth/reset-password")}`
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: callbackUrl,
+      })
+
+      if (error) {
+        setForgotError(error.message)
+      } else {
+        setForgotMessage("Check your email for a password reset link.")
+      }
+    } catch {
+      setForgotError("Could not send reset email. Please try again.")
+    }
+
     setLoading(null)
   }
 
@@ -62,6 +90,62 @@ export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
     return null
   }
 
+  if (mode === "forgot") {
+    return (
+      <div className="space-y-6">
+        <form action={handleForgotPassword} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              Email
+            </label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@qbfabrication.com"
+              required
+              autoComplete="email"
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
+            disabled={loading !== null}
+          >
+            {loading === "forgot" && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
+            Send reset link
+          </Button>
+        </form>
+
+        {forgotError && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            {forgotError}
+          </div>
+        )}
+
+        {forgotMessage && (
+          <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-900 p-3 text-sm text-green-800 dark:text-green-200">
+            {forgotMessage}
+          </div>
+        )}
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setMode("signin")
+              setForgotError(null)
+              setForgotMessage(null)
+            }}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <form action={handleEmailSubmit} className="space-y-4">
@@ -79,9 +163,20 @@ export function LoginForm({ redirectTo, supabaseReady }: LoginFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-foreground">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="text-sm font-medium text-foreground">
+              Password
+            </label>
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={() => setMode("forgot")}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Forgot password?
+              </button>
+            )}
+          </div>
           <Input
             id="password"
             name="password"
