@@ -13,6 +13,12 @@ export async function sendInviteEmail(props: InviteEmailProps & { to: string }) 
   })
 
   if (error) {
-    throw new Error(error.message ?? "Failed to send invite email")
+    const msg = error.message ?? "Failed to send invite email"
+    if (msg.includes("not authorized to send emails")) {
+      throw new Error(
+        "Email domain not verified in Resend. Confirm qbfab.com is verified and RESEND_FROM_EMAIL matches."
+      )
+    }
+    throw new Error(msg)
   }
 }

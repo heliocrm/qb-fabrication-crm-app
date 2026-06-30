@@ -8,7 +8,10 @@ export function isResendConfigured(): boolean {
 }
 
 export function getResendFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL ?? DEFAULT_FROM_EMAIL
+  const custom = process.env.RESEND_FROM_EMAIL
+  if (!custom) return DEFAULT_FROM_EMAIL
+  if (custom.includes("<")) return custom
+  return `QB Fabrication <${custom}>`
 }
 
 let client: Resend | null = null

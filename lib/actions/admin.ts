@@ -29,6 +29,7 @@ async function safeAction<T>(fn: () => Promise<T>): Promise<{ data?: T; error?: 
         : err instanceof Error
           ? err.message
           : "An unexpected error occurred"
+    console.error("[admin] action failed:", message, err)
     return { error: message }
   }
 }
@@ -48,7 +49,7 @@ export async function sendInviteAction(input: {
   const result = await safeAction(async () => {
     if (!isResendConfigured()) {
       throw new Error(
-        "Email is not configured. Add RESEND_API_KEY to .env.local."
+        "Email is not configured. Add RESEND_API_KEY to .env.local (or Vercel env) and restart the dev server."
       )
     }
 

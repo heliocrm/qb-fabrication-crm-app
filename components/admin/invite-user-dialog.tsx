@@ -45,18 +45,27 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
     }
 
     setIsSubmitting(true)
-    const result = await sendInviteAction({ email, fullName, role })
-    setIsSubmitting(false)
+    try {
+      const result = await sendInviteAction({ email, fullName, role })
 
-    if (result.error) {
-      toast.error("Invite failed", result.error)
-      return
-    }
+      if (result.error) {
+        toast.error("Invite failed", result.error)
+        return
+      }
 
-    if (result.data) {
-      onInvited(result.data)
-      toast.success("Invitation sent", `${fullName} will receive an email to join.`)
-      setOpen(false)
+      if (result.data) {
+        onInvited(result.data)
+        toast.success("Invitation sent", `${fullName} will receive an email to join.`)
+        setOpen(false)
+        return
+      }
+
+      toast.error("Invite failed", "No response from server. Check the console and try again.")
+    } catch (err) {
+      console.error("[invite] sendInviteAction failed:", err)
+      toast.error("Invite failed", err instanceof Error ? err.message : "An unexpected error occurred")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
