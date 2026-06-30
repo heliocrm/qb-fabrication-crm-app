@@ -144,6 +144,40 @@ function buildJobWithLineItems(
   return { ...rest, lineItems, tasks }
 }
 
+const MOCK_PROFILES: Record<string, ProfileSummary> = {
+  "Ivy Chen": {
+    id: "prof-mock-ivy",
+    fullName: "Ivy Chen",
+    role: "manager",
+    avatarInitials: "IC",
+    isActive: true,
+  },
+  "James Nguyen": {
+    id: "prof-mock-james",
+    fullName: "James Nguyen",
+    role: "member",
+    avatarInitials: "JN",
+    isActive: true,
+  },
+  "Cuong Tran": {
+    id: "prof-mock-cuong",
+    fullName: "Cuong Tran",
+    role: "member",
+    avatarInitials: "CT",
+    isActive: true,
+  },
+}
+
+function withAssignedUsers(job: Job): Job {
+  const names = job.assignees ?? []
+  return {
+    ...job,
+    assignedUsers: names
+      .map((name) => MOCK_PROFILES[name])
+      .filter((p): p is ProfileSummary => Boolean(p)),
+  }
+}
+
 // ─── Jobs (BPA PO 90866, PGE 21706, MK-E series, etc.) ─────────────────────
 const rawJobs: Job[] = [
   {
@@ -448,37 +482,3 @@ export const teamMembers: TeamMember[] = [
   { name: "James Nguyen", initials: "JN", role: "Lead Fabricator" },
   { name: "Cuong Tran", initials: "CT", role: "Fabricator" },
 ]
-
-const MOCK_PROFILES: Record<string, ProfileSummary> = {
-  "Ivy Chen": {
-    id: "prof-mock-ivy",
-    fullName: "Ivy Chen",
-    role: "manager",
-    avatarInitials: "IC",
-    isActive: true,
-  },
-  "James Nguyen": {
-    id: "prof-mock-james",
-    fullName: "James Nguyen",
-    role: "member",
-    avatarInitials: "JN",
-    isActive: true,
-  },
-  "Cuong Tran": {
-    id: "prof-mock-cuong",
-    fullName: "Cuong Tran",
-    role: "member",
-    avatarInitials: "CT",
-    isActive: true,
-  },
-}
-
-function withAssignedUsers(job: Job): Job {
-  const names = job.assignees ?? []
-  return {
-    ...job,
-    assignedUsers: names
-      .map((name) => MOCK_PROFILES[name])
-      .filter((p): p is ProfileSummary => Boolean(p)),
-  }
-}
