@@ -1,7 +1,7 @@
 import { Resend } from "resend"
 
-/** Verified sending domain in Resend (qbfab.com) */
-export const DEFAULT_FROM_EMAIL = "QB Fabrication <invites@qbfab.com>"
+/** Verified sending domain in Resend (updates.qbfab.com) */
+export const DEFAULT_FROM_EMAIL = "QB Fabrication <invites@updates.qbfab.com>"
 
 export function isResendConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY)
