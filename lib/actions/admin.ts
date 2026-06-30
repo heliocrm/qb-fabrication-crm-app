@@ -13,7 +13,7 @@ import {
   updateOrgUser,
 } from "@/lib/supabase/services/profiles"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
-import type { OrganizationRole, OrgUser } from "@/types"
+import type { OrganizationRole } from "@/types"
 
 async function safeAction<T>(fn: () => Promise<T>): Promise<{ data?: T; error?: string }> {
   if (!isSupabaseConfigured()) {
@@ -101,5 +101,3 @@ export async function deactivateOrgUserAction(profileId: string) {
   if (result.data) revalidatePath("/admin")
   return result
 }
-
-export type { OrgUser }
