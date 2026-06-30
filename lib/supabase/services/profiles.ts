@@ -84,26 +84,48 @@ export async function listOrgUsers(): Promise<OrgUser[]> {
   return users
 }
 
+export async function getOrganizationName(organizationId: string): Promise<string> {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from(Tables.organizations)
+    .select("name")
+    .eq("id", organizationId)
+    .single()
+
+  if (error || !data?.name) {
+    return "QB Fabrication"
+  }
+  return data.name
+}
+
 export async function inviteOrgUser(input: {
   email: string
   fullName: string
   role: OrganizationRole
   organizationId: string
-}): Promise<OrgUser> {
+}): Promise<{ user: OrgUser; inviteLink: string }> {
   const admin = createAdminClient()
   const siteUrl = getSiteUrl()
 
-  const { data: inviteData, error: inviteError } =
-    await admin.auth.admin.inviteUserByEmail(input.email, {
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email: input.email,
+    options: {
       data: { full_name: input.fullName },
       redirectTo: `${siteUrl}/auth/callback?redirectTo=${encodeURIComponent("/")}`,
-    })
+    },
+  })
 
-  if (inviteError || !inviteData.user) {
-    throw new Error(inviteError?.message ?? "Failed to invite user")
+  if (linkError || !linkData.user) {
+    throw new Error(linkError?.message ?? "Failed to create invite")
   }
 
-  const userId = inviteData.user.id
+  const inviteLink = linkData.properties?.action_link
+  if (!inviteLink) {
+    throw new Error("Failed to generate invite link")
+  }
+
+  const userId = linkData.user.id
   const initials = initialsFromName(input.fullName)
 
   const { data: profile, error: profileError } = await admin
@@ -123,16 +145,19 @@ export async function inviteOrgUser(input: {
 
   const row = profile as ProfileRow
   return {
-    id: row.id,
-    userId: row.user_id,
-    organizationId: row.organization_id,
-    fullName: row.full_name ?? input.fullName,
-    email: input.email,
-    role: row.role as OrganizationRole,
-    isActive: row.is_active,
-    avatarInitials: row.avatar_initials ?? initials,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    user: {
+      id: row.id,
+      userId: row.user_id,
+      organizationId: row.organization_id,
+      fullName: row.full_name ?? input.fullName,
+      email: input.email,
+      role: row.role as OrganizationRole,
+      isActive: row.is_active,
+      avatarInitials: row.avatar_initials ?? initials,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    },
+    inviteLink,
   }
 }
 

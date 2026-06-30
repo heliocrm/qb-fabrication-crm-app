@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { inviteOrgUserAction } from "@/lib/actions/admin"
+import { sendInviteAction } from "@/lib/actions/admin"
 import { toast } from "@/lib/toast"
 import type { OrganizationRole, OrgUser } from "@/types"
 
@@ -45,7 +45,7 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
     }
 
     setIsSubmitting(true)
-    const result = await inviteOrgUserAction({ email, fullName, role })
+    const result = await sendInviteAction({ email, fullName, role })
     setIsSubmitting(false)
 
     if (result.error) {
