@@ -24,8 +24,8 @@ export default async function LoginPage({
             CRM + Job Management for steel fabrication
           </h1>
           <p className="text-white/70 text-sm leading-relaxed">
-            Track BPA, PGE, and utility contracts from opportunity through delivery.
-            Manage POs, MK-E series items, change orders, and shop floor tasks in one place.
+            Clarity from estimate to ship date. Track work, coordinate the floor,
+            and keep every stakeholder aligned as jobs move through the shop.
           </p>
         </div>
 
