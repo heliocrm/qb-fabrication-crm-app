@@ -59,6 +59,8 @@ export interface Database {
           role: string
           is_active: boolean
           avatar_initials: string | null
+          avatar_url: string | null
+          notification_preferences: Json
           created_at: string
           updated_at: string
         }
@@ -70,6 +72,8 @@ export interface Database {
           role?: string
           is_active?: boolean
           avatar_initials?: string | null
+          avatar_url?: string | null
+          notification_preferences?: Json
           created_at?: string
           updated_at?: string
         }
@@ -81,6 +85,8 @@ export interface Database {
           role?: string
           is_active?: boolean
           avatar_initials?: string | null
+          avatar_url?: string | null
+          notification_preferences?: Json
           created_at?: string
           updated_at?: string
         }
@@ -642,6 +648,51 @@ export interface Database {
           },
           {
             foreignKeyName: "job_assignees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_views: {
+        Row: {
+          id: string
+          profile_id: string
+          organization_id: string
+          name: string
+          filters: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          organization_id: string
+          name: string
+          filters?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          organization_id?: string
+          name?: string
+          filters?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_views_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_views_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"

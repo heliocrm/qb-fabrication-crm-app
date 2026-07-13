@@ -250,6 +250,8 @@ export function mapJobListItem(row: JobListRow): JobListItem {
     progress: row.progress,
     assignees: assignedUsers.map((u) => u.fullName),
     assignedUsers,
+    updatedAt: row.updated_at,
+    createdAt: row.created_at,
   }
 }
 

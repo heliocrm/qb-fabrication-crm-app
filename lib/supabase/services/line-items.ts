@@ -37,6 +37,26 @@ export async function listLineItemsByJobId(jobId: string): Promise<LineItem[]> {
   ).map((row) => mapLineItemRow(row, row.tasks))
 }
 
+/** Lightweight line-item WIP summary for Reports filtering */
+export async function listLineItemsForReports(): Promise<
+  { jobId: string; wipStatus: import("@/types").LineItemWipStatus }[]
+> {
+  const supabase = await getClient()
+  const organizationId = await requireOrganizationId(supabase)
+
+  const { data, error } = await supabase
+    .from(Tables.line_items)
+    .select("job_id, wip_status")
+    .eq("organization_id", organizationId)
+
+  throwOnError({ data, error })
+
+  return (data ?? []).map((row) => ({
+    jobId: row.job_id,
+    wipStatus: row.wip_status as import("@/types").LineItemWipStatus,
+  }))
+}
+
 export async function createLineItem(
   jobId: string,
   input: Omit<LineItemInsert, "organization_id" | "job_id">

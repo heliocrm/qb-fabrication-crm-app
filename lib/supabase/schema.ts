@@ -46,6 +46,7 @@ export const Tables = {
   change_orders: "change_orders",
   activity_logs: "activity_logs",
   job_assignees: "job_assignees",
+  report_views: "report_views",
 } as const
 
 const JOB_ASSIGNEES_SELECT = `

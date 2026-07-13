@@ -51,7 +51,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
     const { data: profile } = await supabase
       .from(Tables.profiles)
-      .select("full_name, role, avatar_initials, is_active")
+      .select("full_name, role, avatar_initials, avatar_url, is_active")
       .eq("user_id", user.id)
       .maybeSingle()
 
@@ -79,6 +79,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
       email: user.email,
       role: formatRoleLabel(profile?.role ?? meta.role),
       initials,
+      avatarUrl: profile?.avatar_url ?? null,
       organizationRole: profile?.role,
     }
   } catch {

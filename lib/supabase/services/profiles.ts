@@ -2,7 +2,10 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { getSiteUrl } from "@/lib/supabase/env"
 import { Tables, requireOrganizationId, throwOnError } from "@/lib/supabase/schema"
-import type { OrganizationRole, OrgUser, ProfileRow, ProfileSummary } from "@/types"
+import type { OrganizationRole, OrgUser, ProfileRow, ProfileSummary, OwnProfile, NotificationPreferences, JobListItem } from "@/types"
+import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/types/Profile"
+import { mapJobListItem } from "@/lib/supabase/mappers"
+import { JOB_LIST_SELECT } from "@/lib/supabase/schema"
 
 function mapProfileSummary(row: {
   id: string
@@ -266,6 +269,147 @@ export async function deactivateOrgUser(
   organizationId: string
 ): Promise<void> {
   await updateOrgUser(profileId, { isActive: false }, organizationId)
+}
+
+function parseNotificationPreferences(raw: unknown): NotificationPreferences {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_NOTIFICATION_PREFERENCES }
+  const obj = raw as Record<string, unknown>
+  return {
+    job_updates_email:
+      typeof obj.job_updates_email === "boolean"
+        ? obj.job_updates_email
+        : DEFAULT_NOTIFICATION_PREFERENCES.job_updates_email,
+    task_assignments_email:
+      typeof obj.task_assignments_email === "boolean"
+        ? obj.task_assignments_email
+        : DEFAULT_NOTIFICATION_PREFERENCES.task_assignments_email,
+  }
+}
+
+export async function getOwnProfile(): Promise<OwnProfile | null> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data, error } = await supabase
+    .from(Tables.profiles)
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (error || !data || !data.is_active) return null
+
+  const row = data as ProfileRow
+  const fullName = row.full_name ?? user.email?.split("@")[0] ?? "User"
+
+  return {
+    id: row.id,
+    userId: row.user_id,
+    organizationId: row.organization_id,
+    fullName,
+    email: user.email ?? "",
+    role: row.role as OrganizationRole,
+    avatarInitials: row.avatar_initials ?? initialsFromName(fullName),
+    avatarUrl: row.avatar_url ?? null,
+    notificationPreferences: parseNotificationPreferences(row.notification_preferences),
+  }
+}
+
+export async function updateOwnProfile(updates: {
+  fullName?: string
+  avatarInitials?: string
+  avatarUrl?: string | null
+}): Promise<OwnProfile> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("Not authenticated")
+
+  const payload: {
+    full_name?: string
+    avatar_initials?: string
+    avatar_url?: string | null
+  } = {}
+
+  if (updates.fullName !== undefined) {
+    payload.full_name = updates.fullName
+    payload.avatar_initials =
+      updates.avatarInitials ?? initialsFromName(updates.fullName)
+  } else if (updates.avatarInitials !== undefined) {
+    payload.avatar_initials = updates.avatarInitials
+  }
+
+  if (updates.avatarUrl !== undefined) {
+    payload.avatar_url = updates.avatarUrl
+  }
+
+  const { data, error } = await supabase
+    .from(Tables.profiles)
+    .update(payload)
+    .eq("user_id", user.id)
+    .select("*")
+    .single()
+
+  throwOnError({ data, error })
+
+  const profile = await getOwnProfile()
+  if (!profile) throw new Error("Profile not found after update")
+  return profile
+}
+
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferences
+): Promise<OwnProfile> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("Not authenticated")
+
+  const { data, error } = await supabase
+    .from(Tables.profiles)
+    .update({ notification_preferences: prefs as unknown as import("@/types").Json })
+    .eq("user_id", user.id)
+    .select("*")
+    .single()
+
+  throwOnError({ data, error })
+
+  const profile = await getOwnProfile()
+  if (!profile) throw new Error("Profile not found after update")
+  return profile
+}
+
+type AssignedJobRow = Parameters<typeof mapJobListItem>[0]
+
+export async function listJobsAssignedToProfile(
+  profileId: string
+): Promise<JobListItem[]> {
+  const supabase = await createClient()
+  await requireOrganizationId(supabase)
+
+  const { data: assignments, error: assignError } = await supabase
+    .from(Tables.job_assignees)
+    .select("job_id")
+    .eq("profile_id", profileId)
+
+  throwOnError({ data: assignments, error: assignError })
+
+  const jobIds = (assignments ?? []).map((a) => a.job_id)
+  if (jobIds.length === 0) return []
+
+  const { data, error } = await supabase
+    .from(Tables.jobs)
+    .select(JOB_LIST_SELECT)
+    .in("id", jobIds)
+    .order("delivery_date", { ascending: true, nullsFirst: false })
+
+  throwOnError({ data, error })
+
+  return ((data ?? []) as unknown as AssignedJobRow[]).map(mapJobListItem)
 }
 
 export { mapProfileSummary }

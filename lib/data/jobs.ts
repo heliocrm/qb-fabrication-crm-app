@@ -30,6 +30,8 @@ function listItemToJob(item: JobListItem): Job {
     documents: [],
     changeOrders: [],
     activity: [],
+    updatedAt: item.updatedAt,
+    createdAt: item.createdAt,
   }
 }
 

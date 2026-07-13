@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LogOut, Settings, User } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ export interface UserProfile {
   email?: string
   role: string
   initials: string
+  avatarUrl?: string | null
   organizationRole?: string
 }
 
@@ -27,15 +28,27 @@ interface UserMenuProps {
   variant?: "avatar" | "sidebar"
 }
 
-const defaultUser: UserProfile = {
-  name: "Ivy Chen",
-  email: "ivy@qbfabrication.com",
-  role: "Project Manager",
-  initials: "IC",
+const fallbackUser: UserProfile = {
+  name: "Account",
+  role: "Member",
+  initials: "??",
+}
+
+function UserAvatar({ profile, className }: { profile: UserProfile; className?: string }) {
+  return (
+    <Avatar className={className}>
+      {profile.avatarUrl && (
+        <AvatarImage src={profile.avatarUrl} alt={profile.name} />
+      )}
+      <AvatarFallback className="bg-[var(--orange)] text-white text-xs font-bold">
+        {profile.initials}
+      </AvatarFallback>
+    </Avatar>
+  )
 }
 
 export function UserMenu({ user, variant = "avatar" }: UserMenuProps) {
-  const profile = user ?? defaultUser
+  const profile = user ?? fallbackUser
 
   return (
     <DropdownMenu>
@@ -49,11 +62,7 @@ export function UserMenu({ user, variant = "avatar" }: UserMenuProps) {
                 "hover:bg-sidebar-accent group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
               )}
             >
-              <Avatar className="size-8 shrink-0">
-                <AvatarFallback className="bg-[var(--orange)] text-white text-xs font-bold">
-                  {profile.initials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar profile={profile} className="size-8 shrink-0" />
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-xs font-semibold text-sidebar-foreground">
                   {profile.name}
@@ -68,11 +77,7 @@ export function UserMenu({ user, variant = "avatar" }: UserMenuProps) {
               type="button"
               className="inline-flex items-center gap-2 rounded-full border-0 bg-transparent p-0.5 transition-all hover:ring-2 hover:ring-[var(--orange)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Avatar className="size-8">
-                <AvatarFallback className="bg-[var(--orange)] text-white text-xs font-bold">
-                  {profile.initials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar profile={profile} className="size-8" />
               <span className="sr-only">User menu</span>
             </button>
           )
@@ -89,7 +94,7 @@ export function UserMenu({ user, variant = "avatar" }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/settings" />}>
+        <DropdownMenuItem render={<Link href="/profile" />}>
           <User className="size-4" data-icon="inline-start" />
           Profile
         </DropdownMenuItem>
@@ -98,13 +103,15 @@ export function UserMenu({ user, variant = "avatar" }: UserMenuProps) {
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          onClick={() => signOut()}
-        >
-          <LogOut className="size-4" data-icon="inline-start" />
-          Sign out
-        </DropdownMenuItem>
+        <form action={signOut}>
+          <DropdownMenuItem
+            render={<button type="submit" className="w-full" />}
+            className="text-destructive focus:text-destructive"
+          >
+            <LogOut className="size-4" data-icon="inline-start" />
+            Logout
+          </DropdownMenuItem>
+        </form>
       </DropdownMenuContent>
     </DropdownMenu>
   )

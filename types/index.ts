@@ -65,6 +65,10 @@ export type {
   OrgUser,
   ProfileRow,
   JobAssigneeRow,
+  OwnProfile,
+  ReportView,
+  ReportViewRow,
+  NotificationPreferences,
 } from "./Profile"
 
 export type {

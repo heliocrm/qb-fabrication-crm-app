@@ -147,4 +147,6 @@ export interface JobListItem {
   assignees?: string[]
   /** Profile-linked shop team (from job_assignees) */
   assignedUsers?: ProfileSummary[]
+  updatedAt?: string
+  createdAt?: string
 }
