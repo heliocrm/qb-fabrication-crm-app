@@ -19,7 +19,11 @@ export async function saveReportViewAction(
     const data = await createReportView(name, serializeReportsFilters(filters))
     return { data }
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to save view" }
+    const message = e instanceof Error ? e.message : "Failed to save view"
+    if (/unique|duplicate/i.test(message)) {
+      return { error: "You already have a view with that name. Choose a different name." }
+    }
+    return { error: message }
   }
 }
 

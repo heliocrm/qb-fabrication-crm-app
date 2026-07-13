@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { ProfileAvatarUpload } from "@/components/profile/profile-avatar-upload"
 import { ProfileAssignedJobs } from "@/components/profile/profile-assigned-jobs"
@@ -28,6 +29,7 @@ export function ProfilePageClient({
   assignedJobs,
   source,
 }: ProfilePageClientProps) {
+  const router = useRouter()
   const [profile, setProfile] = useState(initialProfile)
   const [fullName, setFullName] = useState(profile.fullName)
   const [avatarInitials, setAvatarInitials] = useState(profile.avatarInitials)
@@ -53,6 +55,7 @@ export function ProfilePageClient({
       setFullName(result.data.fullName)
       setAvatarInitials(result.data.avatarInitials)
       toast.success("Profile updated")
+      router.refresh()
     }
   }
 
@@ -93,9 +96,9 @@ export function ProfilePageClient({
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
+    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 max-w-3xl mx-auto w-full">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Profile</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Profile</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Your account, preferences, and assigned work
           {source === "supabase" && (
@@ -104,23 +107,38 @@ export function ProfilePageClient({
         </p>
       </div>
 
-      <Tabs defaultValue="personal">
-        <TabsList className="w-full sm:w-auto flex-wrap h-auto">
-          <TabsTrigger value="personal">Personal</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="jobs">My Jobs</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="personal" className="gap-0">
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+          <TabsList className="w-max min-w-full sm:min-w-0 sm:w-auto h-auto p-1">
+            <TabsTrigger value="personal" className="px-3 py-1.5 text-xs sm:text-sm">
+              Personal
+            </TabsTrigger>
+            <TabsTrigger value="security" className="px-3 py-1.5 text-xs sm:text-sm">
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="px-3 py-1.5 text-xs sm:text-sm">
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="jobs" className="px-3 py-1.5 text-xs sm:text-sm">
+              My Jobs
+              {assignedJobs.length > 0 && (
+                <span className="ml-1 rounded-full bg-muted px-1.5 text-[10px] tabular-nums">
+                  {assignedJobs.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="personal" className="mt-6 space-y-6">
+        <TabsContent value="personal" className="mt-5 sm:mt-6 space-y-5 sm:space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6">
               <CardTitle>Personal info</CardTitle>
               <CardDescription>
                 Update how you appear across QB Fabrication.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 px-4 sm:px-6">
               <ProfileAvatarUpload profile={profile} onUpdated={setProfile} />
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -167,7 +185,7 @@ export function ProfilePageClient({
               </div>
 
               <Button
-                className="bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
+                className="w-full sm:w-auto bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
                 onClick={handleSaveProfile}
                 disabled={savingProfile || source === "mock"}
               >
@@ -178,17 +196,30 @@ export function ProfilePageClient({
               </Button>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="px-4 sm:px-6">
+              <CardTitle>My assigned jobs</CardTitle>
+              <CardDescription>
+                Jobs where you are on the shop team
+                {assignedJobs.length > 0 ? ` · ${assignedJobs.length}` : ""}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 sm:px-6">
+              <ProfileAssignedJobs jobs={assignedJobs} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="mt-6">
+        <TabsContent value="security" className="mt-5 sm:mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6">
               <CardTitle>Change password</CardTitle>
               <CardDescription>
                 Choose a strong password with at least 6 characters.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 max-w-sm">
+            <CardContent className="space-y-4 max-w-sm px-4 sm:px-6">
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">
                   New password
@@ -214,7 +245,7 @@ export function ProfilePageClient({
                 />
               </div>
               <Button
-                className="bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
+                className="w-full sm:w-auto bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
                 onClick={handleChangePassword}
                 disabled={changingPassword || source === "mock"}
               >
@@ -227,15 +258,15 @@ export function ProfilePageClient({
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="mt-6">
+        <TabsContent value="notifications" className="mt-5 sm:mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6">
               <CardTitle>Notification preferences</CardTitle>
               <CardDescription>
                 Control which email notifications you receive.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 sm:px-6">
               <label className="flex items-start gap-3 cursor-pointer">
                 <Checkbox
                   checked={prefs.job_updates_email}
@@ -261,7 +292,7 @@ export function ProfilePageClient({
                 </div>
               </label>
               <Button
-                className="bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
+                className="w-full sm:w-auto bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
                 onClick={handleSavePrefs}
                 disabled={savingPrefs || source === "mock"}
               >
@@ -274,15 +305,15 @@ export function ProfilePageClient({
           </Card>
         </TabsContent>
 
-        <TabsContent value="jobs" className="mt-6">
+        <TabsContent value="jobs" className="mt-5 sm:mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6">
               <CardTitle>My assigned jobs</CardTitle>
               <CardDescription>
                 Jobs where you are on the shop team ({assignedJobs.length}).
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6">
               <ProfileAssignedJobs jobs={assignedJobs} />
             </CardContent>
           </Card>

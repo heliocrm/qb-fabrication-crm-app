@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Wrench } from "lucide-react"
+import { BrandLogo } from "@/components/brand-logo"
 import { LoginForm } from "@/components/auth/login-form"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 
@@ -15,14 +15,8 @@ export default async function LoginPage({
     <div className="min-h-screen flex">
       {/* Brand panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-[var(--navy)] text-white p-12">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-md bg-[var(--orange)]">
-            <Wrench className="size-5 text-white" />
-          </div>
-          <div>
-            <p className="font-bold tracking-wide">QB Fabrication</p>
-            <p className="text-sm text-white/60">Shop Management</p>
-          </div>
+        <div className="flex items-center">
+          <BrandLogo size="lg" priority className="brightness-110" />
         </div>
 
         <div className="space-y-4 max-w-md">
@@ -43,11 +37,8 @@ export default async function LoginPage({
       {/* Login form */}
       <div className="flex flex-1 flex-col items-center justify-center p-6 bg-background">
         <div className="w-full max-w-sm space-y-8">
-          <div className="lg:hidden flex items-center gap-3 justify-center">
-            <div className="flex size-9 items-center justify-center rounded-md bg-[var(--orange)]">
-              <Wrench className="size-5 text-white" />
-            </div>
-            <span className="font-bold text-foreground">QB Fabrication</span>
+          <div className="lg:hidden flex items-center justify-center">
+            <BrandLogo size="md" priority />
           </div>
 
           <div className="space-y-2 text-center lg:text-left">

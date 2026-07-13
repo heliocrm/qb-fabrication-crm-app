@@ -16,8 +16,9 @@ export const metadata: Metadata = {
   description:
     "Production and project management for QB Fabrication – steel fabrication specialists.",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: [{ url: "/qb-logo.png", type: "image/png" }],
+    shortcut: "/qb-logo.png",
+    apple: "/qb-logo.png",
   },
 }
 

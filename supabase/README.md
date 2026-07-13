@@ -9,6 +9,8 @@ Run migrations in order in the [SQL Editor](https://supabase.com/dashboard/proje
 5. `005_line_items_and_templates.sql` — line items, job templates, task categories, backfill
 6. `006_fix_document_scoping.sql` — correct job-level vs line-item document scoping on seed jobs
 7. `007_user_roles_and_assignees.sql` — roles, `job_assignees`, RLS helpers, admin bootstrap
+8. `008_profile_and_report_views.sql` — avatar_url, notification prefs, report_views, avatars bucket
+9. `009_report_views_user_isolation.sql` — force RLS + unique view names per user
 
 ## Seed demo data
 

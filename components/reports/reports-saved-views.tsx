@@ -90,23 +90,23 @@ export function ReportsSavedViews({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full sm:w-auto items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="outline" size="sm" className="h-9 gap-1.5">
+            <Button variant="outline" size="sm" className="h-9 flex-1 sm:flex-none gap-1.5">
               <Bookmark className="size-3.5" />
-              Saved views
+              My views
               <ChevronDown className="size-3.5 opacity-60" />
             </Button>
           }
         />
         <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel>Saved views</DropdownMenuLabel>
+          <DropdownMenuLabel>Your saved views</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {views.length === 0 ? (
             <div className="px-2 py-3 text-xs text-muted-foreground">
-              No saved views yet
+              No personal views yet. Save filters to reuse them later — only you can see them.
             </div>
           ) : (
             views.map((view) => (
@@ -141,19 +141,19 @@ export function ReportsSavedViews({
       <Button
         variant="outline"
         size="sm"
-        className="h-9 gap-1.5"
+        className="h-9 flex-1 sm:flex-none gap-1.5"
         onClick={() => setSaveOpen(true)}
       >
         <Plus className="size-3.5" />
-        <span className="hidden sm:inline">Save view</span>
+        <span className="sm:inline">Save</span>
       </Button>
 
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle>Save report view</DialogTitle>
+            <DialogTitle>Save your report view</DialogTitle>
             <DialogDescription>
-              Save the current filter combination for quick access later.
+              Saves the current filters for you only. Other teammates won’t see this view.
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -162,12 +162,12 @@ export function ReportsSavedViews({
             onChange={(e) => setViewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSave()}
           />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveOpen(false)}>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setSaveOpen(false)}>
               Cancel
             </Button>
             <Button
-              className="bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
+              className="w-full sm:w-auto bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
               onClick={handleSave}
               disabled={isSaving}
             >

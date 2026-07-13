@@ -38,12 +38,12 @@ export function ReportsPageClient({ initialData, savedViews }: ReportsPageClient
   )
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports</h1>
+    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Reports</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Business intelligence — filter, analyze, and save views
+            Business intelligence — filter, analyze, and save your views
             {initialData.source === "supabase" && (
               <span className="ml-1 text-[var(--orange)]">· live data</span>
             )}

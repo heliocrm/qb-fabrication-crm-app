@@ -43,19 +43,19 @@ function MetricCard({ label, value, sub, icon: Icon, accent }: MetricCardProps) 
   const styles = accentStyles[accent]
   return (
     <Card className="border shadow-sm">
-      <CardContent className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-3 sm:p-5">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
               {label}
             </p>
-            <p className="text-2xl sm:text-3xl font-bold text-foreground mt-1 tabular-nums">
+            <p className="text-xl sm:text-3xl font-bold text-foreground mt-1 tabular-nums">
               {value}
             </p>
-            <p className="text-xs text-muted-foreground mt-1 truncate">{sub}</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 truncate">{sub}</p>
           </div>
-          <div className={cn("p-2.5 rounded-lg shrink-0", styles.bg, styles.icon)}>
-            <Icon className="size-5" />
+          <div className={cn("p-2 sm:p-2.5 rounded-lg shrink-0", styles.bg, styles.icon)}>
+            <Icon className="size-4 sm:size-5" />
           </div>
         </div>
       </CardContent>
@@ -96,7 +96,7 @@ export function ReportsCoreMetrics({ metrics }: { metrics: CoreReportsMetrics })
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
       {cards.map((card) => (
         <MetricCard key={card.label} {...card} />
       ))}

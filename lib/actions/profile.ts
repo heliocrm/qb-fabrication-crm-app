@@ -87,9 +87,20 @@ export async function uploadAvatarAction(
     const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
     const path = `${user.id}/avatar.${ext}`
 
+    // Remove previous avatar files with other extensions so only one mark remains
+    const { data: existing } = await supabase.storage.from("avatars").list(user.id)
+    if (existing?.length) {
+      const stale = existing
+        .map((f) => `${user.id}/${f.name}`)
+        .filter((p) => p !== path)
+      if (stale.length > 0) {
+        await supabase.storage.from("avatars").remove(stale)
+      }
+    }
+
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" })
 
     if (uploadError) return { error: uploadError.message }
 
@@ -97,7 +108,8 @@ export async function uploadAvatarAction(
       data: { publicUrl },
     } = supabase.storage.from("avatars").getPublicUrl(path)
 
-    const cacheBust = `${publicUrl}?t=${Date.now()}`
+    // Cache-bust so top nav / layout AvatarImage updates immediately
+    const cacheBust = `${publicUrl}?v=${Date.now()}`
     const data = await updateOwnProfile({ avatarUrl: cacheBust })
 
     revalidatePath("/profile")

@@ -37,9 +37,14 @@ const fallbackUser: UserProfile = {
 function UserAvatar({ profile, className }: { profile: UserProfile; className?: string }) {
   return (
     <Avatar className={className}>
-      {profile.avatarUrl && (
-        <AvatarImage src={profile.avatarUrl} alt={profile.name} />
-      )}
+      {profile.avatarUrl ? (
+        <AvatarImage
+          key={profile.avatarUrl}
+          src={profile.avatarUrl}
+          alt={profile.name}
+          className="size-full object-cover"
+        />
+      ) : null}
       <AvatarFallback className="bg-[var(--orange)] text-white text-xs font-bold">
         {profile.initials}
       </AvatarFallback>
@@ -85,12 +90,15 @@ export function UserMenu({ user, variant = "avatar" }: UserMenuProps) {
       />
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-semibold">{profile.name}</span>
-            {profile.email && (
-              <span className="text-xs text-muted-foreground truncate">{profile.email}</span>
-            )}
-            <span className="text-xs text-muted-foreground">{profile.role}</span>
+          <div className="flex items-center gap-2.5">
+            <UserAvatar profile={profile} className="size-9" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="font-semibold truncate">{profile.name}</span>
+              {profile.email && (
+                <span className="text-xs text-muted-foreground truncate">{profile.email}</span>
+              )}
+              <span className="text-xs text-muted-foreground">{profile.role}</span>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

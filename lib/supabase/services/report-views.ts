@@ -15,6 +15,11 @@ function mapReportView(row: ReportViewRow): ReportView {
   }
 }
 
+/**
+ * Saved report views — always scoped to the signed-in user's profile.
+ * DB RLS (`report_views_*` policies) also enforces profile_id = auth.uid()'s profile;
+ * app-layer filters reinforce that so views are never shared across users.
+ */
 export async function listReportViews(): Promise<ReportView[]> {
   if (!isSupabaseConfigured()) return []
 

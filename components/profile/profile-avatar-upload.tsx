@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Camera, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,7 @@ interface ProfileAvatarUploadProps {
 }
 
 export function ProfileAvatarUpload({ profile, onUpdated }: ProfileAvatarUploadProps) {
+  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
 
@@ -36,6 +38,7 @@ export function ProfileAvatarUpload({ profile, onUpdated }: ProfileAvatarUploadP
     if (result.data) {
       onUpdated(result.data)
       toast.success("Avatar updated")
+      router.refresh()
     }
 
     if (inputRef.current) inputRef.current.value = ""
@@ -44,10 +47,15 @@ export function ProfileAvatarUpload({ profile, onUpdated }: ProfileAvatarUploadP
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
       <div className="relative">
-        <Avatar className="size-20">
-          {profile.avatarUrl && (
-            <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
-          )}
+        <Avatar className="!size-20">
+          {profile.avatarUrl ? (
+            <AvatarImage
+              key={profile.avatarUrl}
+              src={profile.avatarUrl}
+              alt={profile.fullName}
+              className="size-full object-cover"
+            />
+          ) : null}
           <AvatarFallback className="bg-[var(--orange)] text-white text-xl font-bold">
             {profile.avatarInitials}
           </AvatarFallback>
@@ -75,10 +83,13 @@ export function ProfileAvatarUpload({ profile, onUpdated }: ProfileAvatarUploadP
           onChange={handleFileChange}
         />
       </div>
-      <div className="text-center sm:text-left">
+      <div className="text-center sm:text-left space-y-1">
         <p className="text-sm font-semibold text-foreground">{profile.fullName}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{profile.email}</p>
-        <p className="text-xs text-muted-foreground capitalize mt-1">{profile.role}</p>
+        <p className="text-xs text-muted-foreground">{profile.email}</p>
+        <p className="text-xs text-muted-foreground capitalize">{profile.role}</p>
+        <p className="text-[11px] text-muted-foreground pt-1">
+          Click the camera to upload a photo (JPEG, PNG, WebP, or GIF · max 2 MB)
+        </p>
       </div>
     </div>
   )

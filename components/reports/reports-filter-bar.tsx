@@ -23,7 +23,7 @@ interface ReportsFilterBarProps {
 }
 
 const selectClassName =
-  "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto sm:min-w-[130px]"
 
 export function ReportsFilterBar({
   filters,
@@ -44,84 +44,88 @@ export function ReportsFilterBar({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col xl:flex-row gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-            <Filter className="size-3.5" />
-            <span className="font-medium hidden sm:inline">Filters</span>
-          </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
+        <Filter className="size-3.5" />
+        <span className="font-medium">Filters</span>
+      </div>
 
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+          <Filter className="size-3.5" />
+          <span className="font-medium">Filters</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
           <Input
             type="date"
             aria-label="From date"
-            className="h-9 w-[140px]"
+            className="h-9 w-full sm:w-[140px]"
             value={filters.dateFrom ?? ""}
             onChange={(e) => update({ dateFrom: e.target.value || null })}
           />
-          <span className="text-xs text-muted-foreground hidden sm:inline">to</span>
           <Input
             type="date"
             aria-label="To date"
-            className="h-9 w-[140px]"
+            className="h-9 w-full sm:w-[140px]"
             value={filters.dateTo ?? ""}
             onChange={(e) => update({ dateTo: e.target.value || null })}
           />
-
-          <select
-            aria-label="Filter by customer"
-            className={cn(selectClassName, "min-w-[130px]")}
-            value={filters.customerId}
-            onChange={(e) => update({ customerId: e.target.value })}
-          >
-            <option value="">All customers</option>
-            {customers.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.shortName} — {a.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            aria-label="Filter by job status"
-            className={cn(selectClassName, "min-w-[120px]")}
-            value={filters.jobStatus}
-            onChange={(e) => update({ jobStatus: e.target.value })}
-          >
-            <option value="">All job statuses</option>
-            {JOB_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-
-          <select
-            aria-label="Filter by line item status"
-            className={cn(selectClassName, "min-w-[140px]")}
-            value={filters.lineItemStatus}
-            onChange={(e) => update({ lineItemStatus: e.target.value })}
-          >
-            <option value="">All line item statuses</option>
-            {LINE_ITEM_WIP_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-
-          {activeCount > 0 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-9 gap-1 text-xs text-muted-foreground"
-              onClick={clearFilters}
-            >
-              <X className="size-3.5" />
-              Clear
-            </Button>
-          )}
         </div>
+
+        <select
+          aria-label="Filter by customer"
+          className={cn(selectClassName)}
+          value={filters.customerId}
+          onChange={(e) => update({ customerId: e.target.value })}
+        >
+          <option value="">All customers</option>
+          {customers.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.shortName} — {a.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Filter by job status"
+          className={cn(selectClassName)}
+          value={filters.jobStatus}
+          onChange={(e) => update({ jobStatus: e.target.value })}
+        >
+          <option value="">All job statuses</option>
+          {JOB_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Filter by line item status"
+          className={cn(selectClassName)}
+          value={filters.lineItemStatus}
+          onChange={(e) => update({ lineItemStatus: e.target.value })}
+        >
+          <option value="">All line item statuses</option>
+          {LINE_ITEM_WIP_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
+        {activeCount > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 gap-1 text-xs text-muted-foreground w-full sm:w-auto"
+            onClick={clearFilters}
+          >
+            <X className="size-3.5" />
+            Clear filters
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">

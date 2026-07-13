@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Wrench, type LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { BrandLogo } from "@/components/brand-logo"
 import {
   Sidebar,
   SidebarContent,
@@ -67,17 +68,21 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
-        <Link href="/" className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[var(--orange)] shadow-sm">
-            <Wrench className="size-5 text-white" />
-          </div>
-          <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-bold text-sidebar-foreground tracking-wide">
-              QB Fabrication
-            </span>
-            <span className="text-xs text-sidebar-foreground/60">Shop Management</span>
-          </div>
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+        <Link
+          href="/"
+          className="flex items-center group-data-[collapsible=icon]:justify-center"
+          aria-label="QB Fabrication home"
+        >
+          <BrandLogo
+            size="md"
+            className="group-data-[collapsible=icon]:hidden"
+            priority
+          />
+          <BrandLogo
+            size="sm"
+            className="hidden !size-8 !max-w-none object-cover object-left group-data-[collapsible=icon]:block"
+          />
         </Link>
       </SidebarHeader>
 

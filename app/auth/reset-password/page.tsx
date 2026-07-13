@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Wrench } from "lucide-react"
+import { BrandLogo } from "@/components/brand-logo"
 import { ResetPasswordForm } from "@/components/auth/reset-password-form"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
@@ -19,11 +19,8 @@ export default async function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-sm space-y-8">
-        <div className="flex items-center gap-3 justify-center">
-          <div className="flex size-9 items-center justify-center rounded-md bg-[var(--orange)]">
-            <Wrench className="size-5 text-white" />
-          </div>
-          <span className="font-bold text-foreground">QB Fabrication</span>
+        <div className="flex items-center justify-center">
+          <BrandLogo size="md" priority />
         </div>
 
         <div className="space-y-2 text-center">
