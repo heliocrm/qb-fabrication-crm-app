@@ -2,12 +2,26 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "@/types/database"
+import {
+  getPullHomePath,
+  isPullAllowedPath,
+  isPullStandaloneRequest,
+} from "@/lib/pull-mode"
 import { getSupabaseEnv } from "@/lib/supabase/env"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const redirectTo = searchParams.get("redirectTo") ?? "/"
+  const pullMode = isPullStandaloneRequest(request)
+  const pullHome = getPullHomePath()
+  let redirectTo = searchParams.get("redirectTo") ?? (pullMode ? pullHome : "/")
+
+  if (pullMode) {
+    const path = redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`
+    if (!isPullAllowedPath(path.split("?")[0] ?? path)) {
+      redirectTo = pullHome
+    }
+  }
 
   if (!code) {
     return NextResponse.redirect(

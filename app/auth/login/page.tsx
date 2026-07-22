@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { BrandLogo } from "@/components/brand-logo"
 import { LoginForm } from "@/components/auth/login-form"
+import { getPullHomePath, isPullStandalone } from "@/lib/pull-mode"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 
 export default async function LoginPage({
@@ -10,6 +11,10 @@ export default async function LoginPage({
 }) {
   const params = await searchParams
   const supabaseReady = isSupabaseConfigured()
+  const pullStandalone = await isPullStandalone()
+  const pullHome = getPullHomePath()
+  const defaultRedirect = pullStandalone ? pullHome : "/"
+  const redirectTo = params.redirectTo ?? defaultRedirect
 
   return (
     <div className="min-h-screen flex">
@@ -20,13 +25,27 @@ export default async function LoginPage({
         </div>
 
         <div className="space-y-4 max-w-md">
-          <h1 className="text-3xl font-bold leading-tight">
-            CRM + Job Management for steel fabrication
-          </h1>
-          <p className="text-white/70 text-sm leading-relaxed">
-            Clarity from estimate to ship date. Track work, coordinate the floor,
-            and keep every stakeholder aligned as jobs move through the shop.
-          </p>
+          {pullStandalone ? (
+            <>
+              <h1 className="text-3xl font-bold leading-tight">
+                QB Material Pull
+              </h1>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Request material, source it, and batch pull lists for the floor —
+                one place for Eric, Tristan, and the shop.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold leading-tight">
+                CRM + Job Management for steel fabrication
+              </h1>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Clarity from estimate to ship date. Track work, coordinate the floor,
+                and keep every stakeholder aligned as jobs move through the shop.
+              </p>
+            </>
+          )}
         </div>
 
         <p className="text-xs text-white/40">
@@ -44,7 +63,9 @@ export default async function LoginPage({
           <div className="space-y-2 text-center lg:text-left">
             <h2 className="text-2xl font-bold text-foreground">Sign in</h2>
             <p className="text-sm text-muted-foreground">
-              Access your dashboard, jobs, and pipeline
+              {pullStandalone
+                ? "Sign in to submit and manage material pull requests"
+                : "Access your dashboard, jobs, and pipeline"}
             </p>
           </div>
 
@@ -67,7 +88,7 @@ export default async function LoginPage({
                 . Until then, you can browse with mock data.
               </p>
               <Link
-                href="/"
+                href={pullStandalone ? pullHome : "/"}
                 className="inline-block text-xs font-semibold text-[var(--orange)] hover:underline mt-1"
               >
                 Continue with mock data →
@@ -87,10 +108,7 @@ export default async function LoginPage({
             </div>
           )}
 
-          <LoginForm
-            redirectTo={params.redirectTo ?? "/"}
-            supabaseReady={supabaseReady}
-          />
+          <LoginForm redirectTo={redirectTo} supabaseReady={supabaseReady} />
         </div>
       </div>
     </div>

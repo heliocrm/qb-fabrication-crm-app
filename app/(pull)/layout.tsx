@@ -2,6 +2,7 @@ import Link from "next/link"
 import { BrandLogo } from "@/components/brand-logo"
 import { PullNav } from "@/components/material-requests/pull-nav"
 import { PullPwaToolbar } from "@/components/material-requests/pull-pwa-toolbar"
+import { isPullStandalone } from "@/lib/pull-mode"
 import { getUserProfile } from "@/lib/supabase/provision"
 
 export default async function PullLayout({
@@ -9,7 +10,10 @@ export default async function PullLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await getUserProfile()
+  const [user, pullStandalone] = await Promise.all([
+    getUserProfile(),
+    isPullStandalone(),
+  ])
 
   return (
     <div className="min-h-svh bg-background flex flex-col">
@@ -25,12 +29,14 @@ export default async function PullLayout({
                 {user.name?.split(" ")[0] ?? "User"}
               </span>
             ) : null}
-            <Link
-              href="/"
-              className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-            >
-              Full CRM
-            </Link>
+            {!pullStandalone ? (
+              <Link
+                href="/"
+                className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+              >
+                Full CRM
+              </Link>
+            ) : null}
           </div>
         </div>
         <PullNav />

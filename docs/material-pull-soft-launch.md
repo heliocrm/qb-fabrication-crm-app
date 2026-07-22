@@ -1,10 +1,32 @@
 # Material Pull — soft-launch checklist
 
+## Standalone deploy (no CRM for the floor team)
+
+Use a **second Vercel project** from the same GitHub repo + domain `pull.qbfab.com` (or similar).
+
+| Env on pull project | Value |
+|---------------------|--------|
+| `NEXT_PUBLIC_APP_MODE` | `pull` |
+| `NEXT_PUBLIC_SITE_URL` | `https://pull.qbfab.com` |
+| Supabase / Resend / VAPID | Same as CRM project |
+
+Also add Supabase Auth redirect URLs for the pull domain (`/auth/callback`, `/auth/reset-password`, `/**`).
+
+With `NEXT_PUBLIC_APP_MODE=pull`:
+- Login lands on `/pull` (Material Pull branding)
+- Middleware blocks CRM routes (`/jobs`, `/`, etc.) → `/pull`
+- “Full CRM” link is hidden
+
+Share only `https://pull.qbfab.com` with the floor team. Keep `crmv1.qbfab.com` for internal CRM use.
+
+Local test: set `NEXT_PUBLIC_APP_MODE=pull` in `.env.local` and restart `pnpm dev`.
+
 ## Before testers start
 
 - [ ] Run migration `010_material_pull_requests.sql` in Supabase SQL Editor
 - [ ] Confirm seed rows appear (or create a test request)
 - [ ] Assign Eric / Tristan accounts the `manager` role in Admin
+- [ ] Deploy pull Vercel project with `NEXT_PUBLIC_APP_MODE=pull`
 - [ ] Set VAPID env vars for Web Push (optional but recommended)
 - [ ] Confirm Resend is configured for email fallback
 
