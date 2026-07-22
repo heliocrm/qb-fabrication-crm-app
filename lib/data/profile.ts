@@ -16,6 +16,8 @@ function mockOwnProfile(): OwnProfile {
     notificationPreferences: {
       job_updates_email: true,
       task_assignments_email: true,
+      material_request_push: true,
+      material_request_email: true,
     },
   }
 }

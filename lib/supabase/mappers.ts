@@ -15,6 +15,9 @@ import type {
   LineItem,
   LineItemInsert,
   LineItemRow,
+  MaterialPullRequest,
+  MaterialPullRequestRow,
+  MaterialPullStatus,
   Opportunity,
   OpportunityRow,
   OrganizationRole,
@@ -384,5 +387,34 @@ export function toTaskInsert(
     due_date: task.dueDate || null,
     category: task.category,
     sort_order: task.sortOrder ?? 0,
+  }
+}
+
+type MaterialPullJoinRow = MaterialPullRequestRow & {
+  requester?: { full_name: string | null } | null
+}
+
+export function mapMaterialPullRequestRow(
+  row: MaterialPullJoinRow
+): MaterialPullRequest {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    jobId: row.job_id,
+    jobNumber: row.job_number,
+    material: row.material,
+    quantity: Number(row.quantity),
+    unit: row.unit,
+    neededBy: row.needed_by,
+    stage: row.stage,
+    notes: row.notes,
+    status: row.status as MaterialPullStatus,
+    requestedBy: row.requested_by,
+    requestedByName: row.requester?.full_name ?? null,
+    sourcedBy: row.sourced_by,
+    pulledBy: row.pulled_by,
+    batchId: row.batch_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   }
 }

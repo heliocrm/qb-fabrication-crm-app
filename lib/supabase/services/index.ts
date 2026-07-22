@@ -39,6 +39,23 @@ export {
 } from "./tasks"
 
 export {
+  listMaterialPullRequests,
+  getMaterialPullRequestById,
+  createMaterialPullRequest,
+  updateMaterialPullStatus,
+  cancelMaterialPullRequest,
+  assignMaterialPullBatch,
+  markBatchPulled,
+  getMaterialPullSummary,
+} from "./material-pull-requests"
+
+export {
+  savePushSubscription,
+  deletePushSubscription,
+  listPushSubscriptionsForProfiles,
+} from "./push-subscriptions"
+
+export {
   getCurrentOrganizationId,
   requireOrganizationId,
   SupabaseServiceError,

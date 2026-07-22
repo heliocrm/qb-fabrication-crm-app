@@ -3,6 +3,7 @@ import {
   Briefcase,
   Building2,
   LayoutDashboard,
+  Package,
   Settings,
   Shield,
   TrendingUp,
@@ -34,6 +35,12 @@ export const mainNavItems: NavItem[] = [
     href: "/jobs",
     icon: Briefcase,
     description: "Active fabrication jobs",
+  },
+  {
+    label: "Material Requests",
+    href: "/material-requests",
+    icon: Package,
+    description: "Pull requests for Eric and Tristan",
   },
   {
     label: "Customers",

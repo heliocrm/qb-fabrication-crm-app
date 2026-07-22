@@ -11,6 +11,7 @@ export type {
   OrganizationRole,
   JobTemplateType,
   LineItemWipStatus,
+  MaterialPullStatus,
 } from "./enums"
 
 // Entities
@@ -70,6 +71,7 @@ export type {
   ReportViewRow,
   NotificationPreferences,
 } from "./Profile"
+export { DEFAULT_NOTIFICATION_PREFERENCES } from "./Profile"
 
 export type {
   Account,
@@ -78,6 +80,17 @@ export type {
   OrganizationRow,
   TeamMember,
 } from "./Account"
+
+export type {
+  MaterialPullRequest,
+  MaterialPullRequestRow,
+  MaterialPullRequestInsert,
+  MaterialPullRequestUpdate,
+  MaterialPullListFilters,
+  CreateMaterialPullInput,
+  PushSubscriptionRow,
+  PushSubscriptionInsert,
+} from "./MaterialPullRequest"
 
 // Database schema type for Supabase client generics
 export type { Database, Json } from "./database"

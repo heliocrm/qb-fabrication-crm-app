@@ -10,6 +10,7 @@ import type {
   JobStatus,
   JobTemplateType,
   LineItemWipStatus,
+  MaterialPullStatus,
   OppStage,
   Priority,
   TaskCategory,
@@ -693,6 +694,136 @@ export interface Database {
           },
           {
             foreignKeyName: "report_views_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_pull_requests: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string | null
+          job_number: string
+          material: string
+          quantity: number
+          unit: string
+          needed_by: string | null
+          stage: string | null
+          notes: string | null
+          status: MaterialPullStatus
+          requested_by: string
+          sourced_by: string | null
+          pulled_by: string | null
+          batch_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id?: string | null
+          job_number: string
+          material: string
+          quantity: number
+          unit?: string
+          needed_by?: string | null
+          stage?: string | null
+          notes?: string | null
+          status?: MaterialPullStatus
+          requested_by: string
+          sourced_by?: string | null
+          pulled_by?: string | null
+          batch_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string | null
+          job_number?: string
+          material?: string
+          quantity?: number
+          unit?: string
+          needed_by?: string | null
+          stage?: string | null
+          notes?: string | null
+          status?: MaterialPullStatus
+          requested_by?: string
+          sourced_by?: string | null
+          pulled_by?: string | null
+          batch_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_pull_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_pull_requests_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_pull_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          organization_id: string
+          profile_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          profile_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          profile_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          user_agent?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"

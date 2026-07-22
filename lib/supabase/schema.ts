@@ -47,6 +47,8 @@ export const Tables = {
   activity_logs: "activity_logs",
   job_assignees: "job_assignees",
   report_views: "report_views",
+  material_pull_requests: "material_pull_requests",
+  push_subscriptions: "push_subscriptions",
 } as const
 
 const JOB_ASSIGNEES_SELECT = `

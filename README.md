@@ -8,6 +8,17 @@ This repository is linked to a [v0](https://v0.app) project. You can continue de
 
 [Continue working on v0 →](https://v0.app/chat/projects/prj_5nPsJ0Rvdhg0z1DwwDuJLN3M6ByT)
 
+## Material Pull (soft launch)
+
+Floor-facing PWA + CRM module for material pull requests (service worker at `public/sw.js`).
+
+1. Run Supabase migration [`supabase/migrations/010_material_pull_requests.sql`](supabase/migrations/010_material_pull_requests.sql).
+2. Optional push alerts: generate VAPID keys (`npx web-push generate-vapid-keys`) and set `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` in `.env.local` (see `.env.local.example`).
+3. Dev: `pnpm dev` → CRM at `/material-requests`, floor shell at `/pull`.
+4. Production: deploy, open `/pull`, install to home screen, enable notifications.
+
+Flow: submit request → managers source → batch/print pull list → mark pulled. Email fallback uses Resend when push is unavailable.
+
 ## Getting Started
 
 First, run the development server:

@@ -283,6 +283,14 @@ function parseNotificationPreferences(raw: unknown): NotificationPreferences {
       typeof obj.task_assignments_email === "boolean"
         ? obj.task_assignments_email
         : DEFAULT_NOTIFICATION_PREFERENCES.task_assignments_email,
+    material_request_push:
+      typeof obj.material_request_push === "boolean"
+        ? obj.material_request_push
+        : DEFAULT_NOTIFICATION_PREFERENCES.material_request_push,
+    material_request_email:
+      typeof obj.material_request_email === "boolean"
+        ? obj.material_request_email
+        : DEFAULT_NOTIFICATION_PREFERENCES.material_request_email,
   }
 }
 

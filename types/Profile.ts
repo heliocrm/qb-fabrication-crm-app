@@ -4,11 +4,15 @@ import type { Json } from "./database"
 export interface NotificationPreferences {
   job_updates_email: boolean
   task_assignments_email: boolean
+  material_request_push: boolean
+  material_request_email: boolean
 }
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   job_updates_email: true,
   task_assignments_email: true,
+  material_request_push: true,
+  material_request_email: true,
 }
 
 /** Lightweight profile for job assignee display and pickers */

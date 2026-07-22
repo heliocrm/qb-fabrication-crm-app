@@ -263,7 +263,7 @@ export function ProfilePageClient({
             <CardHeader className="px-4 sm:px-6">
               <CardTitle>Notification preferences</CardTitle>
               <CardDescription>
-                Control which email notifications you receive.
+                Control email and material-pull alerts.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 px-4 sm:px-6">
@@ -288,6 +288,31 @@ export function ProfilePageClient({
                   <p className="text-sm font-medium">Task assignments</p>
                   <p className="text-xs text-muted-foreground">
                     Email when you are assigned a new task on a job.
+                  </p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox
+                  checked={prefs.material_request_push}
+                  onCheckedChange={() => togglePref("material_request_push")}
+                />
+                <div>
+                  <p className="text-sm font-medium">Material pull — push</p>
+                  <p className="text-xs text-muted-foreground">
+                    Device notifications for new requests, batches, and status changes
+                    (enable on the Material Pull app first).
+                  </p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox
+                  checked={prefs.material_request_email}
+                  onCheckedChange={() => togglePref("material_request_email")}
+                />
+                <div>
+                  <p className="text-sm font-medium">Material pull — email</p>
+                  <p className="text-xs text-muted-foreground">
+                    Email fallback when push is unavailable or not subscribed.
                   </p>
                 </div>
               </label>
