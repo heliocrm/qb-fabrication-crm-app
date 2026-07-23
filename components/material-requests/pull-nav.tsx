@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { PULL_SHELL_WIDTH } from "@/lib/pull-layout"
 import { cn } from "@/lib/utils"
 
 const tabs = [
@@ -14,7 +15,10 @@ export function PullNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="mx-auto max-w-lg px-4 pb-2 flex gap-1">
+    <nav
+      className={cn(PULL_SHELL_WIDTH, "px-4 pb-2 flex gap-1.5")}
+      aria-label="Material Pull sections"
+    >
       {tabs.map((tab) => {
         const active = tab.exact
           ? pathname === tab.href
@@ -24,10 +28,10 @@ export function PullNav() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              "flex-1 text-center rounded-md px-2 py-2 text-sm font-medium transition-colors",
+              "flex-1 min-h-11 inline-flex items-center justify-center text-center rounded-lg px-3 text-sm font-medium transition-colors touch-manipulation",
               active
                 ? "bg-[var(--orange)]/15 text-foreground"
-                : "text-muted-foreground hover:bg-muted"
+                : "text-muted-foreground hover:bg-muted active:bg-muted"
             )}
           >
             {tab.label}

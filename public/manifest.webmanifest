@@ -5,9 +5,11 @@
   "start_url": "/pull",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#1e2d5a",
   "theme_color": "#1e2d5a",
+  "lang": "en",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",

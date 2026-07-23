@@ -34,7 +34,7 @@ export default async function PullHomePage({
       <EnablePushCard />
 
       {summary ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           <Stat label="Pending" value={summary.pending} />
           <Stat label="Sourced" value={summary.sourced} />
           <Stat label="Batched" value={summary.batched} />
@@ -53,9 +53,9 @@ export default async function PullHomePage({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border bg-card px-2 py-2 text-center">
-      <p className="text-xl font-semibold tabular-nums">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+    <div className="rounded-lg border bg-card px-2 py-3 text-center md:px-4 md:py-4">
+      <p className="text-xl font-semibold tabular-nums md:text-2xl">{value}</p>
+      <p className="text-[11px] text-muted-foreground md:text-xs">{label}</p>
     </div>
   )
 }

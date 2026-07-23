@@ -74,13 +74,19 @@ export function MaterialRequestForm({
             placeholder="QB-2025-041"
             required
             autoComplete="off"
+            className="min-h-11 text-base md:text-sm"
           />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="neededBy" className="text-sm font-medium">
             Needed by
           </label>
-          <Input id="neededBy" name="neededBy" type="date" />
+          <Input
+            id="neededBy"
+            name="neededBy"
+            type="date"
+            className="min-h-11 text-base md:text-sm"
+          />
         </div>
       </div>
 
@@ -94,6 +100,7 @@ export function MaterialRequestForm({
           placeholder="L4x4x3/8 x 40' A588"
           required
           autoComplete="off"
+          className="min-h-11 text-base md:text-sm"
         />
       </div>
 
@@ -110,13 +117,20 @@ export function MaterialRequestForm({
             step="any"
             defaultValue={1}
             required
+            className="min-h-11 text-base md:text-sm"
           />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="unit" className="text-sm font-medium">
             Unit
           </label>
-          <Input id="unit" name="unit" defaultValue="ea" placeholder="ea" />
+          <Input
+            id="unit"
+            name="unit"
+            defaultValue="ea"
+            placeholder="ea"
+            className="min-h-11 text-base md:text-sm"
+          />
         </div>
         <div className="space-y-1.5 col-span-2 sm:col-span-1">
           <label htmlFor="stage" className="text-sm font-medium">
@@ -125,7 +139,7 @@ export function MaterialRequestForm({
           <select
             id="stage"
             name="stage"
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+            className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
             defaultValue="Fabrication"
           >
             {MATERIAL_PULL_STAGES.map((s) => (
@@ -145,12 +159,16 @@ export function MaterialRequestForm({
           id="notes"
           name="notes"
           rows={3}
-          className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs resize-y min-h-[80px]"
+          className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs resize-y min-h-[80px]"
           placeholder="Special instructions, location, heat preference…"
         />
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full min-h-11 touch-manipulation sm:w-auto"
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="size-4 animate-spin" />

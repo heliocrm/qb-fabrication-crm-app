@@ -118,12 +118,19 @@ export function MaterialBatchClient({
           <h2 className="text-lg font-semibold">Ready to batch</h2>
           {canManage ? (
             <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={selectAll}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="min-h-11 touch-manipulation"
+                onClick={selectAll}
+              >
                 Select all
               </Button>
               <Button
                 type="button"
                 size="sm"
+                className="min-h-11 touch-manipulation"
                 onClick={createBatch}
                 disabled={isPending || selected.size === 0}
               >
@@ -149,7 +156,7 @@ export function MaterialBatchClient({
                   <Checkbox
                     checked={selected.has(r.id)}
                     onCheckedChange={() => toggle(r.id)}
-                    className="mt-1"
+                    className="mt-1 size-5 touch-manipulation"
                     aria-label={`Select ${r.material}`}
                   />
                 ) : null}
@@ -181,6 +188,7 @@ export function MaterialBatchClient({
             type="button"
             size="sm"
             variant="outline"
+            className="min-h-11 touch-manipulation"
             onClick={() => window.print()}
             disabled={printRows.length === 0}
           >
@@ -205,7 +213,7 @@ export function MaterialBatchClient({
               <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
                 <button
                   type="button"
-                  className="text-left font-medium hover:underline"
+                  className="text-left font-medium hover:underline min-h-11 touch-manipulation"
                   onClick={() => setActiveBatchId(batchId)}
                 >
                   Batch {batchId.slice(0, 8)} · {items.length} items
@@ -215,6 +223,7 @@ export function MaterialBatchClient({
                     type="button"
                     size="sm"
                     variant="outline"
+                    className="min-h-11 touch-manipulation"
                     disabled={isPending}
                     onClick={() => markPulled(batchId)}
                   >

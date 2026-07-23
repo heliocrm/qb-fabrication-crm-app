@@ -172,6 +172,7 @@ export function EnablePushCard() {
         type="button"
         size="sm"
         variant={subscribed ? "outline" : "default"}
+        className="min-h-11 min-w-20 touch-manipulation shrink-0"
         disabled={busy}
         onClick={subscribed ? disable : enable}
       >

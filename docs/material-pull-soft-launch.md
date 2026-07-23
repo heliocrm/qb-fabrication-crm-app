@@ -30,9 +30,15 @@ Local test: set `NEXT_PUBLIC_APP_MODE=pull` in `.env.local` and restart `pnpm de
 - [ ] Set VAPID env vars for Web Push (optional but recommended)
 - [ ] Confirm Resend is configured for email fallback
 
+## Install on phone / tablet
+
+- **Android / Chrome:** open `https://pull.qbfab.com` → Install banner or browser menu → Install app
+- **iPhone / iPad:** Safari → Share → **Add to Home Screen** (banner on `/pull` explains this)
+- Manifest allows any orientation; shell widens on tablet (`md`/`lg` breakpoints)
+
 ## Tester flows
 
-1. **Foreman (member)** — open `/pull` on phone → Install app → New → submit Job #, material, qty, needed-by
+1. **Foreman (member)** — open `/pull` on phone or tablet → Install app → New → submit Job #, material, qty, needed-by
 2. **Eric (manager)** — `/pull` or `/material-requests` → see pending → Source
 3. **Tristan (manager)** — Batch → select items → Create pull list → Print → Mark all pulled
 4. **Notifications** — Enable on `/pull`; submit from another user; confirm push or email

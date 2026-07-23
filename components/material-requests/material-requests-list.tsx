@@ -87,6 +87,7 @@ export function MaterialRequestsList({
               type="button"
               size="sm"
               variant={statusFilter === opt.value ? "default" : "outline"}
+              className="min-h-11 touch-manipulation px-3"
               onClick={() => setStatusFilter(opt.value)}
             >
               {opt.label}
@@ -97,7 +98,7 @@ export function MaterialRequestsList({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search job, material…"
-          className="sm:max-w-xs"
+          className="min-h-11 sm:max-w-xs"
         />
       </div>
 
@@ -111,8 +112,8 @@ export function MaterialRequestsList({
         </div>
       ) : (
         <>
-          {/* Mobile cards */}
-          <ul className="space-y-3 md:hidden">
+          {/* Phone / tablet portrait cards */}
+          <ul className="space-y-3 lg:hidden">
             {filtered.map((r) => (
               <li
                 key={r.id}
@@ -165,8 +166,8 @@ export function MaterialRequestsList({
             ))}
           </ul>
 
-          {/* Desktop table */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border">
+          {/* Large tablet / desktop table */}
+          <div className="hidden lg:block overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
@@ -266,23 +267,41 @@ function RequestActions({
     (canManage && request.status !== "pulled" && request.status !== "cancelled")
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2">
       {busy ? (
         <Loader2 className="size-4 animate-spin text-muted-foreground" />
       ) : (
         <>
           {canManage && request.status === "pending" ? (
-            <Button type="button" size="sm" variant="outline" onClick={onSource}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-11 touch-manipulation"
+              onClick={onSource}
+            >
               Source
             </Button>
           ) : null}
           {canManage && (request.status === "sourced" || request.status === "batched") ? (
-            <Button type="button" size="sm" variant="outline" onClick={onPulled}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-11 touch-manipulation"
+              onClick={onPulled}
+            >
               Pulled
             </Button>
           ) : null}
           {showCancel ? (
-            <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="min-h-11 touch-manipulation"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
           ) : null}
