@@ -1,0 +1,436 @@
+{
+  "generatedAt": "2026-07-23T01:52:32.709Z",
+  "source": "data/docs/PROCUREMENT STATUS LOG.xlsx - MATERIAL LIST FOR PROJECTS.csv",
+  "items": [
+    {
+      "id": "mat_42e1a626c6",
+      "label": "1-1/4 SCH 80 STAINLESS PIPE",
+      "searchText": "1-1/4 sch 80 stainless pipe"
+    },
+    {
+      "id": "mat_3ca2f03435",
+      "label": "1-1/4\" sch 80 STAINLESS",
+      "searchText": "1-1/4\" sch 80 stainless"
+    },
+    {
+      "id": "mat_df8ae7fd28",
+      "label": "1\" SCH 80 STAINLESS PIPE",
+      "searchText": "1\" sch 80 stainless pipe"
+    },
+    {
+      "id": "mat_c89caf74cc",
+      "label": "1/2 SCH 40 PIPE",
+      "searchText": "1/2 sch 40 pipe"
+    },
+    {
+      "id": "mat_0626d93327",
+      "label": "1/2 SCH 80 PIPE",
+      "searchText": "1/2 sch 80 pipe"
+    },
+    {
+      "id": "mat_6ffb8c3db1",
+      "label": "3\"XXH .600 A53/A106B SMLS PE",
+      "searchText": "3\"xxh .600 a53/a106b smls pe"
+    },
+    {
+      "id": "mat_b4aedbd997",
+      "label": "C3 4.1#",
+      "searchText": "c3 4.1"
+    },
+    {
+      "id": "mat_dbc8f55a2b",
+      "label": "C6 8.2#",
+      "searchText": "c6 8.2"
+    },
+    {
+      "id": "mat_9609a8656b",
+      "label": "C8 11.5#",
+      "searchText": "c8 11.5"
+    },
+    {
+      "id": "mat_30112c72ad",
+      "label": "HSS RECT 12 X 6 X 3/8",
+      "searchText": "hss rect 12 x 6 x 3/8"
+    },
+    {
+      "id": "mat_6dad828012",
+      "label": "HSS RECT 6 X4 X .375",
+      "searchText": "hss rect 6 x4 x .375"
+    },
+    {
+      "id": "mat_14dadd0b47",
+      "label": "HSS RECT 8 X 6 X 3/8",
+      "searchText": "hss rect 8 x 6 x 3/8"
+    },
+    {
+      "id": "mat_c25298dabb",
+      "label": "HSS RECT 8 X4 X .375",
+      "searchText": "hss rect 8 x4 x .375"
+    },
+    {
+      "id": "mat_b7c58a189f",
+      "label": "HSS ROUND 10.75\" X .25\"",
+      "searchText": "hss round 10.75\" x .25\""
+    },
+    {
+      "id": "mat_8b63828224",
+      "label": "HSS ROUND 10.75\" X .500\" //10\" DIA. SCH. 60 PIPE",
+      "searchText": "hss round 10.75\" x .500\" //10\" dia. sch. 60 pipe"
+    },
+    {
+      "id": "mat_3615932b7b",
+      "label": "HSS ROUND 12.75\" X .25\"",
+      "searchText": "hss round 12.75\" x .25\""
+    },
+    {
+      "id": "mat_bd9e2790dc",
+      "label": "HSS ROUND 8 X .250\"",
+      "searchText": "hss round 8 x .250\""
+    },
+    {
+      "id": "mat_37feecbecf",
+      "label": "HSS SQUARE 10 X .250\"",
+      "searchText": "hss square 10 x .250\""
+    },
+    {
+      "id": "mat_7b3d92c02f",
+      "label": "HSS SQUARE 12 X .375\"",
+      "searchText": "hss square 12 x .375\""
+    },
+    {
+      "id": "mat_114a85dcb2",
+      "label": "HSS SQUARE 12 X .500\"",
+      "searchText": "hss square 12 x .500\""
+    },
+    {
+      "id": "mat_7e9ba9ad3f",
+      "label": "HSS SQUARE 3 X .250\"",
+      "searchText": "hss square 3 x .250\""
+    },
+    {
+      "id": "mat_e93a62e10f",
+      "label": "HSS SQUARE 6 X .250\"",
+      "searchText": "hss square 6 x .250\""
+    },
+    {
+      "id": "mat_961b60e817",
+      "label": "HSS SQUARE 6 X .375\"",
+      "searchText": "hss square 6 x .375\""
+    },
+    {
+      "id": "mat_dce1c9f713",
+      "label": "HSS SQUARE 8 X .250\"",
+      "searchText": "hss square 8 x .250\""
+    },
+    {
+      "id": "mat_5814ec5652",
+      "label": "L 3 1/2 X 3 1/2 X 1/4 A588",
+      "searchText": "l 3 1/2 x 3 1/2 x 1/4 a588"
+    },
+    {
+      "id": "mat_e78a82ca4e",
+      "label": "L 3 1/2 X 3 1/2 X 3/8 A588",
+      "searchText": "l 3 1/2 x 3 1/2 x 3/8 a588"
+    },
+    {
+      "id": "mat_6428cbc193",
+      "label": "L1 3/4 x 1 3/4 x3/16",
+      "searchText": "l1 3/4 x 1 3/4 x3/16"
+    },
+    {
+      "id": "mat_b50485c90f",
+      "label": "L2 1/2 x 2 1/2 x 1/4",
+      "searchText": "l2 1/2 x 2 1/2 x 1/4"
+    },
+    {
+      "id": "mat_45908a2e1c",
+      "label": "L2 1/2 x 2 1/2 x 3/16",
+      "searchText": "l2 1/2 x 2 1/2 x 3/16"
+    },
+    {
+      "id": "mat_92cfdb516e",
+      "label": "L2 1/2 X 2 1/2 X 3/8",
+      "searchText": "l2 1/2 x 2 1/2 x 3/8"
+    },
+    {
+      "id": "mat_8c4875a44f",
+      "label": "L2 x 2 x 1/4",
+      "searchText": "l2 x 2 x 1/4"
+    },
+    {
+      "id": "mat_e0a774cbaa",
+      "label": "L2 x 2 x 3/16",
+      "searchText": "l2 x 2 x 3/16"
+    },
+    {
+      "id": "mat_8ad71bca8b",
+      "label": "L2 x 2 x 5/16",
+      "searchText": "l2 x 2 x 5/16"
+    },
+    {
+      "id": "mat_f29666cf06",
+      "label": "L2-1/2 X 2  X 3/16",
+      "searchText": "l2-1/2 x 2 x 3/16"
+    },
+    {
+      "id": "mat_aca1097363",
+      "label": "L2-1/2 X 2-1/2  X 5/16",
+      "searchText": "l2-1/2 x 2-1/2 x 5/16"
+    },
+    {
+      "id": "mat_d26dc3a927",
+      "label": "L3 x 2 x 1/4",
+      "searchText": "l3 x 2 x 1/4"
+    },
+    {
+      "id": "mat_a0f47c09cf",
+      "label": "L3 X 2-1/2 X 1/4",
+      "searchText": "l3 x 2-1/2 x 1/4"
+    },
+    {
+      "id": "mat_fc8b75c7d3",
+      "label": "L3 X 3 X 1/4",
+      "searchText": "l3 x 3 x 1/4"
+    },
+    {
+      "id": "mat_fb734b96c5",
+      "label": "L3 x 3 x 3/16",
+      "searchText": "l3 x 3 x 3/16"
+    },
+    {
+      "id": "mat_e1cf24e57e",
+      "label": "L3 x 3 x 3/8",
+      "searchText": "l3 x 3 x 3/8"
+    },
+    {
+      "id": "mat_a78fbeae05",
+      "label": "L3-1/2 X 2 1/2 X 1/4",
+      "searchText": "l3-1/2 x 2 1/2 x 1/4"
+    },
+    {
+      "id": "mat_349a4de2ef",
+      "label": "L3-1/2 X 3 1/2 X 3/8",
+      "searchText": "l3-1/2 x 3 1/2 x 3/8"
+    },
+    {
+      "id": "mat_ef1796838b",
+      "label": "L3-1/2 X 3 X 1/4",
+      "searchText": "l3-1/2 x 3 x 1/4"
+    },
+    {
+      "id": "mat_f580c20138",
+      "label": "L3-1/2 X 3-1/2 X 1/2",
+      "searchText": "l3-1/2 x 3-1/2 x 1/2"
+    },
+    {
+      "id": "mat_5dc62e387c",
+      "label": "L3-1/2 X 3-1/2 X 1/4",
+      "searchText": "l3-1/2 x 3-1/2 x 1/4"
+    },
+    {
+      "id": "mat_c0c32296ea",
+      "label": "L4 X 3 X 1/4",
+      "searchText": "l4 x 3 x 1/4"
+    },
+    {
+      "id": "mat_e9f039d9b3",
+      "label": "L4 X 3 X 5/16",
+      "searchText": "l4 x 3 x 5/16"
+    },
+    {
+      "id": "mat_41fb0bf0d9",
+      "label": "L4 X 3-1/2 X 3/8",
+      "searchText": "l4 x 3-1/2 x 3/8"
+    },
+    {
+      "id": "mat_4fcf812dfa",
+      "label": "L4 x 4 x 1/2",
+      "searchText": "l4 x 4 x 1/2"
+    },
+    {
+      "id": "mat_199f0122d1",
+      "label": "L4 X 4 X 1/4",
+      "searchText": "l4 x 4 x 1/4"
+    },
+    {
+      "id": "mat_9906c3b5a4",
+      "label": "L4 x 4 x 3/8",
+      "searchText": "l4 x 4 x 3/8"
+    },
+    {
+      "id": "mat_ea72faf7f6",
+      "label": "L4 x 4 x 3/8 A588",
+      "searchText": "l4 x 4 x 3/8 a588"
+    },
+    {
+      "id": "mat_9fc728b8e4",
+      "label": "L4 X4 X 5/16",
+      "searchText": "l4 x4 x 5/16"
+    },
+    {
+      "id": "mat_c5bb51e100",
+      "label": "L5 X 3-1/2 X 5/16",
+      "searchText": "l5 x 3-1/2 x 5/16"
+    },
+    {
+      "id": "mat_e99414e7b9",
+      "label": "L5 x 5 x 1/2",
+      "searchText": "l5 x 5 x 1/2"
+    },
+    {
+      "id": "mat_bd9528f7a4",
+      "label": "L5 x 5 x 3/8",
+      "searchText": "l5 x 5 x 3/8"
+    },
+    {
+      "id": "mat_9a605fe261",
+      "label": "L5 x 5 x 5/16",
+      "searchText": "l5 x 5 x 5/16"
+    },
+    {
+      "id": "mat_6bdc6dca0a",
+      "label": "L5 X 5 X 5/8",
+      "searchText": "l5 x 5 x 5/8"
+    },
+    {
+      "id": "mat_e30704ed6d",
+      "label": "L6 x 4 x 1/2",
+      "searchText": "l6 x 4 x 1/2"
+    },
+    {
+      "id": "mat_450718ff91",
+      "label": "L6 X 4 X 3/8",
+      "searchText": "l6 x 4 x 3/8"
+    },
+    {
+      "id": "mat_27700a29b6",
+      "label": "L6 x 6 x 1/2",
+      "searchText": "l6 x 6 x 1/2"
+    },
+    {
+      "id": "mat_fb536b53b2",
+      "label": "L6 X 6 X 3/4 A572",
+      "searchText": "l6 x 6 x 3/4 a572"
+    },
+    {
+      "id": "mat_dad9c8fca5",
+      "label": "L6 x 6 x 3/8",
+      "searchText": "l6 x 6 x 3/8"
+    },
+    {
+      "id": "mat_3a51344cd9",
+      "label": "L6 X 6 X 5/8",
+      "searchText": "l6 x 6 x 5/8"
+    },
+    {
+      "id": "mat_da729ca734",
+      "label": "L6 X 6 X 5/8 A572G50",
+      "searchText": "l6 x 6 x 5/8 a572g50"
+    },
+    {
+      "id": "mat_502e35fb88",
+      "label": "L8 x 4 x 1/2",
+      "searchText": "l8 x 4 x 1/2"
+    },
+    {
+      "id": "mat_0e6c970955",
+      "label": "L8 X 8 X 1",
+      "searchText": "l8 x 8 x 1"
+    },
+    {
+      "id": "mat_6f2020f0f4",
+      "label": "L8 X 8 X 3/4",
+      "searchText": "l8 x 8 x 3/4"
+    },
+    {
+      "id": "mat_3375fe02a2",
+      "label": "MC12 50#",
+      "searchText": "mc12 50"
+    },
+    {
+      "id": "mat_071367f99f",
+      "label": "PIPE 12\" DIA SCH 20",
+      "searchText": "pipe 12\" dia sch 20"
+    },
+    {
+      "id": "mat_12d5d6bb1a",
+      "label": "PIPE 14\" DIA SCH 10",
+      "searchText": "pipe 14\" dia sch 10"
+    },
+    {
+      "id": "mat_16a91e939d",
+      "label": "PIPE 16\" DIA SCH 10",
+      "searchText": "pipe 16\" dia sch 10"
+    },
+    {
+      "id": "mat_e4fee035f9",
+      "label": "PIPE 6\" DIA SCH 40",
+      "searchText": "pipe 6\" dia sch 40"
+    },
+    {
+      "id": "mat_2d17f6269b",
+      "label": "W4 13#",
+      "searchText": "w4 13"
+    },
+    {
+      "id": "mat_77117e7f00",
+      "label": "W6 12#",
+      "searchText": "w6 12"
+    },
+    {
+      "id": "mat_ef42e0a55b",
+      "label": "W6 15 A588",
+      "searchText": "w6 15 a588"
+    },
+    {
+      "id": "mat_8565df9032",
+      "label": "W6 15#",
+      "searchText": "w6 15"
+    },
+    {
+      "id": "mat_8f916002cf",
+      "label": "W6 15# A992",
+      "searchText": "w6 15 a992"
+    },
+    {
+      "id": "mat_b0a9e28c1f",
+      "label": "W6 20 A588",
+      "searchText": "w6 20 a588"
+    },
+    {
+      "id": "mat_8c55742cbf",
+      "label": "W8 24# A992",
+      "searchText": "w8 24 a992"
+    },
+    {
+      "id": "mat_0dbd2b5216",
+      "label": "W8 28 A588",
+      "searchText": "w8 28 a588"
+    },
+    {
+      "id": "mat_bc449fd298",
+      "label": "W8 28# A992",
+      "searchText": "w8 28 a992"
+    },
+    {
+      "id": "mat_448153e20b",
+      "label": "W8 31#",
+      "searchText": "w8 31"
+    },
+    {
+      "id": "mat_2e70a86f07",
+      "label": "W8 40#",
+      "searchText": "w8 40"
+    },
+    {
+      "id": "mat_b3d206fd0e",
+      "label": "WT4 6.5#",
+      "searchText": "wt4 6.5"
+    },
+    {
+      "id": "mat_fe0f60b3a1",
+      "label": "WT6 X 32.5",
+      "searchText": "wt6 x 32.5"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { MaterialCatalogPicker } from "@/components/material-requests/material-catalog-picker"
 import { createMaterialPullRequestAction } from "@/lib/actions/material-pull-requests"
 import { MATERIAL_PULL_STAGES } from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
@@ -94,14 +95,7 @@ export function MaterialRequestForm({
         <label htmlFor="material" className="text-sm font-medium">
           Material
         </label>
-        <Input
-          id="material"
-          name="material"
-          placeholder="L4x4x3/8 x 40' A588"
-          required
-          autoComplete="off"
-          className="min-h-11 text-base md:text-sm"
-        />
+        <MaterialCatalogPicker id="material" name="material" required />
       </div>
 
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">

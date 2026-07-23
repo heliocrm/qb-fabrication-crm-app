@@ -50,6 +50,15 @@ Local test: set `NEXT_PUBLIC_APP_MODE=pull` in `.env.local` and restart `pnpm de
 - Data persists across refresh / devices (Supabase)
 - Status events notify via push or email fallback
 
+## Material catalog (searchable picker)
+
+The Material field on `/pull/new` and CRM `/material-requests/new` uses a static catalog generated from the Procurement Status Log CSV.
+
+1. Re-export / update  
+   `data/docs/PROCUREMENT STATUS LOG.xlsx - MATERIAL LIST FOR PROJECTS.csv`
+2. Regenerate: `pnpm catalog:materials`
+3. Commit the updated `data/material-catalog.json`
+
 ## Note on service worker
 
 PWA uses committed `public/sw.js` (registered by `PwaRegister`). Serwist was not used because Next 16 Turbopack builds do not emit its worker reliably.
