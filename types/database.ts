@@ -711,13 +711,15 @@ export interface Database {
           quantity: number
           unit: string
           needed_by: string | null
-          stage: string | null
+          location: string | null
           notes: string | null
           status: MaterialPullStatus
           requested_by: string
-          sourced_by: string | null
+          approved_by: string | null
           pulled_by: string | null
           batch_id: string | null
+          pull_notes: string | null
+          pull_checklist: Json | null
           created_at: string
           updated_at: string
         }
@@ -730,13 +732,15 @@ export interface Database {
           quantity: number
           unit?: string
           needed_by?: string | null
-          stage?: string | null
+          location?: string | null
           notes?: string | null
           status?: MaterialPullStatus
           requested_by: string
-          sourced_by?: string | null
+          approved_by?: string | null
           pulled_by?: string | null
           batch_id?: string | null
+          pull_notes?: string | null
+          pull_checklist?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -749,13 +753,15 @@ export interface Database {
           quantity?: number
           unit?: string
           needed_by?: string | null
-          stage?: string | null
+          location?: string | null
           notes?: string | null
           status?: MaterialPullStatus
           requested_by?: string
-          sourced_by?: string | null
+          approved_by?: string | null
           pulled_by?: string | null
           batch_id?: string | null
+          pull_notes?: string | null
+          pull_checklist?: Json | null
           created_at?: string
           updated_at?: string
         }

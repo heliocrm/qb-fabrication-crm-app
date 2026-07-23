@@ -1,5 +1,9 @@
+import { redirect } from "next/navigation"
 import { MaterialBatchClient } from "@/components/material-requests/material-batch-client"
-import { getSessionContext } from "@/lib/auth/session"
+import {
+  canManageMaterialRequests,
+  getSessionContext,
+} from "@/lib/auth/session"
 import { loadMaterialPullRequests } from "@/lib/data/material-pull-requests"
 
 export const metadata = {
@@ -13,6 +17,11 @@ export default async function PullBatchPage({
 }) {
   const params = await searchParams
   const ctx = await getSessionContext()
+  const role = ctx?.role ?? "viewer"
+  if (!canManageMaterialRequests(role)) {
+    redirect("/pull")
+  }
+
   const { requests } = await loadMaterialPullRequests({ status: "all" })
 
   return (
@@ -20,12 +29,12 @@ export default async function PullBatchPage({
       <div className="print:hidden">
         <h1 className="text-xl font-semibold">Batch / Pull list</h1>
         <p className="text-sm text-muted-foreground">
-          Tristan: print this list, pull material, mark complete.
+          Print this list, pull material, complete the checklist, mark done.
         </p>
       </div>
       <MaterialBatchClient
         requests={requests}
-        role={ctx?.role ?? "viewer"}
+        role={role}
         initialBatchId={params.batch}
       />
     </div>

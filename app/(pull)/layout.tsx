@@ -2,6 +2,7 @@ import Link from "next/link"
 import { BrandLogo } from "@/components/brand-logo"
 import { PullNav } from "@/components/material-requests/pull-nav"
 import { PullPwaToolbar } from "@/components/material-requests/pull-pwa-toolbar"
+import { getSessionContext } from "@/lib/auth/session"
 import { PULL_SHELL_WIDTH } from "@/lib/pull-layout"
 import { isPullStandalone } from "@/lib/pull-mode"
 import { getUserProfile } from "@/lib/supabase/provision"
@@ -12,9 +13,10 @@ export default async function PullLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [user, pullStandalone] = await Promise.all([
+  const [user, pullStandalone, ctx] = await Promise.all([
     getUserProfile(),
     isPullStandalone(),
+    getSessionContext(),
   ])
 
   return (
@@ -51,7 +53,7 @@ export default async function PullLayout({
             ) : null}
           </div>
         </div>
-        <PullNav />
+        <PullNav role={ctx?.role ?? "viewer"} />
       </header>
       <main
         className={cn(

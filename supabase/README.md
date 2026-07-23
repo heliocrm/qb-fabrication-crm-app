@@ -11,6 +11,8 @@ Run migrations in order in the [SQL Editor](https://supabase.com/dashboard/proje
 7. `007_user_roles_and_assignees.sql` — roles, `job_assignees`, RLS helpers, admin bootstrap
 8. `008_profile_and_report_views.sql` — avatar_url, notification prefs, report_views, avatars bucket
 9. `009_report_views_user_isolation.sql` — force RLS + unique view names per user
+10. `010_material_pull_requests.sql` — material pull funnel
+11. `011_material_pull_hierarchy.sql` — approved status, location, pull_notes / pull_checklist
 
 ## Seed demo data
 

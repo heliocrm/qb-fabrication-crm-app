@@ -7,13 +7,26 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import {
   createMaterialPullBatchAction,
   markBatchPulledAction,
 } from "@/lib/actions/material-pull-requests"
+import { canManageMaterialRequests } from "@/lib/auth/permissions"
 import {
+  createDefaultPullChecklist,
   formatNeededBy,
+  MATERIAL_PULL_CANNED_NOTES,
   MATERIAL_PULL_STATUS_LABELS,
   statusBadgeClass,
+  type MaterialPullChecklist,
 } from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -25,21 +38,31 @@ interface MaterialBatchClientProps {
   initialBatchId?: string | null
 }
 
+type ConfirmKind = "create" | "pulled" | null
+
 export function MaterialBatchClient({
   requests,
   role,
   initialBatchId,
 }: MaterialBatchClientProps) {
   const router = useRouter()
-  const canManage = role === "admin" || role === "manager"
+  const canManage = canManageMaterialRequests(role)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [activeBatchId, setActiveBatchId] = useState<string | null>(
     initialBatchId ?? null
   )
   const [isPending, startTransition] = useTransition()
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null)
+  const [confirmBatchId, setConfirmBatchId] = useState<string | null>(null)
+  const [checklist, setChecklist] = useState<MaterialPullChecklist>(() =>
+    createDefaultPullChecklist()
+  )
+  const [notePreset, setNotePreset] = useState<string>(MATERIAL_PULL_CANNED_NOTES[0])
+  const [noteExtra, setNoteExtra] = useState("")
 
   const batchable = useMemo(
-    () => requests.filter((r) => r.status === "pending" || r.status === "sourced"),
+    () =>
+      requests.filter((r) => r.status === "pending" || r.status === "approved"),
     [requests]
   )
 
@@ -61,6 +84,8 @@ export function MaterialBatchClient({
     return batchable.filter((r) => selected.has(r.id))
   }, [activeBatchId, requests, batchable, selected])
 
+  const checklistComplete = checklist.items.every((i) => i.done)
+
   function toggle(id: string) {
     setSelected((prev) => {
       const next = new Set(prev)
@@ -74,11 +99,24 @@ export function MaterialBatchClient({
     setSelected(new Set(batchable.map((r) => r.id)))
   }
 
-  function createBatch() {
+  function openCreateConfirm() {
     if (selected.size === 0) {
-      toast.error("Select requests", "Choose at least one item for Tristan’s list.")
+      toast.error("Select requests", "Choose at least one item for the pull list.")
       return
     }
+    setConfirmKind("create")
+  }
+
+  function openPulledConfirm(batchId: string) {
+    setChecklist(createDefaultPullChecklist())
+    setNotePreset(MATERIAL_PULL_CANNED_NOTES[0])
+    setNoteExtra("")
+    setConfirmBatchId(batchId)
+    setConfirmKind("pulled")
+  }
+
+  function confirmCreateBatch() {
+    setConfirmKind(null)
     startTransition(async () => {
       const result = await createMaterialPullBatchAction([...selected])
       if (result.error) {
@@ -88,14 +126,30 @@ export function MaterialBatchClient({
       const batchId = result.data?.[0]?.batchId ?? null
       setActiveBatchId(batchId)
       setSelected(new Set())
-      toast.success("Batch created", "Pull list ready for Tristan.")
+      toast.success("Batch created", "Pull list is ready.")
       router.refresh()
     })
   }
 
-  function markPulled(batchId: string) {
+  function confirmMarkPulled() {
+    if (!confirmBatchId) return
+    if (!checklistComplete) {
+      toast.error("Checklist incomplete", "Check all items or finish them before confirming.")
+      return
+    }
+    const pullNotes = [notePreset, noteExtra.trim()].filter(Boolean).join(" — ")
+    const batchId = confirmBatchId
+    setConfirmKind(null)
+    setConfirmBatchId(null)
     startTransition(async () => {
-      const result = await markBatchPulledAction(batchId)
+      const result = await markBatchPulledAction(batchId, {
+        pullNotes,
+        pullChecklist: {
+          ...checklist,
+          notePreset,
+          completedAt: new Date().toISOString(),
+        },
+      })
       if (result.error) {
         toast.error("Update failed", result.error)
         return
@@ -131,7 +185,7 @@ export function MaterialBatchClient({
                 type="button"
                 size="sm"
                 className="min-h-11 touch-manipulation"
-                onClick={createBatch}
+                onClick={openCreateConfirm}
                 disabled={isPending || selected.size === 0}
               >
                 {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
@@ -143,7 +197,7 @@ export function MaterialBatchClient({
 
         {batchable.length === 0 ? (
           <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-6 text-center">
-            No pending or sourced requests to batch.
+            No pending or approved requests to batch.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -172,7 +226,7 @@ export function MaterialBatchClient({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Needed {formatNeededBy(r.neededBy)}
-                    {r.stage ? ` · ${r.stage}` : ""}
+                    {r.location ? ` · ${r.location}` : ""}
                   </p>
                 </div>
               </li>
@@ -225,7 +279,7 @@ export function MaterialBatchClient({
                     variant="outline"
                     className="min-h-11 touch-manipulation"
                     disabled={isPending}
-                    onClick={() => markPulled(batchId)}
+                    onClick={() => openPulledConfirm(batchId)}
                   >
                     Mark all pulled
                   </Button>
@@ -236,7 +290,6 @@ export function MaterialBatchClient({
           ))
         )}
 
-        {/* Print-only view of selection / active batch */}
         <div className="hidden print:block">
           <h1 className="text-xl font-bold mb-2">QB Fabrication — Material Pull List</h1>
           <p className="text-sm mb-4">
@@ -245,6 +298,121 @@ export function MaterialBatchClient({
           <PrintableTable rows={printRows} />
         </div>
       </section>
+
+      <Dialog
+        open={confirmKind === "create"}
+        onOpenChange={(open) => !open && setConfirmKind(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create pull list?</DialogTitle>
+            <DialogDescription>
+              Batch {selected.size} selected request(s) into one printable pull list.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmKind(null)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmCreateBatch} disabled={isPending}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmKind === "pulled"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmKind(null)
+            setConfirmBatchId(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Complete pull</DialogTitle>
+            <DialogDescription>
+              Check each step, pick a note, then confirm. All items in this batch will be marked pulled.
+            </DialogDescription>
+          </DialogHeader>
+
+          <ul className="space-y-2">
+            {checklist.items.map((item, index) => (
+              <li key={item.id} className="flex items-center gap-3 min-h-11">
+                <Checkbox
+                  checked={item.done}
+                  onCheckedChange={(checked) => {
+                    setChecklist((prev) => ({
+                      ...prev,
+                      items: prev.items.map((it, i) =>
+                        i === index ? { ...it, done: checked === true } : it
+                      ),
+                    }))
+                  }}
+                  className="size-5 touch-manipulation"
+                  id={`check-${item.id}`}
+                />
+                <label htmlFor={`check-${item.id}`} className="text-sm">
+                  {item.label}
+                </label>
+              </li>
+            ))}
+          </ul>
+
+          <div className="space-y-1.5">
+            <label htmlFor="pull-note-preset" className="text-sm font-medium">
+              Completion note
+            </label>
+            <select
+              id="pull-note-preset"
+              value={notePreset}
+              onChange={(e) => setNotePreset(e.target.value)}
+              className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
+            >
+              {MATERIAL_PULL_CANNED_NOTES.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="pull-note-extra" className="text-sm font-medium">
+              Extra detail (optional)
+            </label>
+            <Input
+              id="pull-note-extra"
+              value={noteExtra}
+              onChange={(e) => setNoteExtra(e.target.value)}
+              placeholder="Bay, rack, substitute size…"
+              className="min-h-11"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setConfirmKind(null)
+                setConfirmBatchId(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmMarkPulled}
+              disabled={isPending || !checklistComplete}
+            >
+              Confirm pulled
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -259,7 +427,7 @@ function PrintableTable({ rows }: { rows: MaterialPullRequest[] }) {
           <th className="py-1 pr-2">Material</th>
           <th className="py-1 pr-2">Qty</th>
           <th className="py-1 pr-2">Needed</th>
-          <th className="py-1 pr-2">Stage</th>
+          <th className="py-1 pr-2">Location</th>
           <th className="py-1">Notes</th>
         </tr>
       </thead>
@@ -272,8 +440,10 @@ function PrintableTable({ rows }: { rows: MaterialPullRequest[] }) {
               {r.quantity} {r.unit}
             </td>
             <td className="py-1.5 pr-2 whitespace-nowrap">{formatNeededBy(r.neededBy)}</td>
-            <td className="py-1.5 pr-2">{r.stage ?? "—"}</td>
-            <td className="py-1.5">{r.notes ?? ""}</td>
+            <td className="py-1.5 pr-2">{r.location ?? "—"}</td>
+            <td className="py-1.5">
+              {[r.notes, r.pullNotes].filter(Boolean).join(" · ") || ""}
+            </td>
           </tr>
         ))}
       </tbody>

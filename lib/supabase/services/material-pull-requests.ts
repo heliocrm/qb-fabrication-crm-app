@@ -6,6 +6,7 @@ import {
   type TypedSupabaseClient,
 } from "@/lib/supabase/schema"
 import { mapMaterialPullRequestRow } from "@/lib/supabase/mappers"
+import type { MaterialPullChecklist } from "@/lib/material-pull-config"
 import type {
   CreateMaterialPullInput,
   MaterialPullListFilters,
@@ -36,7 +37,7 @@ export async function listMaterialPullRequests(
     .order("created_at", { ascending: false })
 
   if (filters.status === "open") {
-    query = query.in("status", ["pending", "sourced", "batched"])
+    query = query.in("status", ["pending", "approved", "batched"])
   } else if (filters.status && filters.status !== "all") {
     query = query.eq("status", filters.status)
   }
@@ -122,7 +123,7 @@ export async function createMaterialPullRequest(
       quantity: input.quantity,
       unit: input.unit?.trim() || "ea",
       needed_by: input.neededBy || null,
-      stage: input.stage?.trim() || null,
+      location: input.location?.trim() || null,
       notes: input.notes?.trim() || null,
       status: "pending",
       requested_by: requestedBy,
@@ -148,8 +149,8 @@ export async function updateMaterialPullStatus(
     status,
   }
 
-  if (status === "sourced") {
-    updates.sourced_by = actorProfileId
+  if (status === "approved") {
+    updates.approved_by = actorProfileId
   }
   if (status === "pulled") {
     updates.pulled_by = actorProfileId
@@ -228,16 +229,29 @@ export async function assignMaterialPullBatch(
 
 export async function markBatchPulled(
   batchId: string,
-  actorProfileId: string
+  actorProfileId: string,
+  completion?: {
+    pullNotes?: string | null
+    pullChecklist?: MaterialPullChecklist | null
+  }
 ): Promise<MaterialPullRequest[]> {
   const supabase = await getClient()
   await requireOrganizationId(supabase)
+
+  const checklist = completion?.pullChecklist
+    ? {
+        ...completion.pullChecklist,
+        completedAt: new Date().toISOString(),
+      }
+    : null
 
   const { data, error } = await supabase
     .from(Tables.material_pull_requests)
     .update({
       status: "pulled",
       pulled_by: actorProfileId,
+      pull_notes: completion?.pullNotes?.trim() || null,
+      pull_checklist: checklist as MaterialPullRequestUpdate["pull_checklist"],
       updated_at: new Date().toISOString(),
     })
     .eq("batch_id", batchId)
@@ -252,7 +266,7 @@ export async function markBatchPulled(
 
 export async function getMaterialPullSummary(): Promise<{
   pending: number
-  sourced: number
+  approved: number
   batched: number
   pulled: number
   cancelled: number
@@ -268,7 +282,7 @@ export async function getMaterialPullSummary(): Promise<{
 
   const summary = {
     pending: 0,
-    sourced: 0,
+    approved: 0,
     batched: 0,
     pulled: 0,
     cancelled: 0,

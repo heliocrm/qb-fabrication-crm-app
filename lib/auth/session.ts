@@ -2,7 +2,21 @@ import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { Tables } from "@/lib/supabase/schema"
 import { ensureUserProfile } from "@/lib/supabase/provision"
+import {
+  canManageAssignees,
+  isAdminRole,
+} from "@/lib/auth/permissions"
 import type { OrganizationRole } from "@/types"
+
+export {
+  canWriteJobs,
+  canManageAssignees,
+  canCreateJobs,
+  isAdminRole,
+  canCreateMaterialRequests,
+  canManageMaterialRequests,
+  canViewMaterialRequests,
+} from "@/lib/auth/permissions"
 
 export interface SessionContext {
   profileId: string
@@ -12,39 +26,6 @@ export interface SessionContext {
   isActive: boolean
   fullName: string
   email: string | undefined
-}
-
-export function canWriteJobs(role: OrganizationRole): boolean {
-  return role === "admin" || role === "manager" || role === "member"
-}
-
-export function canManageAssignees(role: OrganizationRole): boolean {
-  return role === "admin" || role === "manager"
-}
-
-export function canCreateJobs(role: OrganizationRole): boolean {
-  return role === "admin" || role === "manager"
-}
-
-export function isAdminRole(role: OrganizationRole): boolean {
-  return role === "admin"
-}
-
-export function canCreateMaterialRequests(role: OrganizationRole): boolean {
-  return role === "admin" || role === "manager" || role === "member"
-}
-
-export function canManageMaterialRequests(role: OrganizationRole): boolean {
-  return role === "admin" || role === "manager"
-}
-
-export function canViewMaterialRequests(role: OrganizationRole): boolean {
-  return (
-    role === "admin" ||
-    role === "manager" ||
-    role === "member" ||
-    role === "viewer"
-  )
 }
 
 export async function getSessionContext(): Promise<SessionContext | null> {

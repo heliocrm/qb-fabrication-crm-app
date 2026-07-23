@@ -10,6 +10,7 @@ import {
   cancelMaterialPullRequestAction,
   updateMaterialPullStatusAction,
 } from "@/lib/actions/material-pull-requests"
+import { canManageMaterialRequests } from "@/lib/auth/permissions"
 import {
   formatNeededBy,
   MATERIAL_PULL_STATUS_LABELS,
@@ -38,18 +39,18 @@ export function MaterialRequestsList({
   const [search, setSearch] = useState("")
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const canManage = role === "admin" || role === "manager"
+  const canManage = canManageMaterialRequests(role)
 
   const filtered = useMemo(() => {
     return initialRequests.filter((r) => {
       if (statusFilter === "open") {
-        if (!["pending", "sourced", "batched"].includes(r.status)) return false
+        if (!["pending", "approved", "batched"].includes(r.status)) return false
       } else if (statusFilter !== "all" && r.status !== statusFilter) {
         return false
       }
       if (search.trim()) {
         const q = search.trim().toLowerCase()
-        const hay = `${r.jobNumber} ${r.material} ${r.notes ?? ""} ${r.requestedByName ?? ""}`.toLowerCase()
+        const hay = `${r.jobNumber} ${r.material} ${r.notes ?? ""} ${r.requestedByName ?? ""} ${r.location ?? ""}`.toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
@@ -112,7 +113,6 @@ export function MaterialRequestsList({
         </div>
       ) : (
         <>
-          {/* Phone / tablet portrait cards */}
           <ul className="space-y-3 lg:hidden">
             {filtered.map((r) => (
               <li
@@ -133,18 +133,18 @@ export function MaterialRequestsList({
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {r.quantity} {r.unit} · Needed {formatNeededBy(r.neededBy)}
-                  {r.stage ? ` · ${r.stage}` : ""}
+                  {r.location ? ` · ${r.location}` : ""}
                 </p>
                 {r.notes ? <p className="text-sm">{r.notes}</p> : null}
                 <RequestActions
                   request={r}
                   canManage={canManage}
                   busy={isPending && pendingId === r.id}
-                  onSource={() =>
+                  onApprove={() =>
                     runAction(
                       r.id,
-                      () => updateMaterialPullStatusAction(r.id, "sourced"),
-                      "Marked sourced"
+                      () => updateMaterialPullStatusAction(r.id, "approved"),
+                      "Approved"
                     )
                   }
                   onPulled={() =>
@@ -166,7 +166,6 @@ export function MaterialRequestsList({
             ))}
           </ul>
 
-          {/* Large tablet / desktop table */}
           <div className="hidden lg:block overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
@@ -213,11 +212,11 @@ export function MaterialRequestsList({
                         request={r}
                         canManage={canManage}
                         busy={isPending && pendingId === r.id}
-                        onSource={() =>
+                        onApprove={() =>
                           runAction(
                             r.id,
-                            () => updateMaterialPullStatusAction(r.id, "sourced"),
-                            "Marked sourced"
+                            () => updateMaterialPullStatusAction(r.id, "approved"),
+                            "Approved"
                           )
                         }
                         onPulled={() =>
@@ -251,14 +250,14 @@ function RequestActions({
   request,
   canManage,
   busy,
-  onSource,
+  onApprove,
   onPulled,
   onCancel,
 }: {
   request: MaterialPullRequest
   canManage: boolean
   busy: boolean
-  onSource: () => void
+  onApprove: () => void
   onPulled: () => void
   onCancel: () => void
 }) {
@@ -278,12 +277,12 @@ function RequestActions({
               size="sm"
               variant="outline"
               className="min-h-11 touch-manipulation"
-              onClick={onSource}
+              onClick={onApprove}
             >
-              Source
+              Approve
             </Button>
           ) : null}
-          {canManage && (request.status === "sourced" || request.status === "batched") ? (
+          {canManage && (request.status === "approved" || request.status === "batched") ? (
             <Button
               type="button"
               size="sm"

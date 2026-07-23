@@ -88,6 +88,7 @@ export type {
   MaterialPullRequestUpdate,
   MaterialPullListFilters,
   CreateMaterialPullInput,
+  MarkBatchPulledInput,
   PushSubscriptionRow,
   PushSubscriptionInsert,
 } from "./MaterialPullRequest"

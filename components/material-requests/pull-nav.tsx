@@ -2,17 +2,21 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { canManageMaterialRequests } from "@/lib/auth/permissions"
 import { PULL_SHELL_WIDTH } from "@/lib/pull-layout"
 import { cn } from "@/lib/utils"
+import type { OrganizationRole } from "@/types"
 
-const tabs = [
-  { href: "/pull", label: "Requests", exact: true },
-  { href: "/pull/new", label: "New", exact: false },
-  { href: "/pull/batch", label: "Batch", exact: false },
+const allTabs = [
+  { href: "/pull", label: "Requests", exact: true, managersOnly: false },
+  { href: "/pull/new", label: "New", exact: false, managersOnly: false },
+  { href: "/pull/batch", label: "Batch", exact: false, managersOnly: true },
 ]
 
-export function PullNav() {
+export function PullNav({ role }: { role: OrganizationRole }) {
   const pathname = usePathname()
+  const showBatch = canManageMaterialRequests(role)
+  const tabs = allTabs.filter((t) => !t.managersOnly || showBatch)
 
   return (
     <nav

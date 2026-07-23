@@ -31,8 +31,8 @@ export default async function LoginPage({
                 QB Material Pull
               </h1>
               <p className="text-white/70 text-sm leading-relaxed">
-                Request material, source it, and batch pull lists for the floor —
-                one place for Eric, Tristan, and the shop.
+                Request material, approve it, and batch pull lists for the floor —
+                Submission → Approval → Batch &amp; Pull.
               </p>
             </>
           ) : (

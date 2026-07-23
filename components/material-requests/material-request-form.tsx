@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { MaterialCatalogPicker } from "@/components/material-requests/material-catalog-picker"
 import { createMaterialPullRequestAction } from "@/lib/actions/material-pull-requests"
-import { MATERIAL_PULL_STAGES } from "@/lib/material-pull-config"
+import { MATERIAL_PULL_LOCATIONS } from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
 
 interface MaterialRequestFormProps {
@@ -32,7 +32,7 @@ export function MaterialRequestForm({
     const quantity = Number(fd.get("quantity"))
     const unit = String(fd.get("unit") ?? "ea").trim() || "ea"
     const neededBy = String(fd.get("neededBy") ?? "").trim() || null
-    const stage = String(fd.get("stage") ?? "").trim() || null
+    const location = String(fd.get("location") ?? "").trim() || null
     const notes = String(fd.get("notes") ?? "").trim() || null
 
     if (!jobNumber || !material || !(quantity > 0)) {
@@ -47,7 +47,7 @@ export function MaterialRequestForm({
       quantity,
       unit,
       neededBy,
-      stage,
+      location,
       notes,
     })
     setIsSubmitting(false)
@@ -57,7 +57,7 @@ export function MaterialRequestForm({
       return
     }
 
-    toast.success("Request submitted", "Eric’s queue has been notified.")
+    toast.success("Request submitted", "Approval queue has been notified.")
     router.push(redirectTo)
     router.refresh()
   }
@@ -127,16 +127,16 @@ export function MaterialRequestForm({
           />
         </div>
         <div className="space-y-1.5 col-span-2 sm:col-span-1">
-          <label htmlFor="stage" className="text-sm font-medium">
-            Stage
+          <label htmlFor="location" className="text-sm font-medium">
+            Location
           </label>
           <select
-            id="stage"
-            name="stage"
+            id="location"
+            name="location"
             className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
             defaultValue="Fabrication"
           >
-            {MATERIAL_PULL_STAGES.map((s) => (
+            {MATERIAL_PULL_LOCATIONS.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
@@ -182,7 +182,7 @@ export function MaterialRequestForm({
       <CardHeader>
         <CardTitle>New material pull request</CardTitle>
         <CardDescription>
-          Submit to the Eric queue. Tristan pulls from the batched list.
+          Submit for Approval. Material Handlers batch and pull from the approved list.
         </CardDescription>
       </CardHeader>
       <CardContent>{form}</CardContent>

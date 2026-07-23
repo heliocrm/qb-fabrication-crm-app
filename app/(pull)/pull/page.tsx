@@ -5,6 +5,10 @@ import {
   loadMaterialPullRequests,
   loadMaterialPullSummary,
 } from "@/lib/data/material-pull-requests"
+import {
+  MATERIAL_PULL_FUNNEL,
+  MATERIAL_PULL_STATUS_LABELS,
+} from "@/lib/material-pull-config"
 
 export const metadata = {
   title: "Material Pull",
@@ -26,18 +30,16 @@ export default async function PullHomePage({
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold">All requests</h1>
-        <p className="text-sm text-muted-foreground">
-          Foremen submit · Eric sources · Tristan batches &amp; pulls
-        </p>
+        <p className="text-sm text-muted-foreground">{MATERIAL_PULL_FUNNEL}</p>
       </div>
 
       <EnablePushCard />
 
       {summary ? (
         <div className="grid grid-cols-3 gap-2 md:gap-3">
-          <Stat label="Pending" value={summary.pending} />
-          <Stat label="Sourced" value={summary.sourced} />
-          <Stat label="Batched" value={summary.batched} />
+          <Stat label={MATERIAL_PULL_STATUS_LABELS.pending} value={summary.pending} />
+          <Stat label={MATERIAL_PULL_STATUS_LABELS.approved} value={summary.approved} />
+          <Stat label={MATERIAL_PULL_STATUS_LABELS.batched} value={summary.batched} />
         </div>
       ) : null}
 

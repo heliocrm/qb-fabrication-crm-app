@@ -25,7 +25,7 @@ export async function loadMaterialPullRequests(
 
 export async function loadMaterialPullSummary(): Promise<{
   pending: number
-  sourced: number
+  approved: number
   batched: number
   pulled: number
   cancelled: number

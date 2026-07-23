@@ -12,6 +12,7 @@ import {
 } from "@/lib/supabase/services/push-subscriptions"
 import { sendWebPush } from "@/lib/push/web-push"
 import { sendMaterialPullEmail } from "@/lib/email/send-material-pull"
+import { MATERIAL_PULL_STATUS_LABELS } from "@/lib/material-pull-config"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/types/Profile"
 import type { MaterialPullRequest, NotificationPreferences } from "@/types"
 
@@ -60,7 +61,14 @@ function parsePrefs(raw: unknown): NotificationPreferences {
   }
 }
 
-async function loadOrgManagers(organizationId: string): Promise<Recipient[]> {
+function wantsMaterialAlerts(prefs: NotificationPreferences): boolean {
+  return prefs.material_request_push || prefs.material_request_email
+}
+
+/** Active org members who opted into material push and/or email. */
+async function loadMaterialNotifyRecipients(
+  organizationId: string
+): Promise<Recipient[]> {
   if (!isAdminClientConfigured()) return []
   const admin = createAdminClient()
   const { data: profiles } = await admin
@@ -68,18 +76,19 @@ async function loadOrgManagers(organizationId: string): Promise<Recipient[]> {
     .select("id, full_name, user_id, notification_preferences, role")
     .eq("organization_id", organizationId)
     .eq("is_active", true)
-    .in("role", ["admin", "manager"])
 
   if (!profiles?.length) return []
 
   const recipients: Recipient[] = []
   for (const p of profiles) {
+    const prefs = parsePrefs(p.notification_preferences)
+    if (!wantsMaterialAlerts(prefs)) continue
     const { data: userData } = await admin.auth.admin.getUserById(p.user_id)
     recipients.push({
       profileId: p.id,
       email: userData.user?.email ?? null,
       fullName: p.full_name ?? "Team member",
-      prefs: parsePrefs(p.notification_preferences),
+      prefs,
     })
   }
   return recipients
@@ -132,20 +141,12 @@ function buildMessage(payload: MaterialPullNotifyPayload): {
         url,
       }
     case "status_changed":
-    default: {
-      const labels: Record<string, string> = {
-        pending: "Pending",
-        sourced: "Sourced",
-        batched: "Batched",
-        pulled: "Pulled",
-        cancelled: "Cancelled",
-      }
+    default:
       return {
-        title: `Request ${labels[request.status] ?? request.status}`,
+        title: `Request ${MATERIAL_PULL_STATUS_LABELS[request.status] ?? request.status}`,
         body: `${request.jobNumber}: ${request.quantity} ${request.unit} ${request.material}`,
         url,
       }
-    }
   }
 }
 
@@ -153,29 +154,29 @@ async function resolveRecipients(
   payload: MaterialPullNotifyPayload
 ): Promise<Recipient[]> {
   const orgId = payload.request.organizationId
-  const managers = await loadOrgManagers(orgId)
+  const optedIn = await loadMaterialNotifyRecipients(orgId)
   const requester = await loadProfileRecipient(payload.request.requestedBy)
 
   const byId = new Map<string, Recipient>()
 
-  if (payload.type === "created" || payload.type === "batched") {
-    for (const m of managers) byId.set(m.profileId, m)
-  }
+  for (const r of optedIn) byId.set(r.profileId, r)
 
-  if (
-    payload.type === "status_changed" ||
-    payload.type === "cancelled"
+  // Always include requester on events about their item (even if prefs off for board noise —
+  // they still get status on their own requests when prefs allow via optedIn; force-include
+  // requester so they learn about approve/batch/cancel of their submission).
+  if (requester && wantsMaterialAlerts(requester.prefs)) {
+    byId.set(requester.profileId, requester)
+  } else if (
+    requester &&
+    (payload.type === "status_changed" ||
+      payload.type === "cancelled" ||
+      payload.type === "batched")
   ) {
-    if (requester) byId.set(requester.profileId, requester)
-    if (payload.type === "cancelled") {
-      for (const m of managers) byId.set(m.profileId, m)
-    }
-    if (payload.request.status === "batched") {
-      for (const m of managers) byId.set(m.profileId, m)
-    }
+    // Requester gets status/batch/cancel even if they only left defaults — ensure they hear
+    // about their own request lifecycle.
+    byId.set(requester.profileId, requester)
   }
 
-  // Don't notify the actor about their own action
   byId.delete(payload.actorProfileId)
 
   return [...byId.values()]
@@ -184,7 +185,6 @@ async function resolveRecipients(
 export async function notifyMaterialPullEvent(
   payload: MaterialPullNotifyPayload
 ): Promise<void> {
-  // Ensure we have org context even if called after mutation
   try {
     await createClient()
   } catch {

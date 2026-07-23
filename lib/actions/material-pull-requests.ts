@@ -111,7 +111,7 @@ export async function updateMaterialPullStatusAction(
       notifyMaterialPullEvent({
         type: "status_changed",
         request: result.data!,
-        actorProfileId: result.data!.sourcedBy ?? result.data!.pulledBy ?? result.data!.requestedBy,
+        actorProfileId: result.data!.approvedBy ?? result.data!.pulledBy ?? result.data!.requestedBy,
         previousStatus: undefined,
       })
     )
@@ -160,7 +160,7 @@ export async function createMaterialPullBatchAction(ids: string[]) {
         notifyMaterialPullEvent({
           type: "batched",
           request: first,
-          actorProfileId: first.sourcedBy ?? first.requestedBy,
+          actorProfileId: first.approvedBy ?? first.requestedBy,
           batchCount: result.data!.length,
           batchId: first.batchId,
         })
@@ -182,7 +182,13 @@ export async function clearMaterialPullBatchAction(ids: string[]) {
   return result
 }
 
-export async function markBatchPulledAction(batchId: string) {
+export async function markBatchPulledAction(
+  batchId: string,
+  completion?: {
+    pullNotes?: string | null
+    pullChecklist?: import("@/lib/material-pull-config").MaterialPullChecklist | null
+  }
+) {
   let actorProfileId = ""
   const result = await safeAction(async () => {
     const ctx = await requireSessionContext()
@@ -190,7 +196,7 @@ export async function markBatchPulledAction(batchId: string) {
     if (!canManageMaterialRequests(ctx.role)) {
       throw new Error("Only managers and admins can mark batches pulled")
     }
-    return markBatchPulled(batchId, ctx.profileId)
+    return markBatchPulled(batchId, ctx.profileId, completion)
   })
 
   if (result.data?.length) {

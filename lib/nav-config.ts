@@ -40,7 +40,7 @@ export const mainNavItems: NavItem[] = [
     label: "Material Requests",
     href: "/material-requests",
     icon: Package,
-    description: "Pull requests for Eric and Tristan",
+    description: "Floor pull requests — Submission → Approval → Batch & Pull",
   },
   {
     label: "Customers",

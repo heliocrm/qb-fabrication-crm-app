@@ -2,11 +2,18 @@ import Link from "next/link"
 import { Package, Plus } from "lucide-react"
 import { MaterialRequestsList } from "@/components/material-requests/material-requests-list"
 import { Button } from "@/components/ui/button"
-import { getSessionContext } from "@/lib/auth/session"
+import {
+  canManageMaterialRequests,
+  getSessionContext,
+} from "@/lib/auth/session"
 import {
   loadMaterialPullRequests,
   loadMaterialPullSummary,
 } from "@/lib/data/material-pull-requests"
+import {
+  MATERIAL_PULL_FUNNEL,
+  MATERIAL_PULL_STATUS_LABELS,
+} from "@/lib/material-pull-config"
 
 export const metadata = {
   title: "Material Requests",
@@ -19,6 +26,8 @@ export default async function MaterialRequestsPage({
 }) {
   const params = await searchParams
   const ctx = await getSessionContext()
+  const role = ctx?.role ?? "viewer"
+  const canManage = canManageMaterialRequests(role)
   const [{ requests, source }, summary] = await Promise.all([
     loadMaterialPullRequests({ status: "all" }),
     loadMaterialPullSummary(),
@@ -33,14 +42,18 @@ export default async function MaterialRequestsPage({
             Material Requests
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Single funnel for floor pulls — request → Eric sources → Tristan batch/pull.
-            {source === "empty" ? " Connect Supabase and run migration 010 to load data." : ""}
+            {MATERIAL_PULL_FUNNEL}
+            {source === "empty"
+              ? " Connect Supabase and run migrations 010–011 to load data."
+              : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" render={<Link href="/material-requests/batch" />}>
-            Batch / Pull list
-          </Button>
+          {canManage ? (
+            <Button variant="outline" render={<Link href="/material-requests/batch" />}>
+              Batch / Pull list
+            </Button>
+          ) : null}
           <Button render={<Link href="/material-requests/new" />}>
             <Plus className="size-4" />
             New request
@@ -56,7 +69,7 @@ export default async function MaterialRequestsPage({
           {(
             [
               ["pending", summary.pending],
-              ["sourced", summary.sourced],
+              ["approved", summary.approved],
               ["batched", summary.batched],
               ["pulled", summary.pulled],
               ["cancelled", summary.cancelled],
@@ -67,7 +80,9 @@ export default async function MaterialRequestsPage({
               className="rounded-lg border bg-card px-3 py-2 text-center"
             >
               <p className="text-2xl font-semibold tabular-nums">{value}</p>
-              <p className="text-xs text-muted-foreground capitalize">{key}</p>
+              <p className="text-xs text-muted-foreground">
+                {MATERIAL_PULL_STATUS_LABELS[key]}
+              </p>
             </div>
           ))}
         </div>
@@ -75,7 +90,7 @@ export default async function MaterialRequestsPage({
 
       <MaterialRequestsList
         initialRequests={requests}
-        role={ctx?.role ?? "viewer"}
+        role={role}
         highlightId={params.highlight}
       />
     </div>

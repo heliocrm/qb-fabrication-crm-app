@@ -1,4 +1,5 @@
 import type { MaterialPullStatus } from "./enums"
+import type { MaterialPullChecklist } from "@/lib/material-pull-config"
 
 /** Domain model used by UI */
 export interface MaterialPullRequest {
@@ -10,14 +11,16 @@ export interface MaterialPullRequest {
   quantity: number
   unit: string
   neededBy: string | null
-  stage: string | null
+  location: string | null
   notes: string | null
   status: MaterialPullStatus
   requestedBy: string
   requestedByName: string | null
-  sourcedBy: string | null
+  approvedBy: string | null
   pulledBy: string | null
   batchId: string | null
+  pullNotes: string | null
+  pullChecklist: MaterialPullChecklist | null
   createdAt: string
   updatedAt: string
 }
@@ -32,13 +35,15 @@ export interface MaterialPullRequestRow {
   quantity: number
   unit: string
   needed_by: string | null
-  stage: string | null
+  location: string | null
   notes: string | null
   status: MaterialPullStatus
   requested_by: string
-  sourced_by: string | null
+  approved_by: string | null
   pulled_by: string | null
   batch_id: string | null
+  pull_notes: string | null
+  pull_checklist: MaterialPullChecklist | null
   created_at: string
   updated_at: string
 }
@@ -51,13 +56,15 @@ export interface MaterialPullRequestInsert {
   quantity: number
   unit?: string
   needed_by?: string | null
-  stage?: string | null
+  location?: string | null
   notes?: string | null
   status?: MaterialPullStatus
   requested_by: string
-  sourced_by?: string | null
+  approved_by?: string | null
   pulled_by?: string | null
   batch_id?: string | null
+  pull_notes?: string | null
+  pull_checklist?: MaterialPullChecklist | null
 }
 
 export type MaterialPullRequestUpdate = Partial<
@@ -81,8 +88,14 @@ export interface CreateMaterialPullInput {
   quantity: number
   unit?: string
   neededBy?: string | null
-  stage?: string | null
+  location?: string | null
   notes?: string | null
+}
+
+export interface MarkBatchPulledInput {
+  batchId: string
+  pullNotes?: string | null
+  pullChecklist?: MaterialPullChecklist | null
 }
 
 export interface PushSubscriptionRow {

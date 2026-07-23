@@ -37,7 +37,7 @@ export type OrganizationRole = "admin" | "manager" | "member" | "viewer"
 
 export type MaterialPullStatus =
   | "pending"
-  | "sourced"
+  | "approved"
   | "batched"
   | "pulled"
   | "cancelled"
