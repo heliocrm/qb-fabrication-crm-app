@@ -271,6 +271,77 @@ export async function deactivateOrgUser(
   await updateOrgUser(profileId, { isActive: false }, organizationId)
 }
 
+async function getOrgProfileAuthUser(
+  profileId: string,
+  organizationId: string
+): Promise<{ userId: string; email: string; fullName: string }> {
+  const admin = createAdminClient()
+  const { data: profile, error } = await admin
+    .from(Tables.profiles)
+    .select("user_id, full_name")
+    .eq("id", profileId)
+    .eq("organization_id", organizationId)
+    .single()
+
+  if (error || !profile) {
+    throw new Error("User not found in this organization")
+  }
+
+  const { data: authData, error: authError } = await admin.auth.admin.getUserById(
+    profile.user_id
+  )
+  if (authError || !authData.user?.email) {
+    throw new Error(authError?.message ?? "Could not load auth user email")
+  }
+
+  return {
+    userId: profile.user_id,
+    email: authData.user.email,
+    fullName: profile.full_name ?? "User",
+  }
+}
+
+export async function setOrgUserPassword(
+  profileId: string,
+  password: string,
+  organizationId: string
+): Promise<void> {
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters.")
+  }
+
+  const { userId } = await getOrgProfileAuthUser(profileId, organizationId)
+  const admin = createAdminClient()
+  const { error } = await admin.auth.admin.updateUserById(userId, { password })
+  if (error) throw new Error(error.message)
+}
+
+export async function createOrgUserPasswordResetLink(
+  profileId: string,
+  organizationId: string
+): Promise<{ email: string; fullName: string; resetLink: string }> {
+  const { email, fullName } = await getOrgProfileAuthUser(profileId, organizationId)
+  const admin = createAdminClient()
+  const siteUrl = getSiteUrl()
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: {
+      redirectTo: `${siteUrl}/auth/callback?redirectTo=${encodeURIComponent("/auth/reset-password")}`,
+    },
+  })
+
+  if (error) throw new Error(error.message)
+
+  const resetLink = data.properties?.action_link
+  if (!resetLink) {
+    throw new Error("Failed to generate password reset link")
+  }
+
+  return { email, fullName, resetLink }
+}
+
 function parseNotificationPreferences(raw: unknown): NotificationPreferences {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_NOTIFICATION_PREFERENCES }
   const obj = raw as Record<string, unknown>

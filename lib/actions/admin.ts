@@ -3,13 +3,16 @@
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/auth/session"
 import { sendInviteEmail } from "@/lib/email/send-invite"
+import { sendPasswordResetEmail } from "@/lib/email/send-password-reset"
 import { isResendConfigured } from "@/lib/email/resend"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import {
+  createOrgUserPasswordResetLink,
   deactivateOrgUser,
   getOrganizationName,
   inviteOrgUser,
   listOrgUsers,
+  setOrgUserPassword,
   updateOrgUser,
 } from "@/lib/supabase/services/profiles"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
@@ -100,4 +103,42 @@ export async function deactivateOrgUserAction(profileId: string) {
   })
   if (result.data) revalidatePath("/admin")
   return result
+}
+
+export async function setOrgUserPasswordAction(profileId: string, password: string) {
+  return safeAction(async () => {
+    const ctx = await requireAdmin()
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters.")
+    }
+    await setOrgUserPassword(profileId, password, ctx.organizationId)
+    return { profileId }
+  })
+}
+
+export async function sendOrgUserPasswordResetAction(profileId: string) {
+  return safeAction(async () => {
+    if (!isResendConfigured()) {
+      throw new Error(
+        "Email is not configured. Add RESEND_API_KEY to .env.local (or Vercel env) and restart the dev server."
+      )
+    }
+
+    const ctx = await requireAdmin()
+    const organizationName = await getOrganizationName(ctx.organizationId)
+    const { email, fullName, resetLink } = await createOrgUserPasswordResetLink(
+      profileId,
+      ctx.organizationId
+    )
+
+    await sendPasswordResetEmail({
+      to: email,
+      fullName,
+      organizationName,
+      resetLink,
+      requestedByName: ctx.fullName,
+    })
+
+    return { profileId, email }
+  })
 }

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table"
 import { EditUserDialog } from "@/components/admin/edit-user-dialog"
 import { InviteUserDialog } from "@/components/admin/invite-user-dialog"
+import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog"
 import { cn } from "@/lib/utils"
 import type { OrgUser } from "@/types"
 
@@ -38,6 +39,7 @@ interface UsersTableProps {
 export function UsersTable({ initialUsers }: UsersTableProps) {
   const [users, setUsers] = useState(initialUsers)
   const [editingUser, setEditingUser] = useState<OrgUser | null>(null)
+  const [resettingUser, setResettingUser] = useState<OrgUser | null>(null)
 
   return (
     <div className="space-y-4">
@@ -94,6 +96,9 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                         <DropdownMenuItem onClick={() => setEditingUser(user)}>
                           Edit user
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setResettingUser(user)}>
+                          Reset password
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -119,6 +124,14 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
             )
             setEditingUser(null)
           }}
+        />
+      )}
+
+      {resettingUser && (
+        <ResetPasswordDialog
+          user={resettingUser}
+          open={Boolean(resettingUser)}
+          onOpenChange={(open) => !open && setResettingUser(null)}
         />
       )}
     </div>
