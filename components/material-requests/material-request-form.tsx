@@ -8,8 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { MaterialCatalogPicker } from "@/components/material-requests/material-catalog-picker"
 import { createMaterialPullRequestAction } from "@/lib/actions/material-pull-requests"
-import { MATERIAL_PULL_LOCATIONS } from "@/lib/material-pull-config"
+import {
+  isBorrowReason,
+  MATERIAL_PULL_LOCATIONS,
+  MATERIAL_PULL_PRIORITIES,
+  MATERIAL_PULL_PRIORITY_LABELS,
+  MATERIAL_PULL_REASON_CODES,
+  MATERIAL_PULL_REASON_LABELS,
+} from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
+import type { MaterialPullPriority, MaterialPullReasonCode } from "@/types"
 
 interface MaterialRequestFormProps {
   redirectTo?: string
@@ -22,6 +30,7 @@ export function MaterialRequestForm({
 }: MaterialRequestFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [reasonCode, setReasonCode] = useState<MaterialPullReasonCode>("scrap")
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -31,12 +40,23 @@ export function MaterialRequestForm({
     const material = String(fd.get("material") ?? "").trim()
     const quantity = Number(fd.get("quantity"))
     const unit = String(fd.get("unit") ?? "ea").trim() || "ea"
-    const neededBy = String(fd.get("neededBy") ?? "").trim() || null
+    const neededBy = String(fd.get("neededBy") ?? "").trim()
     const location = String(fd.get("location") ?? "").trim() || null
     const notes = String(fd.get("notes") ?? "").trim() || null
+    const priority = String(fd.get("priority") ?? "soon") as MaterialPullPriority
+    const reason = String(fd.get("reasonCode") ?? "other") as MaterialPullReasonCode
+    const sourceJobNumber = String(fd.get("sourceJobNumber") ?? "").trim() || null
 
     if (!jobNumber || !material || !(quantity > 0)) {
       toast.error("Missing fields", "Job #, material, and quantity are required.")
+      return
+    }
+    if (!neededBy) {
+      toast.error("Missing fields", "Needed-by date is required.")
+      return
+    }
+    if (isBorrowReason(reason) && !sourceJobNumber) {
+      toast.error("Missing fields", "Source job # is required when borrowing.")
       return
     }
 
@@ -49,6 +69,9 @@ export function MaterialRequestForm({
       neededBy,
       location,
       notes,
+      priority,
+      reasonCode: reason,
+      sourceJobNumber,
     })
     setIsSubmitting(false)
 
@@ -86,10 +109,71 @@ export function MaterialRequestForm({
             id="neededBy"
             name="neededBy"
             type="date"
+            required
             className="min-h-11 text-base md:text-sm"
           />
         </div>
       </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <label htmlFor="priority" className="text-sm font-medium">
+            Priority
+          </label>
+          <select
+            id="priority"
+            name="priority"
+            required
+            defaultValue="soon"
+            className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
+          >
+            {MATERIAL_PULL_PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {MATERIAL_PULL_PRIORITY_LABELS[p]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="reasonCode" className="text-sm font-medium">
+            Reason
+          </label>
+          <select
+            id="reasonCode"
+            name="reasonCode"
+            required
+            value={reasonCode}
+            onChange={(e) =>
+              setReasonCode(e.target.value as MaterialPullReasonCode)
+            }
+            className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
+          >
+            {MATERIAL_PULL_REASON_CODES.map((code) => (
+              <option key={code} value={code}>
+                {MATERIAL_PULL_REASON_LABELS[code]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {isBorrowReason(reasonCode) ? (
+        <div className="space-y-1.5">
+          <label htmlFor="sourceJobNumber" className="text-sm font-medium">
+            Borrow from job #
+          </label>
+          <Input
+            id="sourceJobNumber"
+            name="sourceJobNumber"
+            placeholder="Job that currently has the material"
+            required
+            className="min-h-11 text-base md:text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Needs project manager (allocation) approval before pull.
+          </p>
+        </div>
+      ) : null}
 
       <div className="space-y-1.5">
         <label htmlFor="material" className="text-sm font-medium">
@@ -134,7 +218,7 @@ export function MaterialRequestForm({
             id="location"
             name="location"
             className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
-            defaultValue="Fabrication"
+            defaultValue={MATERIAL_PULL_LOCATIONS[0]}
           >
             {MATERIAL_PULL_LOCATIONS.map((s) => (
               <option key={s} value={s}>
@@ -154,7 +238,7 @@ export function MaterialRequestForm({
           name="notes"
           rows={3}
           className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs resize-y min-h-[80px]"
-          placeholder="Special instructions, location, heat preference…"
+          placeholder="Special instructions, heat preference, piece mark…"
         />
       </div>
 

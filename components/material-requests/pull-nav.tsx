@@ -2,21 +2,36 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { canManageMaterialRequests } from "@/lib/auth/permissions"
+import {
+  canBatchMaterialRequests,
+  canCreateMaterialRequests,
+} from "@/lib/auth/permissions"
 import { PULL_SHELL_WIDTH } from "@/lib/pull-layout"
 import { cn } from "@/lib/utils"
-import type { OrganizationRole } from "@/types"
+import type { MaterialPullCapabilities, OrganizationRole } from "@/types"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 const allTabs = [
-  { href: "/pull", label: "Requests", exact: true, managersOnly: false },
-  { href: "/pull/new", label: "New", exact: false, managersOnly: false },
-  { href: "/pull/batch", label: "Batch", exact: false, managersOnly: true },
+  { href: "/pull", label: "Requests", exact: true, requires: "view" as const },
+  { href: "/pull/new", label: "New", exact: false, requires: "request" as const },
+  { href: "/pull/batch", label: "Batch", exact: false, requires: "batch" as const },
 ]
 
-export function PullNav({ role }: { role: OrganizationRole }) {
+export function PullNav({
+  role,
+  capabilities = DEFAULT_MATERIAL_PULL_CAPABILITIES,
+}: {
+  role: OrganizationRole
+  capabilities?: MaterialPullCapabilities
+}) {
   const pathname = usePathname()
-  const showBatch = canManageMaterialRequests(role)
-  const tabs = allTabs.filter((t) => !t.managersOnly || showBatch)
+  const canRequest = canCreateMaterialRequests(role, capabilities)
+  const canBatch = canBatchMaterialRequests(role, capabilities)
+  const tabs = allTabs.filter((t) => {
+    if (t.requires === "batch") return canBatch
+    if (t.requires === "request") return canRequest
+    return true
+  })
 
   return (
     <nav

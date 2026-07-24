@@ -70,8 +70,12 @@ export type {
   ReportView,
   ReportViewRow,
   NotificationPreferences,
+  MaterialPullCapabilities,
 } from "./Profile"
-export { DEFAULT_NOTIFICATION_PREFERENCES } from "./Profile"
+export {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  DEFAULT_MATERIAL_PULL_CAPABILITIES,
+} from "./Profile"
 
 export type {
   Account,
@@ -88,10 +92,13 @@ export type {
   MaterialPullRequestUpdate,
   MaterialPullListFilters,
   CreateMaterialPullInput,
+  UpdateMaterialPullInput,
   MarkBatchPulledInput,
   PushSubscriptionRow,
   PushSubscriptionInsert,
 } from "./MaterialPullRequest"
+
+export type { MaterialPullPriority, MaterialPullReasonCode } from "./enums"
 
 export type {
   TravelerGeneration,

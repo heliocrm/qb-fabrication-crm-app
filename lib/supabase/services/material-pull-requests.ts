@@ -6,13 +6,18 @@ import {
   type TypedSupabaseClient,
 } from "@/lib/supabase/schema"
 import { mapMaterialPullRequestRow } from "@/lib/supabase/mappers"
-import type { MaterialPullChecklist } from "@/lib/material-pull-config"
+import {
+  compareMaterialPullQueueOrder,
+  isBorrowReason,
+  type MaterialPullChecklist,
+} from "@/lib/material-pull-config"
 import type {
   CreateMaterialPullInput,
   MaterialPullListFilters,
   MaterialPullRequest,
   MaterialPullRequestUpdate,
   MaterialPullStatus,
+  UpdateMaterialPullInput,
 } from "@/types"
 
 const MPR_SELECT = `
@@ -24,6 +29,10 @@ async function getClient(): Promise<TypedSupabaseClient> {
   return createClient()
 }
 
+function sortQueue(rows: MaterialPullRequest[]): MaterialPullRequest[] {
+  return [...rows].sort(compareMaterialPullQueueOrder)
+}
+
 export async function listMaterialPullRequests(
   filters: MaterialPullListFilters = {}
 ): Promise<MaterialPullRequest[]> {
@@ -33,7 +42,6 @@ export async function listMaterialPullRequests(
   let query = supabase
     .from(Tables.material_pull_requests)
     .select(MPR_SELECT)
-    .order("needed_by", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 
   if (filters.status === "open") {
@@ -61,7 +69,7 @@ export async function listMaterialPullRequests(
   if (filters.search?.trim()) {
     const q = filters.search.trim()
     query = query.or(
-      `material.ilike.%${q}%,job_number.ilike.%${q}%,notes.ilike.%${q}%`
+      `material.ilike.%${q}%,job_number.ilike.%${q}%,notes.ilike.%${q}%,reason_code.ilike.%${q}%,source_job_number.ilike.%${q}%`
     )
   }
 
@@ -71,9 +79,10 @@ export async function listMaterialPullRequests(
 
   const { data, error } = await query
   throwOnError({ data, error })
-  return (data ?? []).map((row) =>
+  const mapped = (data ?? []).map((row) =>
     mapMaterialPullRequestRow(row as Parameters<typeof mapMaterialPullRequestRow>[0])
   )
+  return sortQueue(mapped)
 }
 
 export async function getMaterialPullRequestById(
@@ -102,6 +111,10 @@ export async function createMaterialPullRequest(
   const supabase = await getClient()
   const organizationId = await requireOrganizationId(supabase)
 
+  if (isBorrowReason(input.reasonCode) && !input.sourceJobNumber?.trim()) {
+    throw new Error("Source job # is required when borrowing from another job")
+  }
+
   let jobId = input.jobId ?? null
   if (!jobId && input.jobNumber.trim()) {
     const { data: job } = await supabase
@@ -122,12 +135,77 @@ export async function createMaterialPullRequest(
       material: input.material.trim(),
       quantity: input.quantity,
       unit: input.unit?.trim() || "ea",
-      needed_by: input.neededBy || null,
+      needed_by: input.neededBy,
       location: input.location?.trim() || null,
       notes: input.notes?.trim() || null,
+      priority: input.priority,
+      reason_code: input.reasonCode,
+      source_job_number: isBorrowReason(input.reasonCode)
+        ? input.sourceJobNumber?.trim() || null
+        : null,
       status: "pending",
       requested_by: requestedBy,
     })
+    .select(MPR_SELECT)
+    .single()
+
+  const row = throwOnError({ data, error })
+  return mapMaterialPullRequestRow(
+    row as Parameters<typeof mapMaterialPullRequestRow>[0]
+  )
+}
+
+export async function updatePendingMaterialPullRequest(
+  id: string,
+  input: UpdateMaterialPullInput,
+  actorProfileId: string,
+  canManage: boolean
+): Promise<MaterialPullRequest> {
+  const supabase = await getClient()
+  await requireOrganizationId(supabase)
+
+  const existing = await getMaterialPullRequestById(id)
+  if (!existing) throw new Error("Request not found")
+  if (existing.status !== "pending") {
+    throw new Error("Only pending requests can be edited")
+  }
+  if (!canManage && existing.requestedBy !== actorProfileId) {
+    throw new Error("You can only edit your own pending requests")
+  }
+
+  const reasonCode = input.reasonCode ?? existing.reasonCode
+  const sourceJob =
+    input.sourceJobNumber !== undefined
+      ? input.sourceJobNumber
+      : existing.sourceJobNumber
+
+  if (isBorrowReason(reasonCode) && !sourceJob?.trim()) {
+    throw new Error("Source job # is required when borrowing from another job")
+  }
+
+  const updates: MaterialPullRequestUpdate & { updated_at: string } = {
+    updated_at: new Date().toISOString(),
+  }
+
+  if (input.jobNumber !== undefined) updates.job_number = input.jobNumber.trim()
+  if (input.material !== undefined) updates.material = input.material.trim()
+  if (input.quantity !== undefined) updates.quantity = input.quantity
+  if (input.unit !== undefined) updates.unit = input.unit.trim() || "ea"
+  if (input.neededBy !== undefined) updates.needed_by = input.neededBy
+  if (input.location !== undefined) {
+    updates.location = input.location?.trim() || null
+  }
+  if (input.notes !== undefined) updates.notes = input.notes?.trim() || null
+  if (input.priority !== undefined) updates.priority = input.priority
+  if (input.reasonCode !== undefined) updates.reason_code = input.reasonCode
+  updates.source_job_number = isBorrowReason(reasonCode)
+    ? sourceJob?.trim() || null
+    : null
+
+  const { data, error } = await supabase
+    .from(Tables.material_pull_requests)
+    .update(updates)
+    .eq("id", id)
     .select(MPR_SELECT)
     .single()
 
@@ -206,6 +284,17 @@ export async function assignMaterialPullBatch(
 
   if (ids.length === 0) return []
 
+  if (batchId) {
+    const existing = await listMaterialPullRequests({ status: "all" })
+    const selected = existing.filter((r) => ids.includes(r.id))
+    const notApproved = selected.filter((r) => r.status !== "approved")
+    if (notApproved.length > 0) {
+      throw new Error(
+        "Only approved requests can be batched. Approve first, then create a pull list."
+      )
+    }
+  }
+
   const updates: MaterialPullRequestUpdate & { updated_at: string } = {
     batch_id: batchId,
     updated_at: new Date().toISOString(),
@@ -213,6 +302,8 @@ export async function assignMaterialPullBatch(
 
   if (batchId) {
     updates.status = "batched"
+  } else {
+    updates.status = "approved"
   }
 
   const { data, error } = await supabase
@@ -222,8 +313,12 @@ export async function assignMaterialPullBatch(
     .select(MPR_SELECT)
 
   throwOnError({ data, error })
-  return (data ?? []).map((row) =>
-    mapMaterialPullRequestRow(row as Parameters<typeof mapMaterialPullRequestRow>[0])
+  return sortQueue(
+    (data ?? []).map((row) =>
+      mapMaterialPullRequestRow(
+        row as Parameters<typeof mapMaterialPullRequestRow>[0]
+      )
+    )
   )
 }
 
@@ -259,8 +354,12 @@ export async function markBatchPulled(
     .select(MPR_SELECT)
 
   throwOnError({ data, error })
-  return (data ?? []).map((row) =>
-    mapMaterialPullRequestRow(row as Parameters<typeof mapMaterialPullRequestRow>[0])
+  return sortQueue(
+    (data ?? []).map((row) =>
+      mapMaterialPullRequestRow(
+        row as Parameters<typeof mapMaterialPullRequestRow>[0]
+      )
+    )
   )
 }
 

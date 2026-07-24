@@ -1,11 +1,24 @@
+import { redirect } from "next/navigation"
 import { MaterialRequestForm } from "@/components/material-requests/material-request-form"
+import {
+  canCreateMaterialRequests,
+  getSessionContext,
+} from "@/lib/auth/session"
 import { MATERIAL_PULL_FUNNEL } from "@/lib/material-pull-config"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 export const metadata = {
   title: "New Pull Request",
 }
 
-export default function PullNewPage() {
+export default async function PullNewPage() {
+  const ctx = await getSessionContext()
+  const role = ctx?.role ?? "viewer"
+  const caps = ctx?.materialPullCapabilities ?? DEFAULT_MATERIAL_PULL_CAPABILITIES
+  if (!canCreateMaterialRequests(role, caps)) {
+    redirect("/pull")
+  }
+
   return (
     <div className="space-y-4">
       <div>

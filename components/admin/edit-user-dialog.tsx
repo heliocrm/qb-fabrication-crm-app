@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Loader2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,13 +14,20 @@ import {
 import { Input } from "@/components/ui/input"
 import { deactivateOrgUserAction, updateOrgUserAction } from "@/lib/actions/admin"
 import { toast } from "@/lib/toast"
-import type { OrganizationRole, OrgUser } from "@/types"
+import type { MaterialPullCapabilities, OrganizationRole, OrgUser } from "@/types"
 
 const ROLES: { value: OrganizationRole; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "manager", label: "Manager" },
   { value: "member", label: "Member" },
   { value: "viewer", label: "Viewer" },
+]
+
+const CAP_LABELS: { key: keyof MaterialPullCapabilities; label: string }[] = [
+  { key: "can_request", label: "Can request (submit)" },
+  { key: "can_approve", label: "Can approve" },
+  { key: "can_batch", label: "Can batch / pull (handler)" },
+  { key: "can_approve_allocation", label: "Can approve borrow / allocation (PM)" },
 ]
 
 interface EditUserDialogProps {
@@ -42,10 +49,26 @@ export function EditUserDialog({
   const [role, setRole] = useState<OrganizationRole>(user.role)
   const [isActive, setIsActive] = useState(user.isActive)
   const [fullName, setFullName] = useState(user.fullName)
+  const [caps, setCaps] = useState<MaterialPullCapabilities>(
+    user.materialPullCapabilities
+  )
+
+  useEffect(() => {
+    if (!open) return
+    setRole(user.role)
+    setIsActive(user.isActive)
+    setFullName(user.fullName)
+    setCaps(user.materialPullCapabilities)
+  }, [open, user])
 
   async function handleSave() {
     setIsSubmitting(true)
-    const result = await updateOrgUserAction(user.id, { role, isActive, fullName })
+    const result = await updateOrgUserAction(user.id, {
+      role,
+      isActive,
+      fullName,
+      materialPullCapabilities: caps,
+    })
     setIsSubmitting(false)
 
     if (result.error) {
@@ -79,7 +102,7 @@ export function EditUserDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="size-4" />
@@ -124,6 +147,28 @@ export function EditUserDialog({
             />
             Active account
           </label>
+
+          <div className="space-y-2 rounded-lg border p-3">
+            <p className="text-sm font-medium">Material Pull capabilities</p>
+            <p className="text-xs text-muted-foreground">
+              Admin role always has full access. Use these overlays for manager/member seats.
+            </p>
+            <div className="space-y-2">
+              {CAP_LABELS.map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={caps[key]}
+                    onChange={(e) =>
+                      setCaps((prev) => ({ ...prev, [key]: e.target.checked }))
+                    }
+                    className="rounded border-input"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button

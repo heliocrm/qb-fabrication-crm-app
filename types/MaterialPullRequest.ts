@@ -1,4 +1,8 @@
-import type { MaterialPullStatus } from "./enums"
+import type {
+  MaterialPullPriority,
+  MaterialPullReasonCode,
+  MaterialPullStatus,
+} from "./enums"
 import type { MaterialPullChecklist } from "@/lib/material-pull-config"
 
 /** Domain model used by UI */
@@ -13,6 +17,9 @@ export interface MaterialPullRequest {
   neededBy: string | null
   location: string | null
   notes: string | null
+  priority: MaterialPullPriority
+  reasonCode: MaterialPullReasonCode
+  sourceJobNumber: string | null
   status: MaterialPullStatus
   requestedBy: string
   requestedByName: string | null
@@ -37,6 +44,9 @@ export interface MaterialPullRequestRow {
   needed_by: string | null
   location: string | null
   notes: string | null
+  priority: MaterialPullPriority
+  reason_code: MaterialPullReasonCode
+  source_job_number: string | null
   status: MaterialPullStatus
   requested_by: string
   approved_by: string | null
@@ -58,6 +68,9 @@ export interface MaterialPullRequestInsert {
   needed_by?: string | null
   location?: string | null
   notes?: string | null
+  priority?: MaterialPullPriority
+  reason_code?: MaterialPullReasonCode
+  source_job_number?: string | null
   status?: MaterialPullStatus
   requested_by: string
   approved_by?: string | null
@@ -87,9 +100,25 @@ export interface CreateMaterialPullInput {
   material: string
   quantity: number
   unit?: string
-  neededBy?: string | null
+  neededBy: string
   location?: string | null
   notes?: string | null
+  priority: MaterialPullPriority
+  reasonCode: MaterialPullReasonCode
+  sourceJobNumber?: string | null
+}
+
+export interface UpdateMaterialPullInput {
+  jobNumber?: string
+  material?: string
+  quantity?: number
+  unit?: string
+  neededBy?: string
+  location?: string | null
+  notes?: string | null
+  priority?: MaterialPullPriority
+  reasonCode?: MaterialPullReasonCode
+  sourceJobNumber?: string | null
 }
 
 export interface MarkBatchPulledInput {

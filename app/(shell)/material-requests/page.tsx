@@ -3,7 +3,7 @@ import { Package, Plus } from "lucide-react"
 import { MaterialRequestsList } from "@/components/material-requests/material-requests-list"
 import { Button } from "@/components/ui/button"
 import {
-  canManageMaterialRequests,
+  canBatchMaterialRequests,
   getSessionContext,
 } from "@/lib/auth/session"
 import {
@@ -14,6 +14,7 @@ import {
   MATERIAL_PULL_FUNNEL,
   MATERIAL_PULL_STATUS_LABELS,
 } from "@/lib/material-pull-config"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 export const metadata = {
   title: "Material Requests",
@@ -27,7 +28,8 @@ export default async function MaterialRequestsPage({
   const params = await searchParams
   const ctx = await getSessionContext()
   const role = ctx?.role ?? "viewer"
-  const canManage = canManageMaterialRequests(role)
+  const caps = ctx?.materialPullCapabilities ?? DEFAULT_MATERIAL_PULL_CAPABILITIES
+  const canBatch = canBatchMaterialRequests(role, caps)
   const [{ requests, source }, summary] = await Promise.all([
     loadMaterialPullRequests({ status: "all" }),
     loadMaterialPullSummary(),
@@ -44,12 +46,12 @@ export default async function MaterialRequestsPage({
           <p className="text-sm text-muted-foreground mt-1">
             {MATERIAL_PULL_FUNNEL}
             {source === "empty"
-              ? " Connect Supabase and run migrations 010–011 to load data."
+              ? " Connect Supabase and run migrations 010-013 to load data."
               : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {canManage ? (
+          {canBatch ? (
             <Button variant="outline" render={<Link href="/material-requests/batch" />}>
               Batch / Pull list
             </Button>
@@ -91,6 +93,7 @@ export default async function MaterialRequestsPage({
       <MaterialRequestsList
         initialRequests={requests}
         role={role}
+        capabilities={caps}
         highlightId={params.highlight}
       />
     </div>

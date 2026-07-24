@@ -62,6 +62,7 @@ export interface Database {
           avatar_initials: string | null
           avatar_url: string | null
           notification_preferences: Json
+          material_pull_capabilities: Json
           created_at: string
           updated_at: string
         }
@@ -75,6 +76,7 @@ export interface Database {
           avatar_initials?: string | null
           avatar_url?: string | null
           notification_preferences?: Json
+          material_pull_capabilities?: Json
           created_at?: string
           updated_at?: string
         }
@@ -88,6 +90,7 @@ export interface Database {
           avatar_initials?: string | null
           avatar_url?: string | null
           notification_preferences?: Json
+          material_pull_capabilities?: Json
           created_at?: string
           updated_at?: string
         }
@@ -713,6 +716,9 @@ export interface Database {
           needed_by: string | null
           location: string | null
           notes: string | null
+          priority: string
+          reason_code: string
+          source_job_number: string | null
           status: MaterialPullStatus
           requested_by: string
           approved_by: string | null
@@ -734,6 +740,9 @@ export interface Database {
           needed_by?: string | null
           location?: string | null
           notes?: string | null
+          priority?: string
+          reason_code?: string
+          source_job_number?: string | null
           status?: MaterialPullStatus
           requested_by: string
           approved_by?: string | null
@@ -755,6 +764,9 @@ export interface Database {
           needed_by?: string | null
           location?: string | null
           notes?: string | null
+          priority?: string
+          reason_code?: string
+          source_job_number?: string | null
           status?: MaterialPullStatus
           requested_by?: string
           approved_by?: string | null

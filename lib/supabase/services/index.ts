@@ -42,6 +42,7 @@ export {
   listMaterialPullRequests,
   getMaterialPullRequestById,
   createMaterialPullRequest,
+  updatePendingMaterialPullRequest,
   updateMaterialPullStatus,
   cancelMaterialPullRequest,
   assignMaterialPullBatch,

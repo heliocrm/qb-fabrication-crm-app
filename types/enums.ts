@@ -47,3 +47,13 @@ export type MaterialPullStatus =
   | "batched"
   | "pulled"
   | "cancelled"
+
+export type MaterialPullPriority = "hot" | "soon" | "low"
+
+export type MaterialPullReasonCode =
+  | "scrap"
+  | "nest_wrong"
+  | "short_staged"
+  | "customer_rush"
+  | "borrow"
+  | "other"

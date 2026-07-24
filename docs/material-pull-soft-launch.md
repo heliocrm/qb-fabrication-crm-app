@@ -1,4 +1,4 @@
-# Material Pull — soft-launch checklist
+# Material Pull - soft-launch checklist
 
 ## Standalone deploy (no CRM for the floor team)
 
@@ -15,31 +15,38 @@ Also add Supabase Auth redirect URLs for the pull domain (`/auth/callback`, `/au
 With `NEXT_PUBLIC_APP_MODE=pull`:
 - Login lands on `/pull` (Material Pull branding)
 - Middleware blocks CRM routes (`/jobs`, `/`, etc.) → `/pull`
-- “Full CRM” link is hidden
+- "Full CRM" link is hidden
 
 Share only `https://pull.qbfab.com` with the floor team. Keep `crmv1.qbfab.com` for internal CRM use.
 
 Local test: set `NEXT_PUBLIC_APP_MODE=pull` in `.env.local` and restart `pnpm dev`.
 
-## Role matrix
+## Capability matrix (Admin → Edit user)
 
-| Seat | Role | Material Pull |
-|------|------|---------------|
-| Dylan | `admin` | Full access |
-| Shane, Eric (Approval) | `manager` | Approve / edit / Batch |
-| Material Handler (Tristan) | `manager` | Batch checklist / mark pulled |
-| Floor requesters | `member` | New + status board; `requested_by` = their login |
-| Read-only | `viewer` | Board only |
+Use `manager` / `member` roles plus **Material Pull capabilities** overlays (not new OrganizationRoles).
 
-Funnel: **Submission → Approval → Batch & Pull** (no personal names in product UI).
+| Seat | Role | Capabilities |
+|------|------|--------------|
+| Dylan | `admin` | Full access (all caps implied) |
+| Eric | `manager` | `can_approve` (+ `can_request` if needed) |
+| Tristen | `manager` | `can_batch` |
+| Shane | `manager` | `can_approve_allocation` (+ `can_approve` if he also covers Eric) |
+| Floor requestors (Mr. Kung, incoming hire) | `member` | `can_request` only |
+| Read-only | `viewer` | Board only (no caps) |
+
+Funnel: **Submission → Approval → Batch & Pull**
+
+- Batch accepts **approved** only (not pending).
+- Borrow / steal reason requires **PM allocation** approval (`can_approve_allocation`).
+- Soft launch: prefer a job Tristen has already 100% pulled and Eric verified, then route sticky notes through the app.
 
 ## Before testers start
 
 - [ ] Run migration `010_material_pull_requests.sql` in Supabase SQL Editor
 - [ ] Run migration `011_material_pull_hierarchy.sql` (approved status, location, pull checklist columns)
+- [ ] Run migration `013_material_pull_meeting_prep.sql` (priority, reason, source job, profile capabilities)
+- [ ] In Admin → Edit user, set seat capabilities per matrix above (migration backfills managers with approve+batch; tune Tristen/Eric/Shane)
 - [ ] Confirm seed rows appear (or create a test request)
-- [ ] Assign Approver / Material Handler accounts the `manager` role in Admin
-- [ ] Assign floor requesters the `member` role
 - [ ] Deploy pull Vercel project with `NEXT_PUBLIC_APP_MODE=pull`
 - [ ] Set VAPID env vars for Web Push (optional but recommended)
 - [ ] Confirm Resend is configured for email fallback
@@ -52,17 +59,21 @@ Funnel: **Submission → Approval → Batch & Pull** (no personal names in produ
 
 ## Tester flows
 
-1. **Requester (member)** — `/pull` → New → submit Job #, material, qty, location, needed-by (attributed to their login)
-2. **Approver (manager)** — Requests board → Approve pending
-3. **Material Handler (manager)** — Batch → select → Create pull list → Print → checklist + canned note → Mark pulled
-4. **Notifications** — Enable on `/pull`; submit from another user; confirm push or email
+1. **Requester** (`can_request`) - `/pull` → New → Job #, material, qty, **needed-by (required)**, **priority**, **reason**, location, notes. Borrow reason also needs source job #.
+2. **Approver** (`can_approve`) - Requests board or detail → Approve pending (non-borrow).
+3. **PM** (`can_approve_allocation`) - Approve borrow / "Needs PM" items.
+4. **Handler** (`can_batch`) - Batch → select **approved** only → Create pull list → Print → checklist + canned note → Mark pulled. Queue sorts hot first, then need-by.
+5. **Hot notifications** - Submit priority Hot; approvers + allocation approvers get the alert (push/email).
+6. **Detail / edit** - Open a pending request → Edit fields → Save.
 
-Members do **not** see the Batch tab (redirected if they open `/pull/batch`).
+Requestors without `can_batch` do not see the Batch tab (redirected if they open `/pull/batch`).
 
 ## Success criteria
 
 - Installable PWA opens to `/pull`
 - Same data in CRM **Material Requests** nav
+- Priority / reason / borrow source visible on list, detail, and print sheet
+- Approve-before-batch enforced
 - Data persists across refresh / devices (Supabase)
 - Status events notify via push or email fallback (opted-in profiles)
 
@@ -77,8 +88,9 @@ The Material field on `/pull/new` and CRM `/material-requests/new` uses a static
 
 ## Backlog
 
-- [ ] **Drop locations list** — Ask shop for real drop places; replace `MATERIAL_PULL_LOCATIONS` values (column is already `location`)
-- [ ] **Admin feature flags** — see [project-backlog.md](./project-backlog.md)
+- [ ] **Drop locations list** - Ask shop for real drop places; replace `MATERIAL_PULL_LOCATIONS` values (column is already `location`)
+- [ ] **Admin feature flags** - see [project-backlog.md](./project-backlog.md)
+- [ ] Reason trending report (reason codes are stored now)
 
 ## Note on service worker
 

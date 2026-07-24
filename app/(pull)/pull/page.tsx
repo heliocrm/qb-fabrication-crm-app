@@ -46,6 +46,7 @@ export default async function PullHomePage({
       <MaterialRequestsList
         initialRequests={requests}
         role={ctx?.role ?? "viewer"}
+        capabilities={ctx?.materialPullCapabilities}
         highlightId={params.highlight}
         basePath="/pull"
       />

@@ -5,8 +5,10 @@ import { ensureUserProfile } from "@/lib/supabase/provision"
 import {
   canManageAssignees,
   isAdminRole,
+  parseMaterialPullCapabilities,
 } from "@/lib/auth/permissions"
-import type { OrganizationRole } from "@/types"
+import type { MaterialPullCapabilities, OrganizationRole } from "@/types"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 export {
   canWriteJobs,
@@ -16,6 +18,10 @@ export {
   canCreateMaterialRequests,
   canManageMaterialRequests,
   canViewMaterialRequests,
+  canApproveMaterialRequests,
+  canBatchMaterialRequests,
+  canApproveMaterialAllocation,
+  parseMaterialPullCapabilities,
 } from "@/lib/auth/permissions"
 
 export interface SessionContext {
@@ -26,6 +32,7 @@ export interface SessionContext {
   isActive: boolean
   fullName: string
   email: string | undefined
+  materialPullCapabilities: MaterialPullCapabilities
 }
 
 export async function getSessionContext(): Promise<SessionContext | null> {
@@ -43,7 +50,9 @@ export async function getSessionContext(): Promise<SessionContext | null> {
 
     const { data: profile } = await supabase
       .from(Tables.profiles)
-      .select("id, organization_id, full_name, role, is_active, avatar_initials")
+      .select(
+        "id, organization_id, full_name, role, is_active, avatar_initials, material_pull_capabilities"
+      )
       .eq("user_id", user.id)
       .maybeSingle()
 
@@ -57,6 +66,9 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       isActive: profile.is_active,
       fullName: profile.full_name ?? user.email?.split("@")[0] ?? "User",
       email: user.email,
+      materialPullCapabilities: parseMaterialPullCapabilities(
+        profile.material_pull_capabilities
+      ),
     }
   } catch {
     return null
@@ -85,4 +97,8 @@ export async function requireManagerOrAdmin(): Promise<SessionContext> {
     throw new Error("Manager or admin access required")
   }
   return ctx
+}
+
+export function emptyMaterialPullCaps(): MaterialPullCapabilities {
+  return { ...DEFAULT_MATERIAL_PULL_CAPABILITIES }
 }

@@ -53,7 +53,10 @@ export default async function PullLayout({
             ) : null}
           </div>
         </div>
-        <PullNav role={ctx?.role ?? "viewer"} />
+        <PullNav
+          role={ctx?.role ?? "viewer"}
+          capabilities={ctx?.materialPullCapabilities}
+        />
       </header>
       <main
         className={cn(

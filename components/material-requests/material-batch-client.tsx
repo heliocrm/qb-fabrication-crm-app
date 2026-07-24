@@ -19,22 +19,31 @@ import {
   createMaterialPullBatchAction,
   markBatchPulledAction,
 } from "@/lib/actions/material-pull-requests"
-import { canManageMaterialRequests } from "@/lib/auth/permissions"
+import { canBatchMaterialRequests } from "@/lib/auth/permissions"
 import {
   createDefaultPullChecklist,
   formatNeededBy,
   MATERIAL_PULL_CANNED_NOTES,
+  MATERIAL_PULL_PRIORITY_LABELS,
+  MATERIAL_PULL_REASON_LABELS,
   MATERIAL_PULL_STATUS_LABELS,
+  priorityBadgeClass,
   statusBadgeClass,
   type MaterialPullChecklist,
 } from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-import type { MaterialPullRequest, OrganizationRole } from "@/types"
+import type {
+  MaterialPullCapabilities,
+  MaterialPullRequest,
+  OrganizationRole,
+} from "@/types"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 interface MaterialBatchClientProps {
   requests: MaterialPullRequest[]
   role: OrganizationRole
+  capabilities?: MaterialPullCapabilities
   initialBatchId?: string | null
 }
 
@@ -43,10 +52,11 @@ type ConfirmKind = "create" | "pulled" | null
 export function MaterialBatchClient({
   requests,
   role,
+  capabilities = DEFAULT_MATERIAL_PULL_CAPABILITIES,
   initialBatchId,
 }: MaterialBatchClientProps) {
   const router = useRouter()
-  const canManage = canManageMaterialRequests(role)
+  const canManage = canBatchMaterialRequests(role, capabilities)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [activeBatchId, setActiveBatchId] = useState<string | null>(
     initialBatchId ?? null
@@ -61,8 +71,7 @@ export function MaterialBatchClient({
   const [noteExtra, setNoteExtra] = useState("")
 
   const batchable = useMemo(
-    () =>
-      requests.filter((r) => r.status === "pending" || r.status === "approved"),
+    () => requests.filter((r) => r.status === "approved"),
     [requests]
   )
 
@@ -137,7 +146,7 @@ export function MaterialBatchClient({
       toast.error("Checklist incomplete", "Check all items or finish them before confirming.")
       return
     }
-    const pullNotes = [notePreset, noteExtra.trim()].filter(Boolean).join(" — ")
+    const pullNotes = [notePreset, noteExtra.trim()].filter(Boolean).join(" - ")
     const batchId = confirmBatchId
     setConfirmKind(null)
     setConfirmBatchId(null)
@@ -163,7 +172,7 @@ export function MaterialBatchClient({
     <div className="space-y-6">
       {!canManage ? (
         <p className="text-sm text-muted-foreground">
-          View-only. Managers create batches and mark pulls complete.
+          View-only. Material handlers create batches and mark pulls complete.
         </p>
       ) : null}
 
@@ -197,7 +206,7 @@ export function MaterialBatchClient({
 
         {batchable.length === 0 ? (
           <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-6 text-center">
-            No pending or approved requests to batch.
+            No approved requests to batch. Approve first, then create a pull list.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -220,6 +229,9 @@ export function MaterialBatchClient({
                     <Badge className={statusBadgeClass(r.status)}>
                       {MATERIAL_PULL_STATUS_LABELS[r.status]}
                     </Badge>
+                    <Badge className={priorityBadgeClass(r.priority)}>
+                      {MATERIAL_PULL_PRIORITY_LABELS[r.priority]}
+                    </Badge>
                   </div>
                   <p className="text-sm">
                     {r.quantity} {r.unit} · {r.material}
@@ -227,6 +239,8 @@ export function MaterialBatchClient({
                   <p className="text-xs text-muted-foreground">
                     Needed {formatNeededBy(r.neededBy)}
                     {r.location ? ` · ${r.location}` : ""}
+                    {" · "}
+                    {MATERIAL_PULL_REASON_LABELS[r.reasonCode]}
                   </p>
                 </div>
               </li>
@@ -291,7 +305,7 @@ export function MaterialBatchClient({
         )}
 
         <div className="hidden print:block">
-          <h1 className="text-xl font-bold mb-2">QB Fabrication — Material Pull List</h1>
+          <h1 className="text-xl font-bold mb-2">QB Fabrication - Material Pull List</h1>
           <p className="text-sm mb-4">
             Printed {new Date().toLocaleString()} · {printRows.length} line(s)
           </p>
@@ -424,6 +438,7 @@ function PrintableTable({ rows }: { rows: MaterialPullRequest[] }) {
       <thead>
         <tr className="border-b text-left">
           <th className="py-1 pr-2">Job</th>
+          <th className="py-1 pr-2">Pri</th>
           <th className="py-1 pr-2">Material</th>
           <th className="py-1 pr-2">Qty</th>
           <th className="py-1 pr-2">Needed</th>
@@ -435,12 +450,21 @@ function PrintableTable({ rows }: { rows: MaterialPullRequest[] }) {
         {rows.map((r) => (
           <tr key={r.id} className="border-b align-top">
             <td className="py-1.5 pr-2 whitespace-nowrap font-medium">{r.jobNumber}</td>
-            <td className="py-1.5 pr-2">{r.material}</td>
+            <td className="py-1.5 pr-2 whitespace-nowrap">
+              {MATERIAL_PULL_PRIORITY_LABELS[r.priority]}
+            </td>
+            <td className="py-1.5 pr-2">
+              <div>{r.material}</div>
+              <div className="text-xs text-muted-foreground">
+                {MATERIAL_PULL_REASON_LABELS[r.reasonCode]}
+                {r.sourceJobNumber ? ` · from ${r.sourceJobNumber}` : ""}
+              </div>
+            </td>
             <td className="py-1.5 pr-2 whitespace-nowrap">
               {r.quantity} {r.unit}
             </td>
             <td className="py-1.5 pr-2 whitespace-nowrap">{formatNeededBy(r.neededBy)}</td>
-            <td className="py-1.5 pr-2">{r.location ?? "—"}</td>
+            <td className="py-1.5 pr-2">{r.location ?? "-"}</td>
             <td className="py-1.5">
               {[r.notes, r.pullNotes].filter(Boolean).join(" · ") || ""}
             </td>

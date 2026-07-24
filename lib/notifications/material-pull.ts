@@ -12,9 +12,19 @@ import {
 } from "@/lib/supabase/services/push-subscriptions"
 import { sendWebPush } from "@/lib/push/web-push"
 import { sendMaterialPullEmail } from "@/lib/email/send-material-pull"
-import { MATERIAL_PULL_STATUS_LABELS } from "@/lib/material-pull-config"
+import { parseMaterialPullCapabilities } from "@/lib/auth/permissions"
+import {
+  MATERIAL_PULL_PRIORITY_LABELS,
+  MATERIAL_PULL_REASON_LABELS,
+  MATERIAL_PULL_STATUS_LABELS,
+} from "@/lib/material-pull-config"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/types/Profile"
-import type { MaterialPullRequest, NotificationPreferences } from "@/types"
+import type {
+  MaterialPullCapabilities,
+  MaterialPullRequest,
+  NotificationPreferences,
+  OrganizationRole,
+} from "@/types"
 
 export type MaterialPullNotifyType =
   | "created"
@@ -36,6 +46,8 @@ type Recipient = {
   email: string | null
   fullName: string
   prefs: NotificationPreferences
+  role: OrganizationRole
+  caps: MaterialPullCapabilities
 }
 
 function parsePrefs(raw: unknown): NotificationPreferences {
@@ -65,6 +77,11 @@ function wantsMaterialAlerts(prefs: NotificationPreferences): boolean {
   return prefs.material_request_push || prefs.material_request_email
 }
 
+function isHotApproverTarget(r: Recipient): boolean {
+  if (r.role === "admin") return true
+  return r.caps.can_approve || r.caps.can_approve_allocation
+}
+
 /** Active org members who opted into material push and/or email. */
 async function loadMaterialNotifyRecipients(
   organizationId: string
@@ -73,7 +90,9 @@ async function loadMaterialNotifyRecipients(
   const admin = createAdminClient()
   const { data: profiles } = await admin
     .from(Tables.profiles)
-    .select("id, full_name, user_id, notification_preferences, role")
+    .select(
+      "id, full_name, user_id, notification_preferences, role, material_pull_capabilities"
+    )
     .eq("organization_id", organizationId)
     .eq("is_active", true)
 
@@ -89,6 +108,8 @@ async function loadMaterialNotifyRecipients(
       email: userData.user?.email ?? null,
       fullName: p.full_name ?? "Team member",
       prefs,
+      role: p.role as OrganizationRole,
+      caps: parseMaterialPullCapabilities(p.material_pull_capabilities),
     })
   }
   return recipients
@@ -99,7 +120,9 @@ async function loadProfileRecipient(profileId: string): Promise<Recipient | null
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from(Tables.profiles)
-    .select("id, full_name, user_id, notification_preferences")
+    .select(
+      "id, full_name, user_id, notification_preferences, role, material_pull_capabilities"
+    )
     .eq("id", profileId)
     .maybeSingle()
 
@@ -110,6 +133,8 @@ async function loadProfileRecipient(profileId: string): Promise<Recipient | null
     email: userData.user?.email ?? null,
     fullName: profile.full_name ?? "Team member",
     prefs: parsePrefs(profile.notification_preferences),
+    role: profile.role as OrganizationRole,
+    caps: parseMaterialPullCapabilities(profile.material_pull_capabilities),
   }
 }
 
@@ -120,31 +145,37 @@ function buildMessage(payload: MaterialPullNotifyPayload): {
 } {
   const { request, type, batchCount } = payload
   const url = `/pull?highlight=${request.id}`
+  const reason = MATERIAL_PULL_REASON_LABELS[request.reasonCode]
+  const pri = MATERIAL_PULL_PRIORITY_LABELS[request.priority]
+  const detail = `${request.jobNumber}: ${request.quantity} ${request.unit} ${request.material} · ${pri} · ${reason}`
 
   switch (type) {
     case "created":
       return {
-        title: "New material pull request",
-        body: `${request.jobNumber}: ${request.quantity} ${request.unit} ${request.material}`,
+        title:
+          request.priority === "hot"
+            ? "HOT material pull request"
+            : "New material pull request",
+        body: detail,
         url,
       }
     case "batched":
       return {
         title: "Pull list ready",
-        body: `${batchCount ?? 1} item(s) batched — ${request.jobNumber} / ${request.material}`,
+        body: `${batchCount ?? 1} item(s) batched - ${request.jobNumber} / ${request.material}`,
         url: `/pull/batch${request.batchId ? `?batch=${request.batchId}` : ""}`,
       }
     case "cancelled":
       return {
         title: "Material request cancelled",
-        body: `${request.jobNumber}: ${request.material}`,
+        body: detail,
         url,
       }
     case "status_changed":
     default:
       return {
         title: `Request ${MATERIAL_PULL_STATUS_LABELS[request.status] ?? request.status}`,
-        body: `${request.jobNumber}: ${request.quantity} ${request.unit} ${request.material}`,
+        body: detail,
         url,
       }
   }
@@ -159,11 +190,14 @@ async function resolveRecipients(
 
   const byId = new Map<string, Recipient>()
 
-  for (const r of optedIn) byId.set(r.profileId, r)
+  if (payload.type === "created" && payload.request.priority === "hot") {
+    for (const r of optedIn) {
+      if (isHotApproverTarget(r)) byId.set(r.profileId, r)
+    }
+  } else {
+    for (const r of optedIn) byId.set(r.profileId, r)
+  }
 
-  // Always include requester on events about their item (even if prefs off for board noise —
-  // they still get status on their own requests when prefs allow via optedIn; force-include
-  // requester so they learn about approve/batch/cancel of their submission).
   if (requester && wantsMaterialAlerts(requester.prefs)) {
     byId.set(requester.profileId, requester)
   } else if (
@@ -172,8 +206,6 @@ async function resolveRecipients(
       payload.type === "cancelled" ||
       payload.type === "batched")
   ) {
-    // Requester gets status/batch/cancel even if they only left defaults — ensure they hear
-    // about their own request lifecycle.
     byId.set(requester.profileId, requester)
   }
 

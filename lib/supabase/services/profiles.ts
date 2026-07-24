@@ -1,8 +1,19 @@
+import { parseMaterialPullCapabilities } from "@/lib/auth/permissions"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { getSiteUrl } from "@/lib/supabase/env"
 import { Tables, requireOrganizationId, throwOnError } from "@/lib/supabase/schema"
-import type { OrganizationRole, OrgUser, ProfileRow, ProfileSummary, OwnProfile, NotificationPreferences, JobListItem } from "@/types"
+import type {
+  JobListItem,
+  Json,
+  MaterialPullCapabilities,
+  NotificationPreferences,
+  OrganizationRole,
+  OrgUser,
+  OwnProfile,
+  ProfileRow,
+  ProfileSummary,
+} from "@/types"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/types/Profile"
 import { mapJobListItem } from "@/lib/supabase/mappers"
 import { JOB_LIST_SELECT } from "@/lib/supabase/schema"
@@ -80,6 +91,9 @@ export async function listOrgUsers(): Promise<OrgUser[]> {
       role: row.role as OrganizationRole,
       isActive: row.is_active,
       avatarInitials: row.avatar_initials ?? initialsFromName(row.full_name ?? "?"),
+      materialPullCapabilities: parseMaterialPullCapabilities(
+        row.material_pull_capabilities
+      ),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     })
@@ -157,6 +171,9 @@ export async function inviteOrgUser(input: {
       role: row.role as OrganizationRole,
       isActive: row.is_active,
       avatarInitials: row.avatar_initials ?? initials,
+      materialPullCapabilities: parseMaterialPullCapabilities(
+        row.material_pull_capabilities
+      ),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     },
@@ -188,6 +205,7 @@ export async function updateOrgUser(
     role?: OrganizationRole
     isActive?: boolean
     fullName?: string
+    materialPullCapabilities?: MaterialPullCapabilities
   },
   organizationId: string
 ): Promise<OrgUser> {
@@ -228,12 +246,17 @@ export async function updateOrgUser(
     is_active?: boolean
     full_name?: string
     avatar_initials?: string
+    material_pull_capabilities?: Json
   } = {}
   if (updates.role !== undefined) payload.role = updates.role
   if (updates.isActive !== undefined) payload.is_active = updates.isActive
   if (updates.fullName !== undefined) {
     payload.full_name = updates.fullName
     payload.avatar_initials = initialsFromName(updates.fullName)
+  }
+  if (updates.materialPullCapabilities !== undefined) {
+    payload.material_pull_capabilities =
+      updates.materialPullCapabilities as unknown as Json
   }
 
   const { data, error } = await supabase
@@ -259,6 +282,9 @@ export async function updateOrgUser(
     role: row.role as OrganizationRole,
     isActive: row.is_active,
     avatarInitials: row.avatar_initials ?? initialsFromName(row.full_name ?? "?"),
+    materialPullCapabilities: parseMaterialPullCapabilities(
+      row.material_pull_capabilities
+    ),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

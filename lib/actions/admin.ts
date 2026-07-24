@@ -16,7 +16,7 @@ import {
   updateOrgUser,
 } from "@/lib/supabase/services/profiles"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
-import type { OrganizationRole } from "@/types"
+import type { MaterialPullCapabilities, OrganizationRole } from "@/types"
 
 async function safeAction<T>(fn: () => Promise<T>): Promise<{ data?: T; error?: string }> {
   if (!isSupabaseConfigured()) {
@@ -85,6 +85,7 @@ export async function updateOrgUserAction(
     role?: OrganizationRole
     isActive?: boolean
     fullName?: string
+    materialPullCapabilities?: MaterialPullCapabilities
   }
 ) {
   const result = await safeAction(async () => {

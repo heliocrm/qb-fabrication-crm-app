@@ -4,10 +4,11 @@ import { ArrowLeft } from "lucide-react"
 import { MaterialBatchClient } from "@/components/material-requests/material-batch-client"
 import { Button } from "@/components/ui/button"
 import {
-  canManageMaterialRequests,
+  canBatchMaterialRequests,
   getSessionContext,
 } from "@/lib/auth/session"
 import { loadMaterialPullRequests } from "@/lib/data/material-pull-requests"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 export const metadata = {
   title: "Pull List / Batch",
@@ -21,7 +22,8 @@ export default async function MaterialBatchPage({
   const params = await searchParams
   const ctx = await getSessionContext()
   const role = ctx?.role ?? "viewer"
-  if (!canManageMaterialRequests(role)) {
+  const caps = ctx?.materialPullCapabilities ?? DEFAULT_MATERIAL_PULL_CAPABILITIES
+  if (!canBatchMaterialRequests(role, caps)) {
     redirect("/material-requests")
   }
 
@@ -39,13 +41,14 @@ export default async function MaterialBatchPage({
             Batch / Pull list
           </h1>
           <p className="text-sm text-muted-foreground">
-            Select pending or approved items → generate a printable pull list.
+            Select approved items, then generate a printable pull list.
           </p>
         </div>
       </div>
       <MaterialBatchClient
         requests={requests}
         role={role}
+        capabilities={caps}
         initialBatchId={params.batch}
       />
     </div>

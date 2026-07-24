@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -10,20 +11,35 @@ import {
   cancelMaterialPullRequestAction,
   updateMaterialPullStatusAction,
 } from "@/lib/actions/material-pull-requests"
-import { canManageMaterialRequests } from "@/lib/auth/permissions"
+import {
+  canApproveMaterialAllocation,
+  canApproveMaterialRequests,
+  canBatchMaterialRequests,
+  canManageMaterialRequests,
+} from "@/lib/auth/permissions"
 import {
   formatNeededBy,
+  isBorrowReason,
+  MATERIAL_PULL_PRIORITY_LABELS,
+  MATERIAL_PULL_REASON_LABELS,
   MATERIAL_PULL_STATUS_LABELS,
   MATERIAL_PULL_STATUSES,
+  priorityBadgeClass,
   statusBadgeClass,
 } from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-import type { MaterialPullRequest, OrganizationRole } from "@/types"
+import type {
+  MaterialPullCapabilities,
+  MaterialPullRequest,
+  OrganizationRole,
+} from "@/types"
+import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 interface MaterialRequestsListProps {
   initialRequests: MaterialPullRequest[]
   role: OrganizationRole
+  capabilities?: MaterialPullCapabilities
   highlightId?: string | null
   basePath?: string
 }
@@ -31,6 +47,7 @@ interface MaterialRequestsListProps {
 export function MaterialRequestsList({
   initialRequests,
   role,
+  capabilities = DEFAULT_MATERIAL_PULL_CAPABILITIES,
   highlightId,
   basePath = "/material-requests",
 }: MaterialRequestsListProps) {
@@ -39,7 +56,10 @@ export function MaterialRequestsList({
   const [search, setSearch] = useState("")
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const canManage = canManageMaterialRequests(role)
+  const canApprove = canApproveMaterialRequests(role, capabilities)
+  const canAllocate = canApproveMaterialAllocation(role, capabilities)
+  const canBatch = canBatchMaterialRequests(role, capabilities)
+  const canManage = canManageMaterialRequests(role, capabilities)
 
   const filtered = useMemo(() => {
     return initialRequests.filter((r) => {
@@ -50,7 +70,8 @@ export function MaterialRequestsList({
       }
       if (search.trim()) {
         const q = search.trim().toLowerCase()
-        const hay = `${r.jobNumber} ${r.material} ${r.notes ?? ""} ${r.requestedByName ?? ""} ${r.location ?? ""}`.toLowerCase()
+        const hay =
+          `${r.jobNumber} ${r.material} ${r.notes ?? ""} ${r.requestedByName ?? ""} ${r.location ?? ""} ${r.reasonCode} ${r.priority} ${r.sourceJobNumber ?? ""}`.toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
@@ -124,20 +145,42 @@ export function MaterialRequestsList({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold">{r.jobNumber}</p>
+                    <Link
+                      href={`${basePath}/${r.id}`}
+                      className="font-semibold hover:underline"
+                    >
+                      {r.jobNumber}
+                    </Link>
                     <p className="text-sm">{r.material}</p>
                   </div>
-                  <Badge className={cn("shrink-0", statusBadgeClass(r.status))}>
-                    {MATERIAL_PULL_STATUS_LABELS[r.status]}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge className={cn("shrink-0", statusBadgeClass(r.status))}>
+                      {MATERIAL_PULL_STATUS_LABELS[r.status]}
+                    </Badge>
+                    <Badge className={cn("shrink-0", priorityBadgeClass(r.priority))}>
+                      {MATERIAL_PULL_PRIORITY_LABELS[r.priority]}
+                    </Badge>
+                    {r.status === "pending" && isBorrowReason(r.reasonCode) ? (
+                      <Badge variant="outline" className="shrink-0">
+                        Needs PM
+                      </Badge>
+                    ) : null}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {r.quantity} {r.unit} · Needed {formatNeededBy(r.neededBy)}
                   {r.location ? ` · ${r.location}` : ""}
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  {MATERIAL_PULL_REASON_LABELS[r.reasonCode]}
+                  {r.sourceJobNumber ? ` · from ${r.sourceJobNumber}` : ""}
+                </p>
                 {r.notes ? <p className="text-sm">{r.notes}</p> : null}
                 <RequestActions
                   request={r}
+                  canApprove={canApprove}
+                  canAllocate={canAllocate}
+                  canBatch={canBatch}
                   canManage={canManage}
                   busy={isPending && pendingId === r.id}
                   onApprove={() =>
@@ -173,6 +216,7 @@ export function MaterialRequestsList({
                   <th className="px-3 py-2 font-medium">Job</th>
                   <th className="px-3 py-2 font-medium">Material</th>
                   <th className="px-3 py-2 font-medium">Qty</th>
+                  <th className="px-3 py-2 font-medium">Priority</th>
                   <th className="px-3 py-2 font-medium">Needed</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium">Requester</th>
@@ -188,9 +232,20 @@ export function MaterialRequestsList({
                       highlightId === r.id && "bg-orange-50 dark:bg-orange-950/30"
                     )}
                   >
-                    <td className="px-3 py-2 font-medium whitespace-nowrap">{r.jobNumber}</td>
+                    <td className="px-3 py-2 font-medium whitespace-nowrap">
+                      <Link
+                        href={`${basePath}/${r.id}`}
+                        className="hover:underline"
+                      >
+                        {r.jobNumber}
+                      </Link>
+                    </td>
                     <td className="px-3 py-2">
                       <div>{r.material}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {MATERIAL_PULL_REASON_LABELS[r.reasonCode]}
+                        {r.sourceJobNumber ? ` · from ${r.sourceJobNumber}` : ""}
+                      </div>
                       {r.notes ? (
                         <div className="text-xs text-muted-foreground line-clamp-1">{r.notes}</div>
                       ) : null}
@@ -198,18 +253,31 @@ export function MaterialRequestsList({
                     <td className="px-3 py-2 whitespace-nowrap">
                       {r.quantity} {r.unit}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">{formatNeededBy(r.neededBy)}</td>
                     <td className="px-3 py-2">
-                      <Badge className={statusBadgeClass(r.status)}>
-                        {MATERIAL_PULL_STATUS_LABELS[r.status]}
+                      <Badge className={priorityBadgeClass(r.priority)}>
+                        {MATERIAL_PULL_PRIORITY_LABELS[r.priority]}
                       </Badge>
                     </td>
+                    <td className="px-3 py-2 whitespace-nowrap">{formatNeededBy(r.neededBy)}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge className={statusBadgeClass(r.status)}>
+                          {MATERIAL_PULL_STATUS_LABELS[r.status]}
+                        </Badge>
+                        {r.status === "pending" && isBorrowReason(r.reasonCode) ? (
+                          <Badge variant="outline">Needs PM</Badge>
+                        ) : null}
+                      </div>
+                    </td>
                     <td className="px-3 py-2 text-muted-foreground">
-                      {r.requestedByName ?? "—"}
+                      {r.requestedByName ?? "-"}
                     </td>
                     <td className="px-3 py-2">
                       <RequestActions
                         request={r}
+                        canApprove={canApprove}
+                        canAllocate={canAllocate}
+                        canBatch={canBatch}
                         canManage={canManage}
                         busy={isPending && pendingId === r.id}
                         onApprove={() =>
@@ -248,6 +316,9 @@ export function MaterialRequestsList({
 
 function RequestActions({
   request,
+  canApprove,
+  canAllocate,
+  canBatch,
   canManage,
   busy,
   onApprove,
@@ -255,12 +326,20 @@ function RequestActions({
   onCancel,
 }: {
   request: MaterialPullRequest
+  canApprove: boolean
+  canAllocate: boolean
+  canBatch: boolean
   canManage: boolean
   busy: boolean
   onApprove: () => void
   onPulled: () => void
   onCancel: () => void
 }) {
+  const borrowPending =
+    request.status === "pending" && isBorrowReason(request.reasonCode)
+  const showApprove =
+    request.status === "pending" &&
+    (borrowPending ? canAllocate : canApprove || canAllocate)
   const showCancel =
     request.status === "pending" ||
     (canManage && request.status !== "pulled" && request.status !== "cancelled")
@@ -271,7 +350,7 @@ function RequestActions({
         <Loader2 className="size-4 animate-spin text-muted-foreground" />
       ) : (
         <>
-          {canManage && request.status === "pending" ? (
+          {showApprove ? (
             <Button
               type="button"
               size="sm"
@@ -279,10 +358,11 @@ function RequestActions({
               className="min-h-11 touch-manipulation"
               onClick={onApprove}
             >
-              Approve
+              {borrowPending ? "PM approve" : "Approve"}
             </Button>
           ) : null}
-          {canManage && (request.status === "approved" || request.status === "batched") ? (
+          {canBatch &&
+          (request.status === "approved" || request.status === "batched") ? (
             <Button
               type="button"
               size="sm"

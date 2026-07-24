@@ -15,6 +15,21 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   material_request_email: true,
 }
 
+/** Per-user Material Pull overlays (not OrganizationRole values). */
+export interface MaterialPullCapabilities {
+  can_request: boolean
+  can_approve: boolean
+  can_batch: boolean
+  can_approve_allocation: boolean
+}
+
+export const DEFAULT_MATERIAL_PULL_CAPABILITIES: MaterialPullCapabilities = {
+  can_request: false,
+  can_approve: false,
+  can_batch: false,
+  can_approve_allocation: false,
+}
+
 /** Lightweight profile for job assignee display and pickers */
 export interface ProfileSummary {
   id: string
@@ -34,6 +49,7 @@ export interface OrgUser {
   role: OrganizationRole
   isActive: boolean
   avatarInitials: string
+  materialPullCapabilities: MaterialPullCapabilities
   createdAt: string
   updatedAt: string
 }
@@ -48,6 +64,7 @@ export interface ProfileRow {
   avatar_initials: string | null
   avatar_url: string | null
   notification_preferences: Json
+  material_pull_capabilities: Json
   created_at: string
   updated_at: string
 }
