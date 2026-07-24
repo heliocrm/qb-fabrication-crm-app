@@ -19,14 +19,16 @@ export const MATERIAL_PULL_STATUS_LABELS: Record<MaterialPullStatus, string> = {
   cancelled: "Cancelled",
 }
 
-/** Drop locations (values unchanged until shop provides a dedicated list). */
+/** Drop locations — shop equipment / areas (from floor walkthrough). */
 export const MATERIAL_PULL_LOCATIONS = [
-  "Fabrication",
-  "Machine",
-  "Programming",
-  "Quality Assurance",
-  "Shipping",
-  "Office",
+  "Inside Angle Master",
+  "Outside Angle Master",
+  "Shear",
+  "Brake",
+  "Inside Beam Line",
+  "Outside Beam Line",
+  "Plate Burner",
+  "Blacktop",
 ] as const
 
 /** @deprecated Use MATERIAL_PULL_LOCATIONS */

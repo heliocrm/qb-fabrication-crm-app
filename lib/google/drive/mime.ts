@@ -14,6 +14,8 @@ const EXT_TO_TYPE: Record<string, DocumentType> = {
 }
 
 const NAME_PATTERNS: { pattern: RegExp; type: DocumentType }[] = [
+  { pattern: /^trv[-_]/i, type: "Traveler" },
+  { pattern: /traveler/i, type: "Traveler" },
   { pattern: /po[-_\s]?/i, type: "PO" },
   { pattern: /work[-_\s]?order|wo[-_\s]/i, type: "Work Order" },
   { pattern: /inspect|qc|weld|cert/i, type: "Inspection" },

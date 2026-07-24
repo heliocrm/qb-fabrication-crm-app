@@ -13,6 +13,7 @@ export const DOCUMENT_CATEGORIES: DocumentType[] = [
   "Drawing",
   "PO",
   "Work Order",
+  "Traveler",
   "Inspection",
   "Shipping",
 ]
@@ -46,6 +47,7 @@ export const docTypeMeta: Record<
 > = {
   Drawing: { icon: "📐", color: "bg-blue-50 border-blue-200 dark:bg-blue-950/30" },
   "Work Order": { icon: "📋", color: "bg-slate-50 border-slate-200 dark:bg-slate-900/30" },
+  Traveler: { icon: "🧾", color: "bg-orange-50 border-orange-200 dark:bg-orange-950/30" },
   Inspection: { icon: "🔍", color: "bg-purple-50 border-purple-200 dark:bg-purple-950/30" },
   Shipping: { icon: "🚛", color: "bg-amber-50 border-amber-200 dark:bg-amber-950/30" },
   PO: { icon: "📄", color: "bg-green-50 border-green-200 dark:bg-green-950/30" },

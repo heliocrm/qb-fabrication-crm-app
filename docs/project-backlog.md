@@ -16,7 +16,7 @@ Support hierarchy and permission overlays over time (who can enable what), witho
 
 ## Material Pull — location options
 
-Column is `location`. Gather the real drop-location list from the floor (bays, saw, shipping, etc.) and replace the temporary `MATERIAL_PULL_LOCATIONS` values in `lib/material-pull-config.ts`.
+Done: `MATERIAL_PULL_LOCATIONS` in `lib/material-pull-config.ts` uses shop equipment/area names (Angle Master, Shear, Brake, Beam Line, Plate Burner, Blacktop). Future: admin-editable list if locations change often.
 
 ## Material catalog shape hierarchy
 

@@ -49,6 +49,7 @@ export const Tables = {
   report_views: "report_views",
   material_pull_requests: "material_pull_requests",
   push_subscriptions: "push_subscriptions",
+  traveler_generations: "traveler_generations",
 } as const
 
 const JOB_ASSIGNEES_SELECT = `

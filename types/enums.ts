@@ -25,7 +25,13 @@ export type JobTemplateType = "qb_project" | "crossarm" | "pedestal" | "miscella
 
 export type LineItemWipStatus = "To Do" | "Doing" | "Done"
 
-export type DocumentType = "Drawing" | "Work Order" | "Inspection" | "Shipping" | "PO"
+export type DocumentType =
+  | "Drawing"
+  | "Work Order"
+  | "Inspection"
+  | "Shipping"
+  | "PO"
+  | "Traveler"
 
 export type ChangeOrderType = "Change Order" | "Issue" | "NCR"
 

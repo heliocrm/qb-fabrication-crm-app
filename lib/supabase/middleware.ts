@@ -5,18 +5,40 @@ import {
   isPullAllowedPath,
   isPullStandaloneRequest,
 } from "@/lib/pull-mode"
+import {
+  getTravelerHomePath,
+  isTravelerAllowedPath,
+  isTravelerStandaloneRequest,
+} from "@/lib/traveler-mode"
 
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const pullMode = isPullStandaloneRequest(request)
+  const travelerMode = isTravelerStandaloneRequest(request)
   const pullHome = getPullHomePath()
+  const travelerHome = getTravelerHomePath()
+  const standaloneHome = travelerMode
+    ? travelerHome
+    : pullMode
+      ? pullHome
+      : null
   const pathname = request.nextUrl.pathname
 
+  function isAllowedStandalonePath(path: string): boolean {
+    if (travelerMode) return isTravelerAllowedPath(path)
+    if (pullMode) return isPullAllowedPath(path)
+    return true
+  }
+
   if (!url || !anonKey) {
-    if (pullMode && !isPullAllowedPath(pathname) && !pathname.includes(".")) {
+    if (
+      standaloneHome &&
+      !isAllowedStandalonePath(pathname) &&
+      !pathname.includes(".")
+    ) {
       const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = pullHome
+      redirectUrl.pathname = standaloneHome
       redirectUrl.search = ""
       return NextResponse.redirect(redirectUrl)
     }
@@ -50,12 +72,15 @@ export async function updateSession(request: NextRequest) {
   const isPublicAsset =
     pathname.startsWith("/_next") || pathname.includes(".")
 
-  // Soft-launch lock: only /pull, /auth, and offline shell
-  if (pullMode && !isPublicAsset && !isPullAllowedPath(pathname)) {
+  if (
+    standaloneHome &&
+    !isPublicAsset &&
+    !isAllowedStandalonePath(pathname)
+  ) {
     const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = user ? pullHome : "/auth/login"
+    redirectUrl.pathname = user ? standaloneHome : "/auth/login"
     if (!user) {
-      redirectUrl.searchParams.set("redirectTo", pullHome)
+      redirectUrl.searchParams.set("redirectTo", standaloneHome)
     } else {
       redirectUrl.search = ""
     }
@@ -66,8 +91,9 @@ export async function updateSession(request: NextRequest) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = "/auth/login"
     const dest =
-      pullMode && (pathname === "/" || !isPullAllowedPath(pathname))
-        ? pullHome
+      standaloneHome &&
+      (pathname === "/" || !isAllowedStandalonePath(pathname))
+        ? standaloneHome
         : pathname
     redirectUrl.searchParams.set("redirectTo", dest)
     return NextResponse.redirect(redirectUrl)
@@ -75,7 +101,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthRoute && pathname === "/auth/login") {
     const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = pullMode ? pullHome : "/"
+    redirectUrl.pathname = standaloneHome ?? "/"
     redirectUrl.search = ""
     return NextResponse.redirect(redirectUrl)
   }
@@ -89,7 +115,7 @@ export async function updateSession(request: NextRequest) {
 
     if (!profile?.is_active || profile.role !== "admin") {
       const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = pullMode ? pullHome : "/"
+      redirectUrl.pathname = standaloneHome ?? "/"
       redirectUrl.search = ""
       return NextResponse.redirect(redirectUrl)
     }

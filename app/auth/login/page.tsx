@@ -2,6 +2,10 @@ import Link from "next/link"
 import { BrandLogo } from "@/components/brand-logo"
 import { LoginForm } from "@/components/auth/login-form"
 import { getPullHomePath, isPullStandalone } from "@/lib/pull-mode"
+import {
+  getTravelerHomePath,
+  isTravelerStandalone,
+} from "@/lib/traveler-mode"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 
 export default async function LoginPage({
@@ -11,21 +15,37 @@ export default async function LoginPage({
 }) {
   const params = await searchParams
   const supabaseReady = isSupabaseConfigured()
-  const pullStandalone = await isPullStandalone()
+  const [pullStandalone, travelerStandalone] = await Promise.all([
+    isPullStandalone(),
+    isTravelerStandalone(),
+  ])
   const pullHome = getPullHomePath()
-  const defaultRedirect = pullStandalone ? pullHome : "/"
+  const travelerHome = getTravelerHomePath()
+  const standaloneHome = travelerStandalone
+    ? travelerHome
+    : pullStandalone
+      ? pullHome
+      : null
+  const defaultRedirect = standaloneHome ?? "/"
   const redirectTo = params.redirectTo ?? defaultRedirect
 
   return (
     <div className="min-h-screen flex">
-      {/* Brand panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-[var(--navy)] text-white p-12">
         <div className="flex items-center">
           <BrandLogo size="lg" priority className="brightness-110" />
         </div>
 
         <div className="space-y-4 max-w-md">
-          {pullStandalone ? (
+          {travelerStandalone ? (
+            <>
+              <h1 className="text-3xl font-bold leading-tight">QB Traveler</h1>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Upload a customer work order, fill Structure #s, and generate a
+                QB traveler on the job — phone-first.
+              </p>
+            </>
+          ) : pullStandalone ? (
             <>
               <h1 className="text-3xl font-bold leading-tight">
                 QB Material Pull
@@ -53,7 +73,6 @@ export default async function LoginPage({
         </p>
       </div>
 
-      {/* Login form */}
       <div className="flex flex-1 flex-col items-center justify-center p-6 bg-background">
         <div className="w-full max-w-sm space-y-8">
           <div className="lg:hidden flex items-center justify-center">
@@ -63,9 +82,11 @@ export default async function LoginPage({
           <div className="space-y-2 text-center lg:text-left">
             <h2 className="text-2xl font-bold text-foreground">Sign in</h2>
             <p className="text-sm text-muted-foreground">
-              {pullStandalone
-                ? "Sign in to submit and manage material pull requests"
-                : "Access your dashboard, jobs, and pipeline"}
+              {travelerStandalone
+                ? "Sign in to generate travelers from work orders"
+                : pullStandalone
+                  ? "Sign in to submit and manage material pull requests"
+                  : "Access your dashboard, jobs, and pipeline"}
             </p>
           </div>
 
@@ -88,7 +109,7 @@ export default async function LoginPage({
                 . Until then, you can browse with mock data.
               </p>
               <Link
-                href={pullStandalone ? pullHome : "/"}
+                href={standaloneHome ?? "/"}
                 className="inline-block text-xs font-semibold text-[var(--orange)] hover:underline mt-1"
               >
                 Continue with mock data →

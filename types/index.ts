@@ -93,5 +93,10 @@ export type {
   PushSubscriptionInsert,
 } from "./MaterialPullRequest"
 
+export type {
+  TravelerGeneration,
+  TravelerGenerationRow,
+} from "./TravelerGeneration"
+
 // Database schema type for Supabase client generics
 export type { Database, Json } from "./database"

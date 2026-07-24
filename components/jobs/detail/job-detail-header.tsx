@@ -42,6 +42,15 @@ export function JobDetailHeader({ job }: JobDetailHeaderProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <Link href={`/traveler/jobs/${job.id}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 min-h-10 touch-manipulation"
+            >
+              Traveler
+            </Button>
+          </Link>
           <Link href="/jobs">
             <Button variant="outline" size="sm" className="gap-1.5">
               <ArrowLeft className="size-4" data-icon="inline-start" />

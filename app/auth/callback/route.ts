@@ -7,16 +7,35 @@ import {
   isPullAllowedPath,
   isPullStandaloneRequest,
 } from "@/lib/pull-mode"
+import {
+  getTravelerHomePath,
+  isTravelerAllowedPath,
+  isTravelerStandaloneRequest,
+} from "@/lib/traveler-mode"
 import { getSupabaseEnv } from "@/lib/supabase/env"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
   const pullMode = isPullStandaloneRequest(request)
+  const travelerMode = isTravelerStandaloneRequest(request)
   const pullHome = getPullHomePath()
-  let redirectTo = searchParams.get("redirectTo") ?? (pullMode ? pullHome : "/")
+  const travelerHome = getTravelerHomePath()
+  const standaloneHome = travelerMode
+    ? travelerHome
+    : pullMode
+      ? pullHome
+      : null
 
-  if (pullMode) {
+  let redirectTo =
+    searchParams.get("redirectTo") ?? (standaloneHome ?? "/")
+
+  if (travelerMode) {
+    const path = redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`
+    if (!isTravelerAllowedPath(path.split("?")[0] ?? path)) {
+      redirectTo = travelerHome
+    }
+  } else if (pullMode) {
     const path = redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`
     if (!isPullAllowedPath(path.split("?")[0] ?? path)) {
       redirectTo = pullHome

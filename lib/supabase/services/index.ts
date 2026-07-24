@@ -56,6 +56,12 @@ export {
 } from "./push-subscriptions"
 
 export {
+  getNextTravelerVersion,
+  listTravelerGenerationsByJobId,
+  insertTravelerGeneration,
+} from "./travelers"
+
+export {
   getCurrentOrganizationId,
   requireOrganizationId,
   SupabaseServiceError,

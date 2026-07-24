@@ -837,6 +837,76 @@ export interface Database {
           },
         ]
       }
+      traveler_generations: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          po_number: string
+          version: number
+          customer: string | null
+          order_date: string | null
+          rev_number: string | null
+          structure_numbers: string | null
+          catalog_ids: string | null
+          document_id: string | null
+          generated_by: string | null
+          generated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          po_number: string
+          version: number
+          customer?: string | null
+          order_date?: string | null
+          rev_number?: string | null
+          structure_numbers?: string | null
+          catalog_ids?: string | null
+          document_id?: string | null
+          generated_by?: string | null
+          generated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          po_number?: string
+          version?: number
+          customer?: string | null
+          order_date?: string | null
+          rev_number?: string | null
+          structure_numbers?: string | null
+          catalog_ids?: string | null
+          document_id?: string | null
+          generated_by?: string | null
+          generated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traveler_generations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traveler_generations_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traveler_generations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: {
