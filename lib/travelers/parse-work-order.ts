@@ -178,6 +178,8 @@ export function extractFieldsFromText(text: string): ParsedWorkOrder {
 export async function parseWorkOrderPdf(
   buffer: Buffer
 ): Promise<ParsedWorkOrder> {
+  // Worker must load first so @napi-rs/canvas polyfills DOMMatrix for pdfjs.
+  await import("pdf-parse/worker")
   const { PDFParse } = await import("pdf-parse")
   const parser = new PDFParse({ data: new Uint8Array(buffer) })
   try {
