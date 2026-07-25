@@ -14,6 +14,12 @@ export interface Account {
   totalValue: number
   ytdValue: number
   status: AccountStatus
+  /** QuickBooks Online customer deep link */
+  qbCustomerUrl?: string | null
+  /** Optional QBO customer / nameId */
+  qbCustomerId?: string | null
+  /** Optional short status chip (manual note — not synced) */
+  qbStatusNote?: string | null
   organizationId?: string
   createdAt?: string
   updatedAt?: string
@@ -33,6 +39,9 @@ export interface AccountRow {
   city: string | null
   state: string | null
   status: AccountStatus
+  qb_customer_url?: string | null
+  qb_customer_id?: string | null
+  qb_status_note?: string | null
   created_at: string
   updated_at: string
 }

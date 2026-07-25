@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { JobStatusBadge, PriorityBadge } from "@/components/status-badge"
 import { CustomerContactsPanel } from "@/components/customers/customer-contacts-panel"
+import { QbLinkChip } from "@/components/crm/qb-link-chip"
 import { formatCompact } from "@/lib/dashboard-stats"
 import { formatDeliveryDate } from "@/lib/jobs-config"
 import { formatCurrency, cn } from "@/lib/utils"
@@ -77,6 +78,12 @@ export function CustomerDetailView({
                 {customer.city}, {customer.state}
               </span>
             </div>
+            <QbLinkChip
+              className="mt-2"
+              url={customer.qbCustomerUrl}
+              customerId={customer.qbCustomerId}
+              statusNote={customer.qbStatusNote}
+            />
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">

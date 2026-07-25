@@ -56,6 +56,9 @@ export interface Job {
   organizationId?: string
   googleDriveFolderId?: string | null
   jobTemplate?: JobTemplateType | null
+  /** QuickBooks deep link (estimate/invoice/job) */
+  qbUrl?: string | null
+  qbExternalId?: string | null
   lineItems: LineItem[]
   /** Flattened tasks across all line items (convenience for stats) */
   tasks: Task[]
@@ -90,6 +93,8 @@ export interface JobRow {
   notes: string | null
   google_drive_folder_id: string | null
   job_template: JobTemplateType | null
+  qb_url?: string | null
+  qb_external_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -113,6 +118,8 @@ export interface JobInsert {
   notes?: string | null
   google_drive_folder_id?: string | null
   job_template?: JobTemplateType | null
+  qb_url?: string | null
+  qb_external_id?: string | null
 }
 
 export type JobUpdate = Partial<Omit<JobInsert, "organization_id">>

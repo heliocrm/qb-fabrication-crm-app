@@ -49,6 +49,11 @@ export function CustomerFormDialog({
   const [city, setCity] = useState(customer?.city ?? "")
   const [state, setState] = useState(customer?.state ?? "")
   const [status, setStatus] = useState<AccountStatus>(customer?.status ?? "Active")
+  const [qbCustomerUrl, setQbCustomerUrl] = useState(
+    customer?.qbCustomerUrl ?? ""
+  )
+  const [qbCustomerId, setQbCustomerId] = useState(customer?.qbCustomerId ?? "")
+  const [qbStatusNote, setQbStatusNote] = useState(customer?.qbStatusNote ?? "")
 
   function syncFromCustomer() {
     setName(customer?.name ?? "")
@@ -59,6 +64,9 @@ export function CustomerFormDialog({
     setCity(customer?.city ?? "")
     setState(customer?.state ?? "")
     setStatus(customer?.status ?? "Active")
+    setQbCustomerUrl(customer?.qbCustomerUrl ?? "")
+    setQbCustomerId(customer?.qbCustomerId ?? "")
+    setQbStatusNote(customer?.qbStatusNote ?? "")
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -77,6 +85,9 @@ export function CustomerFormDialog({
       city: city.trim() || null,
       state: state.trim() || null,
       status,
+      qbCustomerUrl: qbCustomerUrl.trim() || null,
+      qbCustomerId: qbCustomerId.trim() || null,
+      qbStatusNote: qbStatusNote.trim() || null,
     }
 
     setIsSubmitting(true)
@@ -203,6 +214,30 @@ export function CustomerFormDialog({
                 <SelectItem value="Inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5 border-t pt-3">
+            <p className="text-sm font-medium">QuickBooks (link only)</p>
+            <p className="text-xs text-muted-foreground">
+              Paste the QBO customer URL, or a customer ID. Financial truth stays
+              in QuickBooks.
+            </p>
+            <Input
+              value={qbCustomerUrl}
+              onChange={(e) => setQbCustomerUrl(e.target.value)}
+              placeholder="https://app.qbo.intuit.com/app/customerdetail?nameId=…"
+            />
+            <div className="grid gap-2 grid-cols-2">
+              <Input
+                value={qbCustomerId}
+                onChange={(e) => setQbCustomerId(e.target.value)}
+                placeholder="QBO customer ID"
+              />
+              <Input
+                value={qbStatusNote}
+                onChange={(e) => setQbStatusNote(e.target.value)}
+                placeholder="Status note (optional)"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button

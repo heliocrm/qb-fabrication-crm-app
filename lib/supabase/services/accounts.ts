@@ -26,6 +26,9 @@ export async function createAccount(input: {
   city?: string | null
   state?: string | null
   status?: AccountStatus
+  qbCustomerUrl?: string | null
+  qbCustomerId?: string | null
+  qbStatusNote?: string | null
 }): Promise<Account> {
   const supabase = await createClient()
   const organizationId = await requireOrganizationId(supabase)
@@ -42,6 +45,9 @@ export async function createAccount(input: {
       city: input.city?.trim() || null,
       state: input.state?.trim() || null,
       status: input.status ?? "Active",
+      qb_customer_url: input.qbCustomerUrl?.trim() || null,
+      qb_customer_id: input.qbCustomerId?.trim() || null,
+      qb_status_note: input.qbStatusNote?.trim() || null,
     })
     .select("*")
     .single()
@@ -61,6 +67,9 @@ export async function updateAccount(
     city?: string | null
     state?: string | null
     status?: AccountStatus
+    qbCustomerUrl?: string | null
+    qbCustomerId?: string | null
+    qbStatusNote?: string | null
   }
 ): Promise<Account> {
   const supabase = await createClient()
@@ -75,6 +84,9 @@ export async function updateAccount(
     city?: string | null
     state?: string | null
     status?: AccountStatus
+    qb_customer_url?: string | null
+    qb_customer_id?: string | null
+    qb_status_note?: string | null
   } = {}
   if (input.name !== undefined) updates.name = input.name.trim()
   if (input.shortName !== undefined) updates.short_name = input.shortName.trim()
@@ -84,6 +96,12 @@ export async function updateAccount(
   if (input.city !== undefined) updates.city = input.city?.trim() || null
   if (input.state !== undefined) updates.state = input.state?.trim() || null
   if (input.status !== undefined) updates.status = input.status
+  if (input.qbCustomerUrl !== undefined)
+    updates.qb_customer_url = input.qbCustomerUrl?.trim() || null
+  if (input.qbCustomerId !== undefined)
+    updates.qb_customer_id = input.qbCustomerId?.trim() || null
+  if (input.qbStatusNote !== undefined)
+    updates.qb_status_note = input.qbStatusNote?.trim() || null
 
   const { data, error } = await supabase
     .from(Tables.accounts)

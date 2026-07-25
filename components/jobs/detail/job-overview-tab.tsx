@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { ShopTeamCard } from "@/components/jobs/detail/shop-team-card"
 import { ScheduleMeetingButton } from "@/components/crm/schedule-meeting-button"
+import { QbLinkChip } from "@/components/crm/qb-link-chip"
 import {
   TASK_CATEGORIES,
   formatJobCurrency,
@@ -76,6 +77,14 @@ export function JobOverviewTab({
                 {i < arr.length - 1 && <Separator />}
               </div>
             ))}
+            {job.qbUrl ? (
+              <>
+                <Separator />
+                <div className="pt-2.5">
+                  <QbLinkChip url={job.qbUrl} label="QB Job" />
+                </div>
+              </>
+            ) : null}
           </CardContent>
         </Card>
 

@@ -119,6 +119,9 @@ export interface Database {
           city: string | null
           state: string | null
           status: string
+          qb_customer_url: string | null
+          qb_customer_id: string | null
+          qb_status_note: string | null
           created_at: string
           updated_at: string
         }
@@ -133,6 +136,9 @@ export interface Database {
           city?: string | null
           state?: string | null
           status?: string
+          qb_customer_url?: string | null
+          qb_customer_id?: string | null
+          qb_status_note?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -147,6 +153,9 @@ export interface Database {
           city?: string | null
           state?: string | null
           status?: string
+          qb_customer_url?: string | null
+          qb_customer_id?: string | null
+          qb_status_note?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -244,6 +253,8 @@ export interface Database {
           notes: string | null
           google_drive_folder_id: string | null
           job_template: JobTemplateType | null
+          qb_url: string | null
+          qb_external_id: string | null
           created_at: string
           updated_at: string
         }
@@ -267,6 +278,8 @@ export interface Database {
           notes?: string | null
           google_drive_folder_id?: string | null
           job_template?: JobTemplateType | null
+          qb_url?: string | null
+          qb_external_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -290,6 +303,8 @@ export interface Database {
           notes?: string | null
           google_drive_folder_id?: string | null
           job_template?: JobTemplateType | null
+          qb_url?: string | null
+          qb_external_id?: string | null
           created_at?: string
           updated_at?: string
         }

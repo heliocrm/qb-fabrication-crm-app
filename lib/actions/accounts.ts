@@ -46,6 +46,9 @@ export async function createAccountAction(input: {
   city?: string | null
   state?: string | null
   status?: AccountStatus
+  qbCustomerUrl?: string | null
+  qbCustomerId?: string | null
+  qbStatusNote?: string | null
 }) {
   if (!input.name?.trim() || !input.shortName?.trim()) {
     return { error: "Name and short name are required" }
@@ -70,6 +73,9 @@ export async function updateAccountAction(
     city?: string | null
     state?: string | null
     status?: AccountStatus
+    qbCustomerUrl?: string | null
+    qbCustomerId?: string | null
+    qbStatusNote?: string | null
   }
 ) {
   if (!id?.trim()) return { error: "Account id is required" }

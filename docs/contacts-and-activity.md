@@ -72,7 +72,8 @@ Claim ownership: contact form checkbox “I own this relationship”.
 
 ## UI (Customer 360 hub)
 
-- **Customers → account detail:** Contacts, email/meeting actions, **Follow-ups** panel, activity timeline, open jobs/opps context.
+- **Customers → account detail:** Contacts, email/meeting actions, **Follow-ups**, **QB Customer → Open in QuickBooks** chip (deep link + optional status note), activity, open jobs/opps.
+- **Jobs → Overview / Edit:** Optional QB job deep link chip.
 - **Customers → Needs a touch:** Queue + Create follow-up.
 - **Jobs → Activity / Overview:** CRM notes + schedule meeting (shop checklist tasks remain on the job).
 
@@ -80,6 +81,10 @@ Claim ownership: contact form checkbox “I own this relationship”.
 
 Borrowing is a **flag** (checkbox → `source_job_number`), not a reason code. Soft-launch notes: [material-pull-soft-launch.md](./material-pull-soft-launch.md).
 
+## QuickBooks (thin links)
+
+No QB sync. Store `qb_customer_url` / optional `qb_customer_id` + `qb_status_note` on accounts; `qb_url` on jobs. Chip opens QBO in a new tab. Migration `020_quickbooks_deep_links.sql`.
+
 ## Commercial layer (remaining)
 
-See [project-backlog.md](./project-backlog.md): outbound Gmail → thin QB links → opportunity hardening → event-driven follow-ups (Delivered → 30-day first) → People API.
+See [project-backlog.md](./project-backlog.md): opportunity hardening → event-driven follow-ups (Delivered → 30-day first) → People API.

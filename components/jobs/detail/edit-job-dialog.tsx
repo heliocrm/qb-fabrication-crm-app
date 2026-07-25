@@ -49,6 +49,8 @@ export function EditJobDialog({
   const [tonnage, setTonnage] = useState(String(job.tonnage || ""))
   const [value, setValue] = useState(String(job.value || ""))
   const [notes, setNotes] = useState(job.notes ?? "")
+  const [qbUrl, setQbUrl] = useState(job.qbUrl ?? "")
+  const [qbExternalId, setQbExternalId] = useState(job.qbExternalId ?? "")
 
   function resetFromJob() {
     setDescription(job.description)
@@ -60,6 +62,8 @@ export function EditJobDialog({
     setTonnage(String(job.tonnage || ""))
     setValue(String(job.value || ""))
     setNotes(job.notes ?? "")
+    setQbUrl(job.qbUrl ?? "")
+    setQbExternalId(job.qbExternalId ?? "")
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -80,6 +84,8 @@ export function EditJobDialog({
       tonnage: tonnage ? Number(tonnage) : null,
       value: value ? Number(value) : 0,
       notes: notes.trim() || null,
+      qb_url: qbUrl.trim() || null,
+      qb_external_id: qbExternalId.trim() || null,
     })
     setIsSubmitting(false)
 
@@ -231,6 +237,22 @@ export function EditJobDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs resize-y min-h-[80px]"
+            />
+          </div>
+          <div className="space-y-1.5 border-t pt-3">
+            <label className="text-sm font-medium" htmlFor="edit-qb-url">
+              QuickBooks link
+            </label>
+            <Input
+              id="edit-qb-url"
+              value={qbUrl}
+              onChange={(e) => setQbUrl(e.target.value)}
+              placeholder="https://app.qbo.intuit.com/app/…"
+            />
+            <Input
+              value={qbExternalId}
+              onChange={(e) => setQbExternalId(e.target.value)}
+              placeholder="QB id (optional)"
             />
           </div>
           <DialogFooter>
