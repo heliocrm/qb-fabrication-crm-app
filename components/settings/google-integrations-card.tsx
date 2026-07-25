@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import {
   disconnectGoogleAction,
+  enrichContactsFromGoogleAction,
   getGoogleConnectionStatusAction,
   syncCalendarNowAction,
   syncGmailNowAction,
@@ -24,7 +25,9 @@ type Status = {
   connected: boolean
   email: string | null
   canSendGmail?: boolean
+  canReadContacts?: boolean
   needsSendReconnect?: boolean
+  needsContactsReconnect?: boolean
   lastGmailSyncAt: string | null
   lastCalendarSyncAt: string | null
 }
@@ -39,9 +42,9 @@ export function GoogleIntegrationsCard() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status | null>(null)
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState<"gmail" | "calendar" | "disconnect" | null>(
-    null
-  )
+  const [busy, setBusy] = useState<
+    "gmail" | "calendar" | "people" | "disconnect" | null
+  >(null)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -103,6 +106,21 @@ export function GoogleIntegrationsCard() {
     void reload()
   }
 
+  async function handleEnrichContacts() {
+    setBusy("people")
+    const result = await enrichContactsFromGoogleAction()
+    setBusy(null)
+    if (result.error) {
+      toast.error("Contact enrich failed", result.error)
+      return
+    }
+    toast.success(
+      "Contacts enriched",
+      `${result.data?.contactsUpdated ?? 0} updated · ${result.data?.matchedByEmail ?? 0} matched by email`
+    )
+    void reload()
+  }
+
   async function handleDisconnect() {
     setBusy("disconnect")
     const result = await disconnectGoogleAction()
@@ -123,8 +141,9 @@ export function GoogleIntegrationsCard() {
           Integrations
         </CardTitle>
         <CardDescription>
-          Connect your Google Workspace account for Gmail and Calendar CRM sync.
-          Drive file storage stays on the shared service account.
+          Connect your Google Workspace account for Gmail, Calendar, and
+          one-way Contacts enrich. Drive file storage stays on the shared
+          service account.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -143,8 +162,9 @@ export function GoogleIntegrationsCard() {
         ) : !status.connected ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Connect Gmail (read + send) and Calendar (events) for this user.
-              Tokens are encrypted at rest and separate from login with Google.
+              Connect Gmail (read + send), Calendar (events), and Contacts
+              (readonly enrich) for this user. Tokens are encrypted at rest and
+              separate from login with Google.
             </p>
             <Button render={<a href="/api/google/oauth/start" />}>
               <Mail className="size-4" data-icon="inline-start" />
@@ -173,6 +193,17 @@ export function GoogleIntegrationsCard() {
                   Outbound compose from Customer 360 is enabled.
                 </p>
               ) : null}
+              {status.needsContactsReconnect ? (
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                  Contact enrich needs Contacts permission. Disconnect, then
+                  Connect Google again to grant <code>contacts.readonly</code>.
+                </p>
+              ) : status.canReadContacts ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enrich fills blank phone/title on CRM contacts matched by
+                  email — does not import new people.
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -196,6 +227,18 @@ export function GoogleIntegrationsCard() {
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   "Sync Calendar now"
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void handleEnrichContacts()}
+                disabled={busy !== null || Boolean(status.needsContactsReconnect)}
+              >
+                {busy === "people" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Enrich contacts"
                 )}
               </Button>
               <Button

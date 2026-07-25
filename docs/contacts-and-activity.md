@@ -58,7 +58,7 @@ See [google-oauth-crm.md](./google-oauth-crm.md). Settings → Integrations: Con
 
 **Outbound:** Customer 360 contact **Email** button and activity **Reply** send via connected Gmail (`gmail.send`) and log `crm_activities` (`kind=email`, `metadata.direction=outbound`). Reconnect Google if send scope is missing.
 
-Contacts are **not** synced from Google Contacts (People API is later backlog).
+**People enrich (one-way):** Settings → **Enrich contacts** matches Google Contacts to existing CRM contacts by email and fills blank phone / role title only. Does not create CRM contacts from Google. Requires `contacts.readonly` (Disconnect → Connect if missing).
 
 ## Needs a touch
 

@@ -37,13 +37,9 @@ Shipped: Contacts, manual + synced `crm_activities` (email/meeting), Settings Go
 
 ## Relationship CRM — commercial layer (Phase 4)
 
-**Shipped:** CRM follow-ups, outbound Gmail, thin QuickBooks chips (`020`), opportunity hardening (`021`), **Job Delivered → 30-day check-in** follow-up. See [contacts-and-activity.md](./contacts-and-activity.md).
+**Shipped (Phase 4 commercial layer):** CRM follow-ups, outbound Gmail, thin QuickBooks chips (`020`), opportunity hardening (`021`), Job Delivered → 30-day check-in, People API one-way contact enrich. See [contacts-and-activity.md](./contacts-and-activity.md), [google-oauth-crm.md](./google-oauth-crm.md).
 
-Remaining slices (separate PRs; Customer 360 stays the hub):
-
-| Item | Intent |
-|------|--------|
-| **People API** | One-way enrich/match vs Google Contacts (roadmap last). |
+No remaining Phase 4 board items. Future CRM ideas go here as new backlog rows.
 
 ## Floor PIN — self-serve + email reset
 

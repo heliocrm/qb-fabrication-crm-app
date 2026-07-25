@@ -17,7 +17,14 @@ import {
   sendCrmEmail,
   syncGmailForProfile,
 } from "@/lib/google/gmail/service"
-import { GMAIL_SEND_SCOPE } from "@/lib/google/types"
+import {
+  enrichCrmContactsFromGoogle,
+  profileHasContactsReadonly,
+} from "@/lib/google/people/service"
+import {
+  CONTACTS_READONLY_SCOPE,
+  GMAIL_SEND_SCOPE,
+} from "@/lib/google/types"
 import {
   createCrmMeeting,
   syncCalendarForProfile,
@@ -52,16 +59,26 @@ export async function getGoogleConnectionStatusAction() {
     const canSendGmail =
       Boolean(connection) &&
       (await profileHasGmailSend(ctx.profileId))
+    const canReadContacts =
+      Boolean(connection) &&
+      (await profileHasContactsReadonly(ctx.profileId))
     return {
       configured,
       connected: Boolean(connection),
       email: connection?.email ?? null,
       scopes,
       canSendGmail,
+      canReadContacts,
       needsSendReconnect:
         Boolean(connection) &&
         !scopes.some(
           (s) => s === GMAIL_SEND_SCOPE || s.includes("gmail.send")
+        ),
+      needsContactsReconnect:
+        Boolean(connection) &&
+        !scopes.some(
+          (s) =>
+            s === CONTACTS_READONLY_SCOPE || s.includes("contacts.readonly")
         ),
       lastGmailSyncAt: connection?.lastGmailSyncAt ?? null,
       lastCalendarSyncAt: connection?.lastCalendarSyncAt ?? null,
@@ -102,6 +119,19 @@ export async function syncCalendarNowAction() {
     revalidatePath("/settings")
     revalidatePath("/customers")
     revalidatePath("/customers/needs-a-touch")
+  }
+  return result
+}
+
+/** One-way: fill blank CRM contact phone/title from Google Contacts (match by email). */
+export async function enrichContactsFromGoogleAction() {
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    return enrichCrmContactsFromGoogle(ctx.profileId)
+  })
+  if (result.data) {
+    revalidatePath("/settings")
+    revalidatePath("/customers")
   }
   return result
 }

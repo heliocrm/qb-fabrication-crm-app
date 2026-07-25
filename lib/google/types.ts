@@ -81,14 +81,19 @@ export const GOOGLE_SCOPES = {
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.send",
   ],
-  /** Consent scopes for CRM Connect (Gmail read/send + Calendar) */
+  contactsReadonly: ["https://www.googleapis.com/auth/contacts.readonly"],
+  /** Consent scopes for CRM Connect (Gmail + Calendar + Contacts readonly) */
   crmSync: [
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/contacts.readonly",
     "https://www.googleapis.com/auth/userinfo.email",
   ],
 } as const
 
 export const GMAIL_SEND_SCOPE =
   "https://www.googleapis.com/auth/gmail.send" as const
+
+export const CONTACTS_READONLY_SCOPE =
+  "https://www.googleapis.com/auth/contacts.readonly" as const
