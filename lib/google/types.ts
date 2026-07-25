@@ -73,6 +73,18 @@ export const GOOGLE_SCOPES = {
   ],
   /** Full drive access for folder management + sharing (service account) */
   driveFull: ["https://www.googleapis.com/auth/drive"],
-  calendar: ["https://www.googleapis.com/auth/calendar"],
-  gmail: ["https://www.googleapis.com/auth/gmail.send"],
+  calendar: ["https://www.googleapis.com/auth/calendar.events"],
+  /** Phase 1 CRM sync — inbound only; gmail.send added when outbound ships */
+  gmailReadonly: ["https://www.googleapis.com/auth/gmail.readonly"],
+  gmailSend: ["https://www.googleapis.com/auth/gmail.send"],
+  gmail: [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+  ],
+  /** Consent scopes for CRM Connect (Gmail + Calendar) */
+  crmSync: [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/userinfo.email",
+  ],
 } as const

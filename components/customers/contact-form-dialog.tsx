@@ -45,6 +45,9 @@ export function ContactFormDialog({
     contact?.nextTouchAt?.slice(0, 10) ?? ""
   )
   const [isPrimary, setIsPrimary] = useState(contact?.isPrimary ?? false)
+  const [claimOwnership, setClaimOwnership] = useState(
+    Boolean(contact?.relationshipOwnerId)
+  )
 
   function sync() {
     setFullName(contact?.fullName ?? "")
@@ -54,6 +57,7 @@ export function ContactFormDialog({
     setPersonalNotes(contact?.personalNotes ?? "")
     setNextTouchAt(contact?.nextTouchAt?.slice(0, 10) ?? "")
     setIsPrimary(contact?.isPrimary ?? false)
+    setClaimOwnership(Boolean(contact?.relationshipOwnerId))
   }
 
   useEffect(() => {
@@ -76,6 +80,11 @@ export function ContactFormDialog({
       personalNotes: personalNotes.trim() || null,
       nextTouchAt: nextTouchAt || null,
       isPrimary,
+      claimOwnership: claimOwnership || undefined,
+      clearOwnership:
+        isEdit && contact?.relationshipOwnerId && !claimOwnership
+          ? true
+          : undefined,
     }
 
     setIsSubmitting(true)
@@ -188,6 +197,15 @@ export function ContactFormDialog({
               className="size-4 rounded border-input"
             />
             Primary contact for this account
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={claimOwnership}
+              onChange={(e) => setClaimOwnership(e.target.checked)}
+              className="size-4 rounded border-input"
+            />
+            I own this relationship (My queue)
           </label>
           <DialogFooter>
             <Button

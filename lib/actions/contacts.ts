@@ -48,15 +48,24 @@ export async function createContactAction(input: {
   personalNotes?: string | null
   nextTouchAt?: string | null
   isPrimary?: boolean
+  claimOwnership?: boolean
 }) {
   if (!input.fullName?.trim()) {
     return { error: "Contact name is required" }
   }
   const result = await safeAction(async () => {
-    await requireSessionContext()
-    return createContact(input)
+    const ctx = await requireSessionContext()
+    const { claimOwnership, ...rest } = input
+    return createContact({
+      ...rest,
+      relationshipOwnerId: claimOwnership ? ctx.profileId : undefined,
+      nextTouchOwnerId: claimOwnership ? ctx.profileId : undefined,
+    })
   })
-  if (result.data) revalidateCustomerPaths()
+  if (result.data) {
+    revalidateCustomerPaths()
+    revalidatePath("/customers/needs-a-touch")
+  }
   return result
 }
 
@@ -71,12 +80,29 @@ export async function updateContactAction(
     personalNotes?: string | null
     nextTouchAt?: string | null
     isPrimary?: boolean
+    claimOwnership?: boolean
+    clearOwnership?: boolean
   }
 ) {
   const result = await safeAction(async () => {
-    await requireSessionContext()
-    return updateContact(id, input)
+    const ctx = await requireSessionContext()
+    const { claimOwnership, clearOwnership, ...rest } = input
+    return updateContact(id, {
+      ...rest,
+      ...(claimOwnership
+        ? {
+            relationshipOwnerId: ctx.profileId,
+            nextTouchOwnerId: ctx.profileId,
+          }
+        : {}),
+      ...(clearOwnership
+        ? { relationshipOwnerId: null, nextTouchOwnerId: null }
+        : {}),
+    })
   })
-  if (result.data) revalidateCustomerPaths()
+  if (result.data) {
+    revalidateCustomerPaths()
+    revalidatePath("/customers/needs-a-touch")
+  }
   return result
 }

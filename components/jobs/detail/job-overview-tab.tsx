@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { ShopTeamCard } from "@/components/jobs/detail/shop-team-card"
+import { ScheduleMeetingButton } from "@/components/crm/schedule-meeting-button"
 import {
   TASK_CATEGORIES,
   formatJobCurrency,
@@ -116,11 +117,21 @@ export function JobOverviewTab({
                     {account.phone}
                   </a>
                 </div>
-                <Link href="/customers">
-                  <Badge variant="secondary" className="text-[10px] cursor-pointer hover:bg-muted">
-                    View account →
-                  </Badge>
-                </Link>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Link href="/customers">
+                    <Badge variant="secondary" className="text-[10px] cursor-pointer hover:bg-muted">
+                      View account →
+                    </Badge>
+                  </Link>
+                  <ScheduleMeetingButton
+                    titleDefault={`${job.jobNumber} — ${job.customer}`}
+                    attendeeEmail={account.email}
+                    accountId={job.customerId}
+                    jobId={job.id}
+                    size="sm"
+                    variant="outline"
+                  />
+                </div>
               </>
             )}
           </CardContent>

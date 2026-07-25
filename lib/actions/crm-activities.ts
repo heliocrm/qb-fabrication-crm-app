@@ -63,6 +63,7 @@ export async function createCrmActivityAction(input: {
 
   if (result.data) {
     revalidatePath("/customers")
+    revalidatePath("/customers/needs-a-touch")
     if (input.jobId) revalidatePath(`/jobs/${input.jobId}`)
   }
   return result

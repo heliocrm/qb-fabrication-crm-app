@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Plus, Search } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+import { CalendarClock, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -25,12 +26,21 @@ export function CustomersPageClient({
   dataSource,
 }: CustomersPageClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const isMobile = useIsMobile()
   const canWrite = dataSource === "supabase"
   const [search, setSearch] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(
     customers[0]?.id ?? null
   )
+
+  useEffect(() => {
+    const account = searchParams.get("account")
+    if (account && customers.some((c) => c.id === account)) {
+      setSelectedId(account)
+      if (isMobile) setSheetOpen(true)
+    }
+  }, [searchParams, customers, isMobile])
   const [sheetOpen, setSheetOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Customer360 | null>(null)
@@ -67,6 +77,15 @@ export function CustomersPageClient({
             )}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2 w-fit">
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href="/customers/needs-a-touch" />}
+          >
+            <CalendarClock className="size-4" data-icon="inline-start" />
+            Needs a touch
+          </Button>
         {canWrite ? (
           <Button
             size="sm"
@@ -80,6 +99,7 @@ export function CustomersPageClient({
             Add customer
           </Button>
         ) : null}
+        </div>
       </div>
 
       <div className="relative max-w-sm">

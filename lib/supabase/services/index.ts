@@ -83,7 +83,16 @@ export {
   listCrmActivitiesForAccount,
   listCrmActivitiesForJob,
   createCrmActivity,
+  upsertExternalCrmActivity,
 } from "./crm-activities"
+
+export {
+  getGoogleOAuthConnection,
+  upsertGoogleOAuthToken,
+  deleteGoogleOAuthToken,
+} from "./google-oauth-tokens"
+
+export { listNeedsTouchContacts } from "./needs-touch"
 
 export {
   listLatestSignoffsForJob,

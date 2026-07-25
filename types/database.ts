@@ -1290,6 +1290,8 @@ export interface Database {
           occurred_at: string
           created_by: string | null
           metadata: Json
+          external_source: string | null
+          external_id: string | null
           created_at: string
         }
         Insert: {
@@ -1303,6 +1305,8 @@ export interface Database {
           occurred_at?: string
           created_by?: string | null
           metadata?: Json
+          external_source?: string | null
+          external_id?: string | null
           created_at?: string
         }
         Update: {
@@ -1316,11 +1320,70 @@ export interface Database {
           occurred_at?: string
           created_by?: string | null
           metadata?: Json
+          external_source?: string | null
+          external_id?: string | null
           created_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "crm_activities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_oauth_tokens: {
+        Row: {
+          id: string
+          profile_id: string
+          organization_id: string
+          email: string
+          encrypted_refresh_token: string
+          scopes: string[]
+          token_expiry: string | null
+          last_gmail_sync_at: string | null
+          last_calendar_sync_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          organization_id: string
+          email: string
+          encrypted_refresh_token: string
+          scopes?: string[]
+          token_expiry?: string | null
+          last_gmail_sync_at?: string | null
+          last_calendar_sync_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          organization_id?: string
+          email?: string
+          encrypted_refresh_token?: string
+          scopes?: string[]
+          token_expiry?: string | null
+          last_gmail_sync_at?: string | null
+          last_calendar_sync_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_oauth_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_oauth_tokens_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

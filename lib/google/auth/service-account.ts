@@ -38,12 +38,8 @@ export async function createServiceAccountAuth(
 }
 
 /**
- * OAuth2 client factory — for future user-delegated flows (Calendar invites, Gmail send).
- *
- * Flow (not wired yet):
- * 1. GET /api/google/oauth/start → redirect to Google consent
- * 2. GET /api/google/oauth/callback → exchange code, store refresh token per user in Supabase
- * 3. Use createOAuth2Client(refreshToken) for user-scoped API calls
+ * Low-level OAuth2 client from explicit credentials.
+ * CRM Connect flow uses lib/google/auth/oauth2.ts + Settings → Integrations.
  */
 export function createOAuth2Client(options: {
   clientId: string

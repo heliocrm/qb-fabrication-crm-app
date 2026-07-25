@@ -92,6 +92,8 @@ export async function createContact(input: {
   personalNotes?: string | null
   nextTouchAt?: string | null
   isPrimary?: boolean
+  relationshipOwnerId?: string | null
+  nextTouchOwnerId?: string | null
 }): Promise<Contact> {
   const supabase = await createClient()
   const organizationId = await requireOrganizationId(supabase)
@@ -117,6 +119,8 @@ export async function createContact(input: {
       personal_notes: input.personalNotes?.trim() || null,
       next_touch_at: input.nextTouchAt || null,
       is_primary: input.isPrimary ?? false,
+      relationship_owner_id: input.relationshipOwnerId ?? null,
+      next_touch_owner_id: input.nextTouchOwnerId ?? null,
     })
     .select("*")
     .single()
@@ -136,6 +140,8 @@ export async function updateContact(
     personalNotes?: string | null
     nextTouchAt?: string | null
     isPrimary?: boolean
+    relationshipOwnerId?: string | null
+    nextTouchOwnerId?: string | null
   }
 ): Promise<Contact> {
   const supabase = await createClient()
@@ -165,6 +171,8 @@ export async function updateContact(
     personal_notes?: string | null
     next_touch_at?: string | null
     is_primary?: boolean
+    relationship_owner_id?: string | null
+    next_touch_owner_id?: string | null
   } = {}
   if (input.fullName !== undefined) updates.full_name = input.fullName.trim()
   if (input.roleTitle !== undefined)
@@ -178,6 +186,10 @@ export async function updateContact(
   if (input.nextTouchAt !== undefined)
     updates.next_touch_at = input.nextTouchAt || null
   if (input.isPrimary !== undefined) updates.is_primary = input.isPrimary
+  if (input.relationshipOwnerId !== undefined)
+    updates.relationship_owner_id = input.relationshipOwnerId
+  if (input.nextTouchOwnerId !== undefined)
+    updates.next_touch_owner_id = input.nextTouchOwnerId
 
   const { data, error } = await supabase
     .from(Tables.contacts)

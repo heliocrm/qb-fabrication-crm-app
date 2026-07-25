@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Loader2, Pencil, Plus, StickyNote, User } from "lucide-react"
+import { CalendarPlus, Loader2, Pencil, Plus, StickyNote, User } from "lucide-react"
+import { ScheduleMeetingDialog } from "@/components/crm/schedule-meeting-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,6 +41,7 @@ export function CustomerContactsPanel({
   const [noteBody, setNoteBody] = useState("")
   const [noteKind, setNoteKind] = useState<CrmActivityKind>("note")
   const [savingNote, setSavingNote] = useState(false)
+  const [meetingContact, setMeetingContact] = useState<Contact | null>(null)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -134,18 +136,31 @@ export function CustomerContactsPanel({
                       </Badge>
                     ) : null}
                     {canWrite ? (
-                      <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditing(c)
-                          setFormOpen(true)
-                        }}
-                        aria-label={`Edit ${c.fullName}`}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
+                      <>
+                        {c.email ? (
+                          <Button
+                            type="button"
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => setMeetingContact(c)}
+                            aria-label={`Schedule meeting with ${c.fullName}`}
+                          >
+                            <CalendarPlus className="size-3.5" />
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditing(c)
+                            setFormOpen(true)
+                          }}
+                          aria-label={`Edit ${c.fullName}`}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                      </>
                     ) : null}
                   </div>
                 </div>
@@ -249,6 +264,22 @@ export function CustomerContactsPanel({
           onSaved={() => void reload()}
         />
       ) : null}
+
+      <ScheduleMeetingDialog
+        open={Boolean(meetingContact)}
+        onOpenChange={(o) => {
+          if (!o) setMeetingContact(null)
+        }}
+        titleDefault={
+          meetingContact
+            ? `Meeting with ${meetingContact.fullName}`
+            : "Customer meeting"
+        }
+        attendeeEmail={meetingContact?.email}
+        accountId={accountId}
+        contactId={meetingContact?.id}
+        onScheduled={() => void reload()}
+      />
     </div>
   )
 }

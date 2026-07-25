@@ -31,13 +31,24 @@ Aesthetic personalization (planned, not started):
 
 Plan: Cursor plan `avatar_and_job_covers` (Profile QB Logos + Job Cover Images).
 
-## Relationship CRM — Google + health (follow-on)
+## Relationship CRM — Google + health (shipped MVP)
 
-Shipped: Contacts under Accounts + manual `crm_activities` notes (see [contacts-and-activity.md](./contacts-and-activity.md)). Not in this build:
+Shipped: Contacts, manual + synced `crm_activities` (email/meeting), Settings Google Connect/Sync, Calendar schedule + light inbound sync, Needs-a-touch queue. Docs: [contacts-and-activity.md](./contacts-and-activity.md), [google-oauth-crm.md](./google-oauth-crm.md).
 
-- Gmail OAuth pilot / thread sync into `crm_activities`
-- Calendar two-way sync
-- Relationship health / dormant queue dashboard
+## Relationship CRM — commercial layer (Phase 4 board)
+
+Do **not** fold into Google MVP. Ship as separate PRs after OAuth is solid, priority order:
+
+| Item | Intent |
+|------|--------|
+| **CRM Tasks** | Assignable, due-dated, completable `crm_tasks`. Needs-a-touch may add “Create task” only after this lands. |
+| **Outbound Gmail** | Compose/reply via connected token (`gmail.send`); templates later; auto-log to `crm_activities`. |
+| **QuickBooks linkage (thin)** | Read-only first: store QB customer/job/invoice ID or deep link + status chip on Account/Job. Financial truth stays in QB. |
+| **Opportunity hardening** | Owner, forecast, win/loss, link won opp → job; win-rate reports. After thin QB links. |
+| **Event-driven follow-ups** | After tasks exist: job Delivered → 30-day check-in; pull fulfilled → optional touch; dormant inbound → notify owner. |
+| **People API** | One-way enrich/match vs Google Contacts (roadmap). |
+
+Also harden (don’t rebuild): Opportunities pipeline, shop WIP checklist tasks vs sales follow-ups, expose assign-owner more broadly on Customer 360.
 
 ## Floor PIN — self-serve + email reset
 

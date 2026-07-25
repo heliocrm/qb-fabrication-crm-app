@@ -1,4 +1,9 @@
-export type CrmActivityKind = "note" | "call" | "meeting" | "touch"
+export type CrmActivityKind =
+  | "note"
+  | "call"
+  | "meeting"
+  | "touch"
+  | "email"
 
 export interface CrmActivity {
   id: string
@@ -12,6 +17,8 @@ export interface CrmActivity {
   createdBy: string | null
   createdByName?: string | null
   metadata: Record<string, unknown>
+  externalSource?: string | null
+  externalId?: string | null
   createdAt?: string
 }
 
@@ -26,6 +33,8 @@ export interface CrmActivityRow {
   occurred_at: string
   created_by: string | null
   metadata: Record<string, unknown> | null
+  external_source?: string | null
+  external_id?: string | null
   created_at: string
 }
 
@@ -39,4 +48,6 @@ export interface CrmActivityInsert {
   occurred_at?: string
   created_by?: string | null
   metadata?: Record<string, unknown> | null
+  external_source?: string | null
+  external_id?: string | null
 }

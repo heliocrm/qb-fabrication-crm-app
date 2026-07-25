@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Building2, Bell, Plug, User } from "lucide-react"
+import { Building2, Bell, User } from "lucide-react"
+import { GoogleIntegrationsCard } from "@/components/settings/google-integrations-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -165,21 +166,7 @@ export function SettingsPageClient({ isAdmin }: SettingsPageClientProps) {
         </CardContent>
       </Card>
 
-      <Card className="border shadow-sm opacity-90">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Plug className="size-4" />
-            Integrations
-          </CardTitle>
-          <CardDescription>Coming soon</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Calendar, email, and shop system connections will be configured here
-            later. No toggles yet — this is intentionally a placeholder.
-          </p>
-        </CardContent>
-      </Card>
+      <GoogleIntegrationsCard />
     </div>
   )
 }
