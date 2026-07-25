@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ContactFormDialog } from "@/components/customers/contact-form-dialog"
+import { CustomerFollowUpsPanel } from "@/components/customers/customer-follow-ups-panel"
 import {
   listContactsByAccountAction,
 } from "@/lib/actions/contacts"
@@ -184,6 +185,12 @@ export function CustomerContactsPanel({
           )}
         </CardContent>
       </Card>
+
+      <CustomerFollowUpsPanel
+        accountId={accountId}
+        contacts={contacts}
+        canWrite={canWrite}
+      />
 
       <Card className="border shadow-sm">
         <CardHeader className="pb-3">

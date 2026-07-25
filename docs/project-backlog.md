@@ -35,20 +35,19 @@ Plan: Cursor plan `avatar_and_job_covers` (Profile QB Logos + Job Cover Images).
 
 Shipped: Contacts, manual + synced `crm_activities` (email/meeting), Settings Google Connect/Sync, Calendar schedule + light inbound sync, Needs-a-touch queue. Docs: [contacts-and-activity.md](./contacts-and-activity.md), [google-oauth-crm.md](./google-oauth-crm.md).
 
-## Relationship CRM — commercial layer (Phase 4 board)
+## Relationship CRM — commercial layer (Phase 4)
 
-Do **not** fold into Google MVP. Ship as separate PRs after OAuth is solid, priority order:
+**Shipped (slice 1):** `crm_tasks` as **CRM follow-ups** (UI: Follow-up) — Customer 360 panel + Needs-a-touch Create follow-up. Distinct from shop `tasks`. Migration `019_crm_tasks.sql`. See [contacts-and-activity.md](./contacts-and-activity.md).
+
+Remaining slices (separate PRs; Customer 360 stays the hub):
 
 | Item | Intent |
 |------|--------|
-| **CRM Tasks** | Assignable, due-dated, completable `crm_tasks`. Needs-a-touch may add “Create task” only after this lands. |
-| **Outbound Gmail** | Compose/reply via connected token (`gmail.send`); templates later; auto-log to `crm_activities`. |
-| **QuickBooks linkage (thin)** | Read-only first: store QB customer/job/invoice ID or deep link + status chip on Account/Job. Financial truth stays in QB. |
-| **Opportunity hardening** | Owner, forecast, win/loss, link won opp → job; win-rate reports. After thin QB links. |
-| **Event-driven follow-ups** | After tasks exist: job Delivered → 30-day check-in; pull fulfilled → optional touch; dormant inbound → notify owner. |
-| **People API** | One-way enrich/match vs Google Contacts (roadmap). |
-
-Also harden (don’t rebuild): Opportunities pipeline, shop WIP checklist tasks vs sales follow-ups, expose assign-owner more broadly on Customer 360.
+| **Outbound Gmail** | Compose/reply via connected token (`gmail.send`); auto-log to `crm_activities`. |
+| **QuickBooks linkage (thin)** | Deep link chip “QB Customer → Open in QuickBooks”; optional last invoice/open balance only if easy. No new financial model. |
+| **Opportunity hardening** | Detail page, owner aligned with relationship pattern, win/loss, won → job; show on 360. |
+| **Event-driven follow-ups** | Start with **Job Delivered → 30-day check-in** only; add more only after use. |
+| **People API** | One-way enrich/match vs Google Contacts (roadmap last). |
 
 ## Floor PIN — self-serve + email reset
 

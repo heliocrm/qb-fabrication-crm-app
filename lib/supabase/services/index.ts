@@ -87,6 +87,15 @@ export {
 } from "./crm-activities"
 
 export {
+  listCrmTasksForAccount,
+  listOpenCrmTasksForOwner,
+  createCrmTask,
+  completeCrmTask,
+  uncompleteCrmTask,
+  updateCrmTask,
+} from "./crm-tasks"
+
+export {
   getGoogleOAuthConnection,
   upsertGoogleOAuthToken,
   deleteGoogleOAuthToken,

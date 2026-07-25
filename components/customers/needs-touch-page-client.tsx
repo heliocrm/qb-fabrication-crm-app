@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { CalendarClock, Loader2, StickyNote } from "lucide-react"
+import { CalendarClock, CheckSquare, Loader2, StickyNote } from "lucide-react"
+import { FollowUpFormDialog } from "@/components/customers/follow-up-form-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,6 +40,8 @@ export function NeedsTouchPageClient() {
   const [nextRow, setNextRow] = useState<NeedsTouchRow | null>(null)
   const [nextDate, setNextDate] = useState("")
   const [saving, setSaving] = useState(false)
+  const [followUpRow, setFollowUpRow] = useState<NeedsTouchRow | null>(null)
+  const [profileId, setProfileId] = useState<string | null>(null)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -51,6 +54,7 @@ export function NeedsTouchPageClient() {
     if (result.data) {
       setRows(result.data.rows)
       setCanViewAll(result.data.canViewAll)
+      setProfileId(result.data.profileId)
       if (result.data.scope !== scope) {
         setScope(result.data.scope as "mine" | "all")
       }
@@ -236,6 +240,17 @@ export function NeedsTouchPageClient() {
                     >
                       Set next
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFollowUpRow(row)}
+                    >
+                      <CheckSquare
+                        className="size-3.5"
+                        data-icon="inline-start"
+                      />
+                      Create follow-up
+                    </Button>
                   </div>
                 </li>
               ))}
@@ -312,6 +327,27 @@ export function NeedsTouchPageClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FollowUpFormDialog
+        open={Boolean(followUpRow)}
+        onOpenChange={(o) => {
+          if (!o) setFollowUpRow(null)
+        }}
+        accountId={followUpRow?.accountId ?? ""}
+        defaultContactId={followUpRow?.contact.id}
+        defaultOwnerId={
+          followUpRow?.contact.relationshipOwnerId ??
+          followUpRow?.contact.nextTouchOwnerId ??
+          profileId
+        }
+        defaultTitle={
+          followUpRow
+            ? `Follow up with ${followUpRow.contact.fullName}`
+            : ""
+        }
+        currentProfileId={profileId}
+        onSaved={() => setFollowUpRow(null)}
+      />
     </div>
   )
 }

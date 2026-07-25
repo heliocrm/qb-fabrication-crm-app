@@ -1334,6 +1334,65 @@ export interface Database {
           },
         ]
       }
+      crm_tasks: {
+        Row: {
+          id: string
+          organization_id: string
+          title: string
+          body: string | null
+          due_at: string | null
+          completed_at: string | null
+          owner_id: string
+          created_by: string | null
+          account_id: string | null
+          contact_id: string | null
+          opportunity_id: string | null
+          job_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          title: string
+          body?: string | null
+          due_at?: string | null
+          completed_at?: string | null
+          owner_id: string
+          created_by?: string | null
+          account_id?: string | null
+          contact_id?: string | null
+          opportunity_id?: string | null
+          job_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          title?: string
+          body?: string | null
+          due_at?: string | null
+          completed_at?: string | null
+          owner_id?: string
+          created_by?: string | null
+          account_id?: string | null
+          contact_id?: string | null
+          opportunity_id?: string | null
+          job_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_oauth_tokens: {
         Row: {
           id: string

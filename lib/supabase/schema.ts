@@ -57,6 +57,7 @@ export const Tables = {
   organization_section_access: "organization_section_access",
   contacts: "contacts",
   crm_activities: "crm_activities",
+  crm_tasks: "crm_tasks",
   google_oauth_tokens: "google_oauth_tokens",
 } as const
 

@@ -131,5 +131,11 @@ export type {
   CrmActivityInsert,
 } from "./CrmActivity"
 
+export type {
+  CrmTask,
+  CrmTaskRow,
+  CrmTaskInsert,
+} from "./CrmTask"
+
 // Database schema type for Supabase client generics
 export type { Database, Json } from "./database"
