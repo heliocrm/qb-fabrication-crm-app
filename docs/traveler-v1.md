@@ -1,16 +1,23 @@
-# Traveler v1 (PWA)
+# Traveler (digital import)
 
-Phone-first traveler generation absorbed from Trevor’s desktop MVP.
+Phone-first traveler **import** absorbed from Trevor’s desktop MVP, stored as an
+in-system CRM record (not Drive-first Word).
 
-## What v1 does
+## What it does
 
-1. Open `/traveler` (or install the Traveler PWA).
+1. Open `/traveler` (PWA) or the job **Traveler** tab / **Import traveler**.
 2. Pick a job.
-3. Upload a customer work-order PDF → parse Customer / PO / Order Date / Catalog IDs.
-4. Enter Structure # per line (or **Fill N/A**).
-5. **Generate traveler** → Word `.docx` uploaded to the job’s Google Drive folder, logged in `traveler_generations`, linked as a `Traveler` document.
+3. Upload a QB work-order PDF → parse Customer (Ship To), PO, Order Date, QB SO,
+   Ship Date, and every catalog line (line #, qty, catalog ID, description).
+4. Structure # is auto-filled from marks like `(MK-0532R)` when present; review
+   or **Fill N/A**.
+5. **Import traveler** → saves `travelers` + `traveler_lines`, seeds linked CRM
+   production `line_items` (template checklists), soft-syncs job PO / marks.
+6. Anytime: **Print** (HTML), **Email** (deep link via Resend), **Download DOCX**
+   (built from DB; logged in `traveler_generations`).
 
-Full CRM job pages deep-link via **Traveler** → `/traveler/jobs/[id]`.
+Re-import creates a new traveler version and marks the prior active row
+`superseded`. Old production cards are not auto-deleted.
 
 ## Soft-launch (like Material Pull)
 
@@ -22,7 +29,8 @@ Full CRM job pages deep-link via **Traveler** → `/traveler/jobs/[id]`.
 
 Do not set `APP_MODE=pull` and `APP_MODE=traveler` on the same deploy.
 
-Run migration [`012_traveler_generations.sql`](../supabase/migrations/012_traveler_generations.sql) in Supabase SQL Editor.
+Run migrations through [`015_digital_travelers.sql`](../supabase/migrations/015_digital_travelers.sql)
+in Supabase SQL Editor (after 012–014).
 
 ## Code map
 
@@ -30,22 +38,29 @@ Run migration [`012_traveler_generations.sql`](../supabase/migrations/012_travel
 |------|------|
 | Parse WO PDF | `lib/travelers/parse-work-order.ts` |
 | Customer name map | `lib/travelers/customer-map.ts` |
-| Build `.docx` | `lib/travelers/write-traveler.ts` |
-| Mode / middleware | `lib/traveler-mode.ts`, `lib/supabase/middleware.ts` |
+| Build `.docx` (on demand) | `lib/travelers/write-traveler.ts` |
 | Actions | `lib/actions/travelers.ts` |
-| UI | `app/(traveler)/`, `components/travelers/` |
+| Services | `lib/supabase/services/travelers.ts` |
+| Job Traveler tab | `components/jobs/detail/job-traveler-tab.tsx` |
+| Import UI | `components/travelers/traveler-job-flow.tsx` |
+| Print | `/jobs/[id]/traveler/print`, `/traveler/jobs/[id]/print` |
+| Mode / middleware | `lib/traveler-mode.ts`, `lib/supabase/middleware.ts` |
+
+## Data model
+
+- **`travelers`** — header (PO, customer, dates, rev, version, status)
+- **`traveler_lines`** — WO lines; optional `line_item_id` → production card
+- **`traveler_generations`** — audit log for DOCX exports only
 
 ## Adding a work-order format
 
-Parsers follow Trevor’s pattern: detect three consecutive “code lines” (line #, qty, catalog ID), then find the description before/after the block. Extend `lib/travelers/parse-work-order.ts` when a new customer layout fails; every field stays editable in the UI and **Add line** covers misses.
-
-## Template note
-
-Official `QB_Traveler_Master_Copy.docx` styling can be dropped under `assets/travelers/` later. v1 builds a structured traveler `.docx` in code with the same fields (Document #, Rev, Customer, PO, Catalog IDs, Structure #, dates). See `assets/travelers/README.md`.
+QB-issued WOs are the primary path. Legacy triple-code-line parsing remains as
+fallback. Every field stays editable in the UI and **Add line** covers misses.
 
 ## Deferred
 
-- Drawing packet combine / crop / stamp (`stamp_engine.py`) — not PWA-friendly; follow-up.
-- Reporting dashboard on traveler volume.
-- PowerFab sync.
-- Floor piece-tracking (“I finished weld”) — different product; prefer PowerFab Go later.
+- Floor step sign-offs / heat-MTR / NCR (extreme traceability next)
+- Drawing packet combine / crop / stamp (`stamp_engine.py`)
+- Reporting dashboard on traveler volume
+- PowerFab sync
+- Drive as traveler source of truth (optional archive only)

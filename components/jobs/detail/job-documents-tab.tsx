@@ -223,8 +223,8 @@ export function JobDocumentsTab({
         {onGenerateTraveler && !readOnly ? (
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2.5">
             <p className="text-xs text-muted-foreground flex-1 min-w-0">
-              Need a traveler? Upload a work order PDF and generate a Word file
-              into this job&apos;s Drive folder.
+              Need a traveler? Import a work order PDF into the digital Traveler
+              tab (print / email / DOCX on demand).
             </p>
             <Button
               type="button"
@@ -234,7 +234,7 @@ export function JobDocumentsTab({
               onClick={onGenerateTraveler}
             >
               <FileText className="size-3.5" data-icon="inline-start" />
-              Generate traveler
+              Import traveler
             </Button>
           </div>
         ) : null}

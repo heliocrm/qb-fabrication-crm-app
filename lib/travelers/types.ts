@@ -2,6 +2,8 @@ export type TravelerCatalogItem = {
   catalogId: string
   description: string
   structureNumber: string
+  lineNumber?: string
+  quantity?: number
 }
 
 export type ParsedWorkOrder = {
@@ -10,6 +12,8 @@ export type ParsedWorkOrder = {
   customer: string
   catalogIds: string
   catalogItems: TravelerCatalogItem[]
+  qbSalesOrder?: string
+  shipDate?: string
 }
 
 export type TravelerGenerateFields = {
@@ -17,6 +21,8 @@ export type TravelerGenerateFields = {
   orderDate: string
   customer: string
   revNumber: string
+  qbSalesOrder?: string
+  shipDate?: string
   catalogItems: TravelerCatalogItem[]
 }
 

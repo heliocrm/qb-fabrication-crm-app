@@ -919,6 +919,162 @@ export interface Database {
           },
         ]
       }
+      travelers: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          po_number: string
+          customer: string | null
+          order_date: string | null
+          rev_number: string | null
+          qb_sales_order: string | null
+          ship_date: string | null
+          source_document_id: string | null
+          version: number
+          status: "draft" | "active" | "superseded"
+          imported_by: string | null
+          imported_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          po_number: string
+          customer?: string | null
+          order_date?: string | null
+          rev_number?: string | null
+          qb_sales_order?: string | null
+          ship_date?: string | null
+          source_document_id?: string | null
+          version: number
+          status?: "draft" | "active" | "superseded"
+          imported_by?: string | null
+          imported_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          po_number?: string
+          customer?: string | null
+          order_date?: string | null
+          rev_number?: string | null
+          qb_sales_order?: string | null
+          ship_date?: string | null
+          source_document_id?: string | null
+          version?: number
+          status?: "draft" | "active" | "superseded"
+          imported_by?: string | null
+          imported_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travelers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travelers_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travelers_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      traveler_lines: {
+        Row: {
+          id: string
+          organization_id: string
+          traveler_id: string
+          job_id: string
+          line_number: string | null
+          quantity: number
+          catalog_id: string
+          description: string | null
+          structure_number: string | null
+          line_item_id: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          traveler_id: string
+          job_id: string
+          line_number?: string | null
+          quantity?: number
+          catalog_id: string
+          description?: string | null
+          structure_number?: string | null
+          line_item_id?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          traveler_id?: string
+          job_id?: string
+          line_number?: string | null
+          quantity?: number
+          catalog_id?: string
+          description?: string | null
+          structure_number?: string | null
+          line_item_id?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traveler_lines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traveler_lines_traveler_id_fkey"
+            columns: ["traveler_id"]
+            isOneToOne: false
+            referencedRelation: "travelers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traveler_lines_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traveler_lines_line_item_id_fkey"
+            columns: ["line_item_id"]
+            isOneToOne: false
+            referencedRelation: "line_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_section_access: {
         Row: {
           organization_id: string

@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { JobDetailHeader } from "@/components/jobs/detail/job-detail-header"
@@ -10,6 +11,7 @@ import { JobLineItemsTab } from "@/components/jobs/detail/job-line-items-tab"
 import { JobDocumentsTab } from "@/components/jobs/detail/job-documents-tab"
 import { JobChangeOrdersTab } from "@/components/jobs/detail/job-change-orders-tab"
 import { JobActivityTab } from "@/components/jobs/detail/job-activity-tab"
+import { JobTravelerTab } from "@/components/jobs/detail/job-traveler-tab"
 import { GenerateTravelerDialog } from "@/components/travelers/generate-traveler-dialog"
 import { flattenLineItemTasks } from "@/lib/job-detail-config"
 import type { DocumentType, Job, LineItem } from "@/types"
@@ -17,9 +19,19 @@ import type { DocumentType, Job, LineItem } from "@/types"
 type JobDetailTab =
   | "overview"
   | "line-items"
+  | "traveler"
   | "documents"
   | "changes"
   | "activity"
+
+const TAB_VALUES: JobDetailTab[] = [
+  "overview",
+  "line-items",
+  "traveler",
+  "documents",
+  "changes",
+  "activity",
+]
 
 interface JobDetailClientProps {
   job: Job
@@ -34,20 +46,31 @@ export function JobDetailClient({
   canWrite = true,
   canManageAssignees = false,
 }: JobDetailClientProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [lineItems, setLineItems] = useState<LineItem[]>(job.lineItems ?? [])
   const [tab, setTab] = useState<JobDetailTab>("overview")
   const [travelerOpen, setTravelerOpen] = useState(false)
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0)
+  const [travelerRefreshKey, setTravelerRefreshKey] = useState(0)
   const [documentsTypeFilter, setDocumentsTypeFilter] = useState<
     "all" | DocumentType
   >("all")
   const tasks = useMemo(() => flattenLineItemTasks(lineItems), [lineItems])
   const openTasks = tasks.filter((t) => !t.completed).length
 
-  function handleTravelerGenerated() {
-    setTab("documents")
-    setDocumentsTypeFilter("Traveler")
+  useEffect(() => {
+    const q = searchParams.get("tab")
+    if (q && TAB_VALUES.includes(q as JobDetailTab)) {
+      setTab(q as JobDetailTab)
+    }
+  }, [searchParams])
+
+  function handleTravelerImported() {
+    setTab("traveler")
+    setTravelerRefreshKey((k) => k + 1)
     setDocumentsRefreshKey((k) => k + 1)
+    router.refresh()
   }
 
   return (
@@ -80,6 +103,7 @@ export function JobDetailClient({
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="traveler">Traveler</TabsTrigger>
             <TabsTrigger value="documents" className="gap-1.5">
               Documents
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
@@ -115,6 +139,15 @@ export function JobDetailClient({
             />
           </TabsContent>
 
+          <TabsContent value="traveler">
+            <JobTravelerTab
+              jobId={job.id}
+              canWrite={canWrite && dataSource === "supabase"}
+              onImport={() => setTravelerOpen(true)}
+              refreshKey={travelerRefreshKey}
+            />
+          </TabsContent>
+
           <TabsContent value="documents">
             <JobDocumentsTab
               job={{ ...job, lineItems }}
@@ -145,7 +178,7 @@ export function JobDetailClient({
         jobNumber={job.jobNumber}
         poNumber={job.poNumber}
         description={job.description}
-        onGenerated={handleTravelerGenerated}
+        onGenerated={handleTravelerImported}
       />
     </div>
   )

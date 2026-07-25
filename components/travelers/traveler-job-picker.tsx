@@ -28,7 +28,7 @@ export function TravelerJobPicker({ jobs }: { jobs: JobListItem[] }) {
       <div>
         <h1 className="text-xl font-semibold">Jobs</h1>
         <p className="text-sm text-muted-foreground">
-          Pick a job, upload the work order, generate a traveler.
+          Pick a job, upload the work order, import a digital traveler.
         </p>
       </div>
 

@@ -41,8 +41,8 @@ export default async function LoginPage({
             <>
               <h1 className="text-3xl font-bold leading-tight">QB Traveler</h1>
               <p className="text-white/70 text-sm leading-relaxed">
-                Upload a customer work order, fill Structure #s, and generate a
-                QB traveler on the job — phone-first.
+                Upload a QB work order, review Structure #s, and import a digital
+                traveler on the job — phone-first.
               </p>
             </>
           ) : pullStandalone ? (
@@ -83,7 +83,7 @@ export default async function LoginPage({
             <h2 className="text-2xl font-bold text-foreground">Sign in</h2>
             <p className="text-sm text-muted-foreground">
               {travelerStandalone
-                ? "Sign in to generate travelers from work orders"
+                ? "Sign in to import travelers from work orders"
                 : pullStandalone
                   ? "Sign in to submit and manage material pull requests"
                   : "Access your dashboard, jobs, and pipeline"}

@@ -78,7 +78,10 @@ export function AppSidebar({
         )
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border print:hidden"
+    >
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <Link
           href="/"

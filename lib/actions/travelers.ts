@@ -1,10 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createJobDriveFolderAction } from "@/lib/actions/google-drive"
 import { getSessionContext, canWriteJobs } from "@/lib/auth/session"
-import { createDriveService } from "@/lib/google/drive"
-import { isGoogleDriveFolderId } from "@/lib/google/drive/urls"
 import { MAX_UPLOAD_BYTES } from "@/lib/google/drive/mime"
 import { parseWorkOrderPdf } from "@/lib/travelers/parse-work-order"
 import {
@@ -18,13 +15,18 @@ import type {
   TravelerGeneration,
 } from "@/lib/travelers/types"
 import { getJobById, updateJob } from "@/lib/supabase/services/jobs"
-import { syncDriveFileToDocument } from "@/lib/supabase/services/documents"
-import { getUserProfile } from "@/lib/supabase/provision"
 import {
+  getActiveTravelerByJobId,
   getNextTravelerVersion,
+  getTravelerById,
+  importDigitalTraveler,
   insertTravelerGeneration,
   listTravelerGenerationsByJobId,
+  listTravelersByJobId,
+  updateTravelerLine,
 } from "@/lib/supabase/services/travelers"
+import { sendTravelerEmail } from "@/lib/email/send-traveler"
+import type { Traveler } from "@/types"
 
 export type TravelerActionResult<T> =
   | { data: T; error?: undefined }
@@ -33,8 +35,74 @@ export type TravelerActionResult<T> =
 function revalidateTraveler(jobId: string) {
   revalidatePath(`/traveler`)
   revalidatePath(`/traveler/jobs/${jobId}`)
+  revalidatePath(`/traveler/jobs/${jobId}/print`)
   revalidatePath(`/jobs/${jobId}`)
+  revalidatePath(`/jobs/${jobId}/traveler/print`)
   revalidatePath(`/jobs`)
+}
+
+function validateImportFields(fields: TravelerGenerateFields): string | null {
+  const customerPo = fields.customerPo?.trim()
+  if (!customerPo || customerPo === "N/A") {
+    return "Customer PO is required before importing a traveler."
+  }
+  if (!fields.catalogItems?.length) {
+    return "Add at least one catalog line item."
+  }
+  for (const item of fields.catalogItems) {
+    if (!item.catalogId?.trim()) {
+      return "Every line needs a Catalog ID."
+    }
+    if (!item.structureNumber?.trim()) {
+      return "Fill every Structure # (or use Fill N/A) before importing."
+    }
+  }
+  return null
+}
+
+function fieldsToGenerate(traveler: Traveler): TravelerGenerateFields {
+  return {
+    customerPo: traveler.poNumber,
+    orderDate: traveler.orderDate ?? "N/A",
+    customer: traveler.customer ?? "N/A",
+    revNumber: traveler.revNumber ?? "0",
+    qbSalesOrder: traveler.qbSalesOrder ?? undefined,
+    shipDate: traveler.shipDate ?? undefined,
+    catalogItems: traveler.lines.map((line) => ({
+      catalogId: line.catalogId,
+      description: line.description ?? "",
+      structureNumber: line.structureNumber ?? "N/A",
+      lineNumber: line.lineNumber ?? undefined,
+      quantity: line.quantity,
+    })),
+  }
+}
+
+async function softSyncJobFromFields(
+  jobId: string,
+  fields: TravelerGenerateFields
+) {
+  const job = await getJobById(jobId)
+  if (!job) return
+  const customerPo = fields.customerPo.trim()
+  const markUpdates = fields.catalogItems
+    .map((i) => i.structureNumber.trim())
+    .filter((s) => s && s.toUpperCase() !== "N/A")
+  const existingMarks = new Set(job.markNumbers ?? [])
+  const nextMarks = [...(job.markNumbers ?? [])]
+  for (const mark of markUpdates) {
+    if (!existingMarks.has(mark)) nextMarks.push(mark)
+  }
+  try {
+    await updateJob(jobId, {
+      po_number: customerPo,
+      ...(nextMarks.length !== (job.markNumbers?.length ?? 0)
+        ? { mark_numbers: nextMarks }
+        : {}),
+    })
+  } catch {
+    /* non-fatal */
+  }
 }
 
 export async function parseWorkOrderAction(
@@ -44,7 +112,7 @@ export async function parseWorkOrderAction(
   try {
     const ctx = await getSessionContext()
     if (!ctx || !canWriteJobs(ctx.role)) {
-      return { error: "You do not have permission to generate travelers." }
+      return { error: "You do not have permission to import travelers." }
     }
 
     const job = await getJobById(jobId)
@@ -89,89 +157,131 @@ export async function listTravelerGenerationsAction(
   }
 }
 
-export async function generateTravelerAction(
+export async function getActiveTravelerAction(
+  jobId: string
+): Promise<TravelerActionResult<Traveler | null>> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx) return { error: "Not signed in." }
+    const traveler = await getActiveTravelerByJobId(jobId)
+    return { data: traveler }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to load traveler"
+    return { error: message }
+  }
+}
+
+export async function listDigitalTravelersAction(
+  jobId: string
+): Promise<TravelerActionResult<Traveler[]>> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx) return { error: "Not signed in." }
+    const rows = await listTravelersByJobId(jobId)
+    return { data: rows }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to load travelers"
+    return { error: message }
+  }
+}
+
+/** Primary path: import WO into in-system digital traveler + CRM line items. */
+export async function importTravelerAction(
   jobId: string,
   fields: TravelerGenerateFields
-): Promise<
-  TravelerActionResult<{
-    generation: TravelerGeneration
-    webViewLink: string | null
-    filename: string
-  }>
-> {
+): Promise<TravelerActionResult<{ traveler: Traveler }>> {
   try {
     const ctx = await getSessionContext()
     if (!ctx || !canWriteJobs(ctx.role)) {
-      return { error: "You do not have permission to generate travelers." }
+      return { error: "You do not have permission to import travelers." }
     }
 
     const job = await getJobById(jobId)
     if (!job) return { error: "Job not found." }
 
-    const customerPo = fields.customerPo?.trim()
-    if (!customerPo || customerPo === "N/A") {
-      return { error: "Customer PO is required before generating a traveler." }
-    }
-    if (!fields.catalogItems?.length) {
-      return { error: "Add at least one catalog line item." }
-    }
-    for (const item of fields.catalogItems) {
-      if (!item.structureNumber?.trim()) {
-        return {
-          error:
-            "Fill every Structure # (or use Fill N/A) before generating.",
-        }
-      }
-    }
+    const validationError = validateImportFields(fields)
+    if (validationError) return { error: validationError }
 
-    const version = await getNextTravelerVersion(jobId, customerPo)
-    const filename = travelerFilename(customerPo, version)
-    const buffer = await buildTravelerDocx({
-      ...fields,
-      customerPo,
-      revNumber: fields.revNumber?.trim() || "0",
-    })
-
-    let folderId = job.googleDriveFolderId
-    if (!isGoogleDriveFolderId(folderId)) {
-      const created = await createJobDriveFolderAction(jobId)
-      if (created.error || !created.data) {
-        return {
-          error:
-            created.error ??
-            "Could not create the job Drive folder for the traveler.",
-        }
-      }
-      folderId = created.data.folderId
-    }
-
-    const drive = await createDriveService()
-    const uploaded = await drive.uploadFile({
-      folderId: folderId!,
-      filename,
-      mimeType:
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      buffer,
-    })
-
-    const profile = await getUserProfile()
-    const uploadedBy = profile?.name ?? ctx.fullName ?? "Team Member"
-
-    const document = await syncDriveFileToDocument(
+    const traveler = await importDigitalTraveler({
       jobId,
-      {
-        id: uploaded.id,
-        name: uploaded.name,
-        mimeType: uploaded.mimeType,
-        sizeBytes: uploaded.sizeBytes,
-        webViewLink: uploaded.webViewLink,
-        thumbnailLink: uploaded.thumbnailLink,
-        folderId,
-        documentType: "Traveler",
+      fields: {
+        customerPo: fields.customerPo.trim(),
+        orderDate: fields.orderDate,
+        customer: fields.customer,
+        revNumber: fields.revNumber?.trim() || "0",
+        qbSalesOrder: fields.qbSalesOrder,
+        shipDate: fields.shipDate,
+        catalogItems: fields.catalogItems,
       },
-      uploadedBy,
-      null
-    )
+      jobTemplate: job.jobTemplate,
+      importedBy: ctx.profileId,
+    })
+
+    await softSyncJobFromFields(jobId, fields)
+    revalidateTraveler(jobId)
+    return { data: { traveler } }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to import traveler"
+    return { error: message }
+  }
+}
+
+export async function updateTravelerLineAction(
+  jobId: string,
+  lineId: string,
+  updates: {
+    structureNumber?: string
+    description?: string
+    catalogId?: string
+    quantity?: number
+  }
+): Promise<TravelerActionResult<{ line: Traveler["lines"][number] }>> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx || !canWriteJobs(ctx.role)) {
+      return { error: "You do not have permission to edit travelers." }
+    }
+    const line = await updateTravelerLine(lineId, updates)
+    if (line.jobId !== jobId) {
+      return { error: "Traveler line does not belong to this job." }
+    }
+    revalidateTraveler(jobId)
+    return { data: { line } }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to update traveler line"
+    return { error: message }
+  }
+}
+
+/** On-demand DOCX from the active digital traveler (no Drive upload). */
+export async function downloadTravelerDocxAction(
+  jobId: string
+): Promise<
+  TravelerActionResult<{
+    filename: string
+    base64: string
+    generation: TravelerGeneration
+  }>
+> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx || !canWriteJobs(ctx.role)) {
+      return { error: "You do not have permission to export travelers." }
+    }
+
+    const traveler = await getActiveTravelerByJobId(jobId)
+    if (!traveler) {
+      return { error: "No active traveler on this job. Import a work order first." }
+    }
+
+    const fields = fieldsToGenerate(traveler)
+    const version = await getNextTravelerVersion(jobId, traveler.poNumber)
+    const filename = travelerFilename(traveler.poNumber, version)
+    const buffer = await buildTravelerDocx(fields)
 
     const structureNumbers = fields.catalogItems
       .map((i: TravelerCatalogItem) => i.structureNumber.trim())
@@ -182,52 +292,134 @@ export async function generateTravelerAction(
 
     const generation = await insertTravelerGeneration({
       jobId,
-      poNumber: customerPo,
+      poNumber: traveler.poNumber,
       version,
-      customer: fields.customer,
-      orderDate: fields.orderDate,
-      revNumber: fields.revNumber?.trim() || "0",
+      customer: traveler.customer,
+      orderDate: traveler.orderDate,
+      revNumber: traveler.revNumber,
       structureNumbers,
       catalogIds,
-      documentId: document.id,
+      documentId: null,
       generatedBy: ctx.profileId,
     })
-
-    // Soft-sync job PO + mark numbers when helpful
-    const markUpdates = fields.catalogItems
-      .map((i) => i.structureNumber.trim())
-      .filter((s) => s && s.toUpperCase() !== "N/A")
-    const existingMarks = new Set(job.markNumbers ?? [])
-    const nextMarks = [...(job.markNumbers ?? [])]
-    for (const mark of markUpdates) {
-      if (!existingMarks.has(mark)) nextMarks.push(mark)
-    }
-    try {
-      await updateJob(jobId, {
-        po_number: customerPo,
-        ...(nextMarks.length !== (job.markNumbers?.length ?? 0)
-          ? { mark_numbers: nextMarks }
-          : {}),
-      })
-    } catch {
-      /* non-fatal — traveler already saved */
-    }
 
     revalidateTraveler(jobId)
     return {
       data: {
-        generation: {
-          ...generation,
-          webViewLink: document.webViewLink ?? uploaded.webViewLink,
-          documentName: document.name,
-        },
-        webViewLink: document.webViewLink ?? uploaded.webViewLink ?? null,
         filename,
+        base64: buffer.toString("base64"),
+        generation,
       },
     }
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : "Failed to generate traveler"
+      err instanceof Error ? err.message : "Failed to export traveler DOCX"
+    return { error: message }
+  }
+}
+
+export async function emailTravelerAction(
+  jobId: string,
+  toEmail: string
+): Promise<TravelerActionResult<{ sent: boolean }>> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx || !canWriteJobs(ctx.role)) {
+      return { error: "You do not have permission to email travelers." }
+    }
+
+    const email = toEmail.trim()
+    if (!email || !email.includes("@")) {
+      return { error: "Enter a valid email address." }
+    }
+
+    const job = await getJobById(jobId)
+    if (!job) return { error: "Job not found." }
+
+    const traveler = await getActiveTravelerByJobId(jobId)
+    if (!traveler) {
+      return { error: "No active traveler on this job. Import a work order first." }
+    }
+
+    const sent = await sendTravelerEmail({
+      to: email,
+      fullName: ctx.fullName ?? "Team",
+      jobNumber: job.jobNumber,
+      poNumber: traveler.poNumber,
+      customer: traveler.customer ?? "Customer",
+      urlPath: `/jobs/${jobId}?tab=traveler`,
+    })
+
+    if (!sent) {
+      return {
+        error:
+          "Email could not be sent. Check that Resend is configured (RESEND_API_KEY).",
+      }
+    }
+    return { data: { sent: true } }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to email traveler"
+    return { error: message }
+  }
+}
+
+/** @deprecated Prefer importTravelerAction — kept for any legacy callers. */
+export async function generateTravelerAction(
+  jobId: string,
+  fields: TravelerGenerateFields
+): Promise<
+  TravelerActionResult<{
+    traveler: Traveler
+    generation?: TravelerGeneration
+    webViewLink: string | null
+    filename: string
+  }>
+> {
+  const imported = await importTravelerAction(jobId, fields)
+  if (imported.error || !imported.data) {
+    return { error: imported.error ?? "Import failed" }
+  }
+  return {
+    data: {
+      traveler: imported.data.traveler,
+      webViewLink: null,
+      filename: `TRV-${imported.data.traveler.poNumber}`,
+    },
+  }
+}
+
+export async function getTravelerForPrintAction(
+  jobId: string
+): Promise<TravelerActionResult<{ traveler: Traveler; jobNumber: string }>> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx) return { error: "Not signed in." }
+    const job = await getJobById(jobId)
+    if (!job) return { error: "Job not found." }
+    const traveler = await getActiveTravelerByJobId(jobId)
+    if (!traveler) {
+      return { error: "No active traveler on this job." }
+    }
+    return { data: { traveler, jobNumber: job.jobNumber } }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to load traveler for print"
+    return { error: message }
+  }
+}
+
+export async function getTravelerByIdAction(
+  travelerId: string
+): Promise<TravelerActionResult<Traveler | null>> {
+  try {
+    const ctx = await getSessionContext()
+    if (!ctx) return { error: "Not signed in." }
+    const traveler = await getTravelerById(travelerId)
+    return { data: traveler }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to load traveler"
     return { error: message }
   }
 }

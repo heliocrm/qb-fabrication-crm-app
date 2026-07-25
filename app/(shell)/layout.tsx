@@ -27,7 +27,9 @@ export default async function ShellLayout({
     <SidebarProvider defaultOpen>
       <AppSidebar user={user} visibleSectionKeys={visibleSectionKeys} />
       <SidebarInset className="min-h-svh">
-        <TopNav user={user} />
+        <div className="print:hidden">
+          <TopNav user={user} />
+        </div>
         <div className="flex-1 overflow-auto">{children}</div>
       </SidebarInset>
     </SidebarProvider>

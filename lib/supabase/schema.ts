@@ -50,6 +50,8 @@ export const Tables = {
   material_pull_requests: "material_pull_requests",
   push_subscriptions: "push_subscriptions",
   traveler_generations: "traveler_generations",
+  travelers: "travelers",
+  traveler_lines: "traveler_lines",
   organization_section_access: "organization_section_access",
 } as const
 

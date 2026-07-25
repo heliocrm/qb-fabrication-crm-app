@@ -32,10 +32,10 @@ export function GenerateTravelerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Generate traveler</DialogTitle>
+          <DialogTitle>Import traveler</DialogTitle>
           <DialogDescription>
-            Upload work order PDF → review Structure #s → create Word file in
-            Drive.
+            Upload work order PDF → review Structure #s → save digital traveler
+            in the CRM (with linked production line items).
           </DialogDescription>
         </DialogHeader>
         {open ? (

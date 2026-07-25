@@ -53,7 +53,7 @@ export function JobDetailHeader({ job, onOpenTraveler }: JobDetailHeaderProps) {
               onClick={onOpenTraveler}
             >
               <FileText className="size-4" data-icon="inline-start" />
-              Generate traveler
+              Import traveler
             </Button>
           ) : null}
           <Link href="/jobs">

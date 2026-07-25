@@ -105,5 +105,14 @@ export type {
   TravelerGenerationRow,
 } from "./TravelerGeneration"
 
+export type {
+  Traveler,
+  TravelerLine,
+  TravelerRow,
+  TravelerLineRow,
+  TravelerStatus,
+  TravelerImportFields,
+} from "./Traveler"
+
 // Database schema type for Supabase client generics
 export type { Database, Json } from "./database"

@@ -3,7 +3,7 @@ import { TravelerJobFlow } from "@/components/travelers/traveler-job-flow"
 import { loadJobById } from "@/lib/data/jobs"
 
 export const metadata = {
-  title: "Generate traveler",
+  title: "Import traveler",
 }
 
 export default async function TravelerJobPage({

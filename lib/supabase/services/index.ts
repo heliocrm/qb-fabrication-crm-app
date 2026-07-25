@@ -58,8 +58,14 @@ export {
 
 export {
   getNextTravelerVersion,
+  getNextDigitalTravelerVersion,
   listTravelerGenerationsByJobId,
   insertTravelerGeneration,
+  getActiveTravelerByJobId,
+  listTravelersByJobId,
+  getTravelerById,
+  importDigitalTraveler,
+  updateTravelerLine,
 } from "./travelers"
 
 export {
