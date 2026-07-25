@@ -70,12 +70,25 @@ Page: `/customers/needs-a-touch`.
 
 Claim ownership: contact form checkbox “I own this relationship”.
 
+## Opportunities (pipeline)
+
+Separate from relationship CRM, but linked from Customer 360.
+
+| Field | Notes |
+|-------|--------|
+| `assignee_id` | Pipeline owner (profile) — same ownership idea as `relationship_owner_id` |
+| `win_loss_reason` | Required in UI when stage is Won or Lost (migration `021`) |
+| `jobs.opportunity_id` | Won → **Create job** prefills account + links the job |
+
+UI: `/opportunities/[id]` detail; kanban/list titles open detail; Customer 360 opps link there.
+
 ## UI (Customer 360 hub)
 
-- **Customers → account detail:** Contacts, email/meeting actions, **Follow-ups**, **QB Customer → Open in QuickBooks** chip (deep link + optional status note), activity, open jobs/opps.
+- **Customers → account detail:** Contacts, email/meeting actions, **Follow-ups**, **QB Customer → Open in QuickBooks** chip (deep link + optional status note), activity, open jobs/opps (opps → detail).
 - **Jobs → Overview / Edit:** Optional QB job deep link chip.
 - **Customers → Needs a touch:** Queue + Create follow-up.
 - **Jobs → Activity / Overview:** CRM notes + schedule meeting (shop checklist tasks remain on the job).
+- **Opportunities:** Detail page with owner, win/loss reason, Create job from Won.
 
 ## Material Pull: borrow vs reason
 

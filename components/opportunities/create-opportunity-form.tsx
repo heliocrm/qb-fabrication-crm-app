@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
@@ -15,9 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createOpportunityAction } from "@/lib/actions/opportunities"
-import { ALL_STAGES } from "@/lib/opportunities-config"
+import { listOrgUsersForPickerAction } from "@/lib/actions/jobs"
+import { ALL_STAGES, isTerminalStage } from "@/lib/opportunities-config"
 import { toast } from "@/lib/toast"
-import type { Account, OppStage } from "@/types"
+import type { Account, OppStage, ProfileSummary } from "@/types"
 
 interface CreateOpportunityFormProps {
   accounts: Account[]
@@ -36,8 +37,17 @@ export function CreateOpportunityForm({
   const [value, setValue] = useState("")
   const [probability, setProbability] = useState("10")
   const [closeDate, setCloseDate] = useState("")
-  const [assignee, setAssignee] = useState("")
+  const [assigneeId, setAssigneeId] = useState("")
+  const [winLossReason, setWinLossReason] = useState("")
   const [notes, setNotes] = useState("")
+  const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
+
+  useEffect(() => {
+    if (dataSource !== "supabase") return
+    void listOrgUsersForPickerAction().then((result) => {
+      if (result.data) setOrgUsers(result.data)
+    })
+  }, [dataSource])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -45,10 +55,16 @@ export function CreateOpportunityForm({
       toast.error("Missing title", "Opportunity title is required.")
       return
     }
+    if (isTerminalStage(stage) && !winLossReason.trim()) {
+      toast.error("Win/loss reason required", "Add why this deal was won or lost.")
+      return
+    }
     if (dataSource === "mock") {
       toast.error("Supabase not configured", "Connect Supabase to create opportunities.")
       return
     }
+
+    const owner = orgUsers.find((u) => u.id === assigneeId)
 
     setIsSubmitting(true)
     const result = await createOpportunityAction({
@@ -58,8 +74,10 @@ export function CreateOpportunityForm({
       stage,
       probability: Number(probability) || 10,
       closeDate: closeDate || null,
-      assignee: assignee.trim() || null,
+      assigneeId: assigneeId || null,
+      assignee: owner?.fullName ?? null,
       notes: notes.trim() || null,
+      winLossReason: isTerminalStage(stage) ? winLossReason.trim() : null,
     })
     setIsSubmitting(false)
 
@@ -69,7 +87,11 @@ export function CreateOpportunityForm({
     }
 
     toast.success("Opportunity created")
-    router.push("/opportunities")
+    if (result.data) {
+      router.push(`/opportunities/${result.data.id}`)
+    } else {
+      router.push("/opportunities")
+    }
     router.refresh()
   }
 
@@ -159,6 +181,7 @@ export function CreateOpportunityForm({
                 max={100}
                 value={probability}
                 onChange={(e) => setProbability(e.target.value)}
+                disabled={isTerminalStage(stage)}
               />
             </div>
             <div className="space-y-1.5">
@@ -173,17 +196,49 @@ export function CreateOpportunityForm({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium" htmlFor="opp-assignee">
-                Assignee
-              </label>
-              <Input
-                id="opp-assignee"
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                placeholder="Optional"
-              />
+              <label className="text-sm font-medium">Owner</label>
+              <Select
+                value={assigneeId || "__none__"}
+                onValueChange={(v) => {
+                  if (v == null) return
+                  setAssigneeId(v === "__none__" ? "" : v)
+                }}
+              >
+                <SelectTrigger className="w-full bg-background text-foreground">
+                  <SelectValue placeholder="Select owner…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Unassigned</SelectItem>
+                  {orgUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.fullName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          {isTerminalStage(stage) && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium" htmlFor="opp-win-loss">
+                Why {stage}? *
+              </label>
+              <textarea
+                id="opp-win-loss"
+                rows={2}
+                value={winLossReason}
+                onChange={(e) => setWinLossReason(e.target.value)}
+                placeholder={
+                  stage === "Won"
+                    ? "e.g. Best price + lead time"
+                    : "e.g. Lost on delivery"
+                }
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs resize-y min-h-[72px]"
+                required
+              />
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium" htmlFor="opp-notes">

@@ -14,6 +14,7 @@ export interface Opportunity {
   assignee: string
   assigneeId?: string | null
   notes: string
+  winLossReason?: string | null
   organizationId?: string
   createdAt?: string
   updatedAt?: string
@@ -32,6 +33,7 @@ export interface OpportunityRow {
   assignee: string | null
   assignee_id: string | null
   notes: string | null
+  win_loss_reason?: string | null
   created_at: string
   updated_at: string
 }
@@ -47,6 +49,7 @@ export interface OpportunityInsert {
   assignee?: string | null
   assignee_id?: string | null
   notes?: string | null
+  win_loss_reason?: string | null
 }
 
 export type OpportunityUpdate = Partial<

@@ -220,8 +220,9 @@ export function CustomerDetailView({
           <h3 className="text-sm font-semibold text-foreground">Opportunities</h3>
           <div className="space-y-2">
             {customer.opportunities.map((opp) => (
-              <div
+              <Link
                 key={opp.id}
+                href={`/opportunities/${opp.id}`}
                 className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-3 hover:bg-muted/30 transition-colors"
               >
                 <div className="min-w-0">
@@ -239,7 +240,7 @@ export function CustomerDetailView({
                 <p className="text-sm font-bold tabular-nums shrink-0">
                   {formatCompact(opp.value)}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

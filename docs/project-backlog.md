@@ -37,13 +37,12 @@ Shipped: Contacts, manual + synced `crm_activities` (email/meeting), Settings Go
 
 ## Relationship CRM — commercial layer (Phase 4)
 
-**Shipped:** CRM follow-ups, outbound Gmail, thin QuickBooks deep-link chips on Customer 360 / Job (migration `020`). See [contacts-and-activity.md](./contacts-and-activity.md).
+**Shipped:** CRM follow-ups, outbound Gmail, thin QuickBooks deep-link chips (migration `020`), opportunity hardening (detail, owner, win/loss, won→job; migration `021`). See [contacts-and-activity.md](./contacts-and-activity.md).
 
 Remaining slices (separate PRs; Customer 360 stays the hub):
 
 | Item | Intent |
 |------|--------|
-| **Opportunity hardening** | Detail page, owner aligned with relationship pattern, win/loss, won → job; show on 360. |
 | **Event-driven follow-ups** | Start with **Job Delivered → 30-day check-in** only; add more only after use. |
 | **People API** | One-way enrich/match vs Google Contacts (roadmap last). |
 

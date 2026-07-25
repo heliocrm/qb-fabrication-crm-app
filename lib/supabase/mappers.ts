@@ -86,6 +86,7 @@ export function mapOpportunityRow(row: OpportunityWithAccount): Opportunity {
     assignee: row.assignee ?? "",
     assigneeId: row.assignee_id,
     notes: row.notes ?? "",
+    winLossReason: row.win_loss_reason ?? null,
     organizationId: row.organization_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

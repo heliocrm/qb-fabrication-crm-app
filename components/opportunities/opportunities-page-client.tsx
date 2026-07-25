@@ -71,9 +71,14 @@ export function OpportunitiesPageClient({
     (s, o) => s + o.value * (o.probability / 100),
     0
   )
-  const wonYtd = filtered
-    .filter((o) => o.stage === "Won")
-    .reduce((s, o) => s + o.value, 0)
+  const closedOpps = filtered.filter(
+    (o) => o.stage === "Won" || o.stage === "Lost"
+  )
+  const wonCount = closedOpps.filter((o) => o.stage === "Won").length
+  const winRate =
+    closedOpps.length > 0
+      ? `${Math.round((wonCount / closedOpps.length) * 100)}%`
+      : "—"
 
   const handleStageChange = useCallback(
     (id: string, stage: OppStage) => {
@@ -176,9 +181,9 @@ export function OpportunitiesPageClient({
             color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40",
           },
           {
-            label: "Won YTD",
-            value: formatOppValue(wonYtd),
-            icon: DollarSign,
+            label: "Win rate",
+            value: winRate,
+            icon: TrendingUp,
             color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40",
           },
         ].map((m) => (

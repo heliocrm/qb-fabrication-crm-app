@@ -3,8 +3,12 @@ export { globalSearch } from "./search"
 
 export {
   listOpportunities,
+  getOpportunityById,
+  listJobsForOpportunity,
   createOpportunity,
+  updateOpportunity,
   updateOpportunityStage,
+  type LinkedJobSummary,
 } from "./opportunities"
 
 export {

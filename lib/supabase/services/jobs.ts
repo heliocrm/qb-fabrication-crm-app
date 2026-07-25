@@ -135,6 +135,7 @@ export interface CreateJobFromTemplateInput {
   poNumber: string
   description: string
   accountId?: string | null
+  opportunityId?: string | null
   template: JobTemplateType
   status?: Job["status"]
   priority?: Job["priority"]
@@ -160,6 +161,7 @@ export async function createJobFromTemplate(
   const jobPayload: JobInsert = {
     organization_id: organizationId,
     account_id: input.accountId ?? null,
+    opportunity_id: input.opportunityId ?? null,
     job_number: input.jobNumber,
     po_number: input.poNumber,
     description: input.description,

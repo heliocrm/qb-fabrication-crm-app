@@ -182,6 +182,7 @@ export interface Database {
           assignee: string | null
           assignee_id: string | null
           notes: string | null
+          win_loss_reason: string | null
           created_at: string
           updated_at: string
         }
@@ -197,6 +198,7 @@ export interface Database {
           assignee?: string | null
           assignee_id?: string | null
           notes?: string | null
+          win_loss_reason?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -212,6 +214,7 @@ export interface Database {
           assignee?: string | null
           assignee_id?: string | null
           notes?: string | null
+          win_loss_reason?: string | null
           created_at?: string
           updated_at?: string
         }

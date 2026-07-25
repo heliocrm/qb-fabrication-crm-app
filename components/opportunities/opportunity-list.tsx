@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -39,7 +40,7 @@ export function OpportunityList({ opportunities }: OpportunityListProps) {
                 "Value",
                 "Probability",
                 "Close Date",
-                "Assignee",
+                "Owner",
               ].map((h, idx) => (
                 <th
                   key={h}
@@ -65,9 +66,12 @@ export function OpportunityList({ opportunities }: OpportunityListProps) {
                 )}
               >
                 <td className="px-5 py-3 max-w-xs">
-                  <p className="text-xs font-semibold text-foreground leading-snug">
+                  <Link
+                    href={`/opportunities/${opp.id}`}
+                    className="text-xs font-semibold text-foreground leading-snug hover:text-[var(--orange)] hover:underline"
+                  >
                     {opp.title}
-                  </p>
+                  </Link>
                   {opp.notes && (
                     <p className="text-[10px] text-muted-foreground truncate mt-0.5 max-w-sm">
                       {opp.notes}

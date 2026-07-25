@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,6 +36,7 @@ interface CreateJobFormProps {
 
 export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [template, setTemplate] = useState<JobTemplateType>("crossarm")
   const [extraLineItems, setExtraLineItems] = useState<ExtraLineItem[]>([])
@@ -43,7 +44,10 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   const [assigneeIds, setAssigneeIds] = useState<Set<string>>(new Set())
   const [importWorkOrder, setImportWorkOrder] = useState(true)
   const [accountId, setAccountId] = useState("")
+  const [opportunityId, setOpportunityId] = useState<string | null>(null)
   const [priority, setPriority] = useState<Priority>("Normal")
+  const [prefillDescription, setPrefillDescription] = useState("")
+  const [prefillValue, setPrefillValue] = useState("")
 
   useEffect(() => {
     if (dataSource !== "supabase") return
@@ -51,6 +55,20 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
       if (result.data) setOrgUsers(result.data)
     })
   }, [dataSource])
+
+  useEffect(() => {
+    const fromAccount = searchParams.get("accountId")
+    const fromOpp = searchParams.get("opportunityId")
+    const description = searchParams.get("description")
+    const value = searchParams.get("value")
+
+    if (fromAccount && accounts.some((a) => a.id === fromAccount)) {
+      setAccountId(fromAccount)
+    }
+    if (fromOpp) setOpportunityId(fromOpp)
+    if (description) setPrefillDescription(description)
+    if (value) setPrefillValue(value)
+  }, [searchParams, accounts])
 
   function addExtraLineItem() {
     setExtraLineItems((prev) => [
@@ -88,6 +106,7 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
       poNumber,
       description,
       accountId: accountId ? resolveAccountId(accountId) : null,
+      opportunityId,
       template,
       priority,
       deliveryDate: String(fd.get("deliveryDate") ?? "") || undefined,
@@ -137,8 +156,20 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
             <label htmlFor="description" className="text-xs font-medium text-muted-foreground">
               Description *
             </label>
-            <Input id="description" name="description" required placeholder="230kV Substation Crossarm Assembly" />
+            <Input
+              id="description"
+              name="description"
+              required
+              placeholder="230kV Substation Crossarm Assembly"
+              defaultValue={prefillDescription}
+              key={prefillDescription || "description"}
+            />
           </div>
+          {opportunityId && (
+            <p className="text-xs text-muted-foreground sm:col-span-2">
+              Linked to opportunity — job will keep this win on the pipeline record.
+            </p>
+          )}
           <div className="space-y-1.5">
             <label htmlFor="jobNumber" className="text-xs font-medium text-muted-foreground">
               Job number *
@@ -205,7 +236,16 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
             <label htmlFor="value" className="text-xs font-medium text-muted-foreground">
               Contract value ($)
             </label>
-            <Input id="value" name="value" type="number" min={0} step={1000} placeholder="312500" />
+            <Input
+              id="value"
+              name="value"
+              type="number"
+              min={0}
+              step={1000}
+              placeholder="312500"
+              defaultValue={prefillValue}
+              key={prefillValue || "value"}
+            />
           </div>
           <div className="space-y-1.5">
             <label htmlFor="startDate" className="text-xs font-medium text-muted-foreground">

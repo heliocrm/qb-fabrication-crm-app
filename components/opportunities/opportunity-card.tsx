@@ -1,6 +1,7 @@
 "use client"
 
 import { memo } from "react"
+import Link from "next/link"
 import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { Calendar, GripVertical } from "lucide-react"
@@ -58,9 +59,19 @@ export const OpportunityCard = memo(function OpportunityCard({
             <GripVertical className="size-3.5" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">
-              {opportunity.title}
-            </p>
+            {isDragOverlay ? (
+              <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">
+                {opportunity.title}
+              </p>
+            ) : (
+              <Link
+                href={`/opportunities/${opportunity.id}`}
+                className="text-xs font-semibold text-foreground leading-snug line-clamp-2 hover:text-[var(--orange)] hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {opportunity.title}
+              </Link>
+            )}
           </div>
         </div>
 

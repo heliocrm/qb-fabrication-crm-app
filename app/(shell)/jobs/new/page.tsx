@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { CreateJobForm } from "@/components/jobs/create-job-form"
 import { canCreateJobs, getSessionContext } from "@/lib/auth/session"
@@ -19,7 +20,9 @@ export default async function NewJobPage() {
           Create a fabrication job from a Trello-style template with auto-seeded line items and checklists
         </p>
       </div>
-      <CreateJobForm accounts={customers} dataSource={source} />
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading form…</p>}>
+        <CreateJobForm accounts={customers} dataSource={source} />
+      </Suspense>
     </div>
   )
 }
