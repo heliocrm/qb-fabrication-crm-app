@@ -39,7 +39,10 @@ export class GoogleDriveService extends GoogleWorkspaceService {
     return this.drive
   }
 
-  /** Create a job-specific folder under the org root folder */
+  /**
+   * Create a job-specific folder under the org root folder.
+   * Intentionally flat — no Drive subfolders. Organization is CRM-side via documents.type.
+   */
   async createJobFolder(input: CreateJobFolderInput): Promise<DriveFolderResult> {
     const drive = await this.getDrive()
     const name = `${input.jobNumber} · ${input.poNumber} · ${input.customerName}`

@@ -18,7 +18,15 @@ import {
 } from "@/lib/supabase/services/documents"
 import { getUserProfile } from "@/lib/supabase/provision"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
-import type { Document } from "@/types"
+import { DOCUMENT_CATEGORIES } from "@/lib/job-detail-config"
+import type { Document, DocumentType } from "@/types"
+
+function parseDocumentType(value: unknown): DocumentType | null {
+  if (typeof value !== "string" || !value) return null
+  return (DOCUMENT_CATEGORIES as readonly string[]).includes(value)
+    ? (value as DocumentType)
+    : null
+}
 
 type ActionResult<T> = { data?: T; error?: string }
 
@@ -209,7 +217,8 @@ export async function listJobDriveFilesAction(
 export async function uploadJobDriveFileAction(
   jobId: string,
   formData: FormData,
-  lineItemId?: string | null
+  lineItemId?: string | null,
+  documentType?: DocumentType | null
 ): Promise<ActionResult<{ document: Document }>> {
   return safeDriveAction(async () => {
     const file = formData.get("file")
@@ -218,6 +227,9 @@ export async function uploadJobDriveFileAction(
     }
 
     const scopeLineItemId = lineItemId ?? (formData.get("lineItemId") as string | null) ?? null
+    const explicitType =
+      parseDocumentType(documentType) ??
+      parseDocumentType(formData.get("documentType"))
 
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new GoogleServiceError("File exceeds 50 MB limit", "VALIDATION")
@@ -261,7 +273,7 @@ export async function uploadJobDriveFileAction(
         webViewLink: uploaded.webViewLink,
         thumbnailLink: uploaded.thumbnailLink,
         folderId,
-        documentType: uploaded.documentType,
+        documentType: explicitType ?? uploaded.documentType,
       },
       uploadedBy,
       scopeLineItemId || null

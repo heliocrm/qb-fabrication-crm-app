@@ -7,7 +7,7 @@ import {
   uploadJobDriveFileAction,
 } from "@/lib/actions/google-drive"
 import { toast } from "@/lib/toast"
-import type { Document } from "@/types"
+import type { Document, DocumentType } from "@/types"
 
 interface UseJobDriveOptions {
   jobId: string
@@ -69,14 +69,24 @@ export function useJobDrive({
     })
   }
 
-  function uploadFile(file: File, lineItemId?: string | null) {
+  function uploadFile(
+    file: File,
+    lineItemId?: string | null,
+    documentType?: DocumentType | null
+  ) {
     setError(null)
     startTransition(async () => {
       const formData = new FormData()
       formData.append("file", file)
       if (lineItemId) formData.append("lineItemId", lineItemId)
+      if (documentType) formData.append("documentType", documentType)
 
-      const result = await uploadJobDriveFileAction(jobId, formData, lineItemId)
+      const result = await uploadJobDriveFileAction(
+        jobId,
+        formData,
+        lineItemId,
+        documentType
+      )
       if (result.error) {
         setError(result.error)
         toast.error("Upload failed", result.error)

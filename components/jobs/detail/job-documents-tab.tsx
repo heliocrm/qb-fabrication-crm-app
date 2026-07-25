@@ -26,6 +26,7 @@ import { CreateJobFolderButton } from "@/components/google/create-job-folder-but
 import { DriveFileUpload } from "@/components/google/drive-file-upload"
 import { useJobDrive } from "@/hooks/use-job-drive"
 import {
+  DOCUMENT_CATEGORIES,
   docTypeMeta,
   formatJobDate,
 } from "@/lib/job-detail-config"
@@ -35,7 +36,7 @@ import {
   isGoogleDriveFolderId,
 } from "@/lib/google/drive/urls"
 import { isPreviewableMime } from "@/lib/google/drive/mime"
-import type { Document, Job } from "@/types"
+import type { Document, DocumentType, Job } from "@/types"
 
 interface JobDocumentsTabProps {
   job: Job
@@ -52,7 +53,9 @@ export function JobDocumentsTab({
 }: JobDocumentsTabProps) {
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
   const [docFilter, setDocFilter] = useState<"all" | "job" | string>("all")
+  const [typeFilter, setTypeFilter] = useState<"all" | DocumentType>("all")
   const [uploadScope, setUploadScope] = useState<"job" | string>("job")
+  const [uploadDocType, setUploadDocType] = useState<"auto" | DocumentType>("auto")
   const effectiveJobId = jobId ?? job.id
   const useLiveDrive = dataSource === "supabase" && Boolean(jobId)
   const lineItems = job.lineItems ?? []
@@ -76,21 +79,27 @@ export function JobDocumentsTab({
 
   const displayDocs = useLiveDrive ? documents : job.documents
 
-  const filteredDocs = displayDocs.filter((d) => {
+  const scopeFilteredDocs = displayDocs.filter((d) => {
     if (docFilter === "all") return true
     if (docFilter === "job") return !d.lineItemId
     return d.lineItemId === docFilter
   })
 
-  const jobLevelDocs = filteredDocs.filter((d) => !d.lineItemId)
-  const lineItemGroups = lineItems
-    .map((li) => ({
-      lineItem: li,
-      docs: filteredDocs.filter((d) => d.lineItemId === li.id),
-    }))
-    .filter((g) => g.docs.length > 0 || docFilter === g.lineItem.id)
+  const filteredDocs = scopeFilteredDocs.filter((d) => {
+    if (typeFilter === "all") return true
+    return d.type === typeFilter
+  })
+
+  const typeSections =
+    typeFilter === "all"
+      ? DOCUMENT_CATEGORIES.map((type) => ({
+          type,
+          docs: filteredDocs.filter((d) => d.type === type),
+        })).filter((s) => s.docs.length > 0)
+      : [{ type: typeFilter, docs: filteredDocs }]
 
   const uploadLineItemId = uploadScope === "job" ? null : uploadScope
+  const uploadTypeOverride = uploadDocType === "auto" ? null : uploadDocType
   const activeFolderId = useLiveDrive ? folderId ?? job.googleDriveFolderId : job.googleDriveFolderId
   const folderUrl = isGoogleDriveFolderId(activeFolderId)
     ? driveFolderUrl(activeFolderId!)
@@ -154,23 +163,43 @@ export function JobDocumentsTab({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <FilterChip active={docFilter === "all"} onClick={() => setDocFilter("all")}>
-          All ({displayDocs.length})
-        </FilterChip>
-        <FilterChip active={docFilter === "job"} onClick={() => setDocFilter("job")}>
-          Job-level ({displayDocs.filter((d) => !d.lineItemId).length})
-        </FilterChip>
-        {lineItems.map((li) => (
-          <FilterChip
-            key={li.id}
-            active={docFilter === li.id}
-            onClick={() => setDocFilter(li.id)}
-          >
-            {li.lineItemNumber ?? li.title.slice(0, 20)} (
-            {displayDocs.filter((d) => d.lineItemId === li.id).length})
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <FilterChip active={docFilter === "all"} onClick={() => setDocFilter("all")}>
+            All ({displayDocs.length})
           </FilterChip>
-        ))}
+          <FilterChip active={docFilter === "job"} onClick={() => setDocFilter("job")}>
+            Job-level ({displayDocs.filter((d) => !d.lineItemId).length})
+          </FilterChip>
+          {lineItems.map((li) => (
+            <FilterChip
+              key={li.id}
+              active={docFilter === li.id}
+              onClick={() => setDocFilter(li.id)}
+            >
+              {li.lineItemNumber ?? li.title.slice(0, 20)} (
+              {displayDocs.filter((d) => d.lineItemId === li.id).length})
+            </FilterChip>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>
+            All types ({scopeFilteredDocs.length})
+          </FilterChip>
+          {DOCUMENT_CATEGORIES.map((type) => {
+            const count = scopeFilteredDocs.filter((d) => d.type === type).length
+            return (
+              <FilterChip
+                key={type}
+                active={typeFilter === type}
+                onClick={() => setTypeFilter(type)}
+              >
+                {type} ({count})
+              </FilterChip>
+            )
+          })}
+        </div>
       </div>
 
       {/* Google Drive folder card */}
@@ -218,20 +247,14 @@ export function JobDocumentsTab({
         </div>
       ) : (
         <>
-          {(docFilter === "all" || docFilter === "job") && jobLevelDocs.length > 0 && (
-            <DocumentSection title="Job-level files" docs={jobLevelDocs} onPreview={setPreviewDoc} />
-          )}
-          {lineItemGroups.map(({ lineItem, docs }) =>
-            docs.length > 0 ? (
-              <DocumentSection
-                key={lineItem.id}
-                title={lineItem.title}
-                subtitle={lineItem.lineItemNumber ? `CID ${lineItem.lineItemNumber}` : undefined}
-                docs={docs}
-                onPreview={setPreviewDoc}
-              />
-            ) : null
-          )}
+          {typeSections.map(({ type, docs }) => (
+            <DocumentSection
+              key={type}
+              title={type}
+              docs={docs}
+              onPreview={setPreviewDoc}
+            />
+          ))}
         </>
       )}
 
@@ -251,23 +274,44 @@ export function JobDocumentsTab({
 
       {useLiveDrive && !readOnly && (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Upload scope:</span>
-            <select
-              value={uploadScope}
-              onChange={(e) => setUploadScope(e.target.value)}
-              className="text-xs rounded-md border border-input bg-transparent px-2 py-1"
-            >
-              <option value="job">Job-level</option>
-              {lineItems.map((li) => (
-                <option key={li.id} value={li.id}>
-                  {li.title}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Upload scope:</span>
+              <select
+                value={uploadScope}
+                onChange={(e) => setUploadScope(e.target.value)}
+                className="text-xs rounded-md border border-input bg-transparent px-2 py-1"
+              >
+                <option value="job">Job-level</option>
+                {lineItems.map((li) => (
+                  <option key={li.id} value={li.id}>
+                    {li.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Doc type:</span>
+              <select
+                value={uploadDocType}
+                onChange={(e) =>
+                  setUploadDocType(e.target.value as "auto" | DocumentType)
+                }
+                className="text-xs rounded-md border border-input bg-transparent px-2 py-1"
+              >
+                <option value="auto">Auto (from filename)</option>
+                {DOCUMENT_CATEGORIES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <DriveFileUpload
-            onUpload={(file) => uploadFile(file, uploadLineItemId)}
+            onUpload={(file) =>
+              uploadFile(file, uploadLineItemId, uploadTypeOverride)
+            }
             isPending={isPending}
           />
         </div>
