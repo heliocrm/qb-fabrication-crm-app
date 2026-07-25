@@ -37,13 +37,12 @@ Shipped: Contacts, manual + synced `crm_activities` (email/meeting), Settings Go
 
 ## Relationship CRM — commercial layer (Phase 4)
 
-**Shipped (slice 1):** `crm_tasks` as **CRM follow-ups** (UI: Follow-up) — Customer 360 panel + Needs-a-touch Create follow-up. Distinct from shop `tasks`. Migration `019_crm_tasks.sql`. See [contacts-and-activity.md](./contacts-and-activity.md).
+**Shipped:** CRM follow-ups (`crm_tasks` / UI Follow-up) + outbound Gmail compose/reply from Customer 360. See [contacts-and-activity.md](./contacts-and-activity.md), [google-oauth-crm.md](./google-oauth-crm.md).
 
 Remaining slices (separate PRs; Customer 360 stays the hub):
 
 | Item | Intent |
 |------|--------|
-| **Outbound Gmail** | Compose/reply via connected token (`gmail.send`); auto-log to `crm_activities`. |
 | **QuickBooks linkage (thin)** | Deep link chip “QB Customer → Open in QuickBooks”; optional last invoice/open balance only if easy. No new financial model. |
 | **Opportunity hardening** | Detail page, owner aligned with relationship pattern, win/loss, won → job; show on 360. |
 | **Event-driven follow-ups** | Start with **Job Delivered → 30-day check-in** only; add more only after use. |

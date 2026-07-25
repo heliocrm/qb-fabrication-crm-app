@@ -52,9 +52,13 @@ Sales/relationship follow-ups. **UI label: Follow-up / Follow-ups.**
 
 **Not** the same as `public.tasks` (shop WIP checklists on line items / floor sign-off). Never overload those tables or call CRM follow-ups “tasks” alone in the UI next to shop language.
 
-## Google sync
+## Google sync + outbound email
 
-See [google-oauth-crm.md](./google-oauth-crm.md). Settings → Integrations: Connect / Sync Gmail / Sync Calendar / Disconnect. Manual sync only. Contacts are **not** synced from Google Contacts (People API is later backlog).
+See [google-oauth-crm.md](./google-oauth-crm.md). Settings → Integrations: Connect / Sync Gmail / Sync Calendar / Disconnect. Manual sync only.
+
+**Outbound:** Customer 360 contact **Email** button and activity **Reply** send via connected Gmail (`gmail.send`) and log `crm_activities` (`kind=email`, `metadata.direction=outbound`). Reconnect Google if send scope is missing.
+
+Contacts are **not** synced from Google Contacts (People API is later backlog).
 
 ## Needs a touch
 
@@ -68,7 +72,7 @@ Claim ownership: contact form checkbox “I own this relationship”.
 
 ## UI (Customer 360 hub)
 
-- **Customers → account detail:** Contacts, **Follow-ups** panel, activity timeline, open jobs/opps context.
+- **Customers → account detail:** Contacts, email/meeting actions, **Follow-ups** panel, activity timeline, open jobs/opps context.
 - **Customers → Needs a touch:** Queue + Create follow-up.
 - **Jobs → Activity / Overview:** CRM notes + schedule meeting (shop checklist tasks remain on the job).
 

@@ -1,8 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { CalendarPlus, Loader2, Pencil, Plus, StickyNote, User } from "lucide-react"
+import {
+  CalendarPlus,
+  Loader2,
+  Mail,
+  Pencil,
+  Plus,
+  StickyNote,
+  User,
+} from "lucide-react"
 import { ScheduleMeetingDialog } from "@/components/crm/schedule-meeting-dialog"
+import { ComposeEmailDialog } from "@/components/crm/compose-email-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +52,8 @@ export function CustomerContactsPanel({
   const [noteKind, setNoteKind] = useState<CrmActivityKind>("note")
   const [savingNote, setSavingNote] = useState(false)
   const [meetingContact, setMeetingContact] = useState<Contact | null>(null)
+  const [emailContact, setEmailContact] = useState<Contact | null>(null)
+  const [replyActivity, setReplyActivity] = useState<CrmActivity | null>(null)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -139,15 +150,26 @@ export function CustomerContactsPanel({
                     {canWrite ? (
                       <>
                         {c.email ? (
-                          <Button
-                            type="button"
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => setMeetingContact(c)}
-                            aria-label={`Schedule meeting with ${c.fullName}`}
-                          >
-                            <CalendarPlus className="size-3.5" />
-                          </Button>
+                          <>
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => setEmailContact(c)}
+                              aria-label={`Email ${c.fullName}`}
+                            >
+                              <Mail className="size-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => setMeetingContact(c)}
+                              aria-label={`Schedule meeting with ${c.fullName}`}
+                            >
+                              <CalendarPlus className="size-3.5" />
+                            </Button>
+                          </>
                         ) : null}
                         <Button
                           type="button"
@@ -243,20 +265,63 @@ export function CustomerContactsPanel({
             </p>
           ) : (
             <ul className="space-y-3">
-              {activities.map((a) => (
-                <li key={a.id} className="border-l-2 border-border pl-3 space-y-0.5">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px] capitalize">
-                      {a.kind}
-                    </Badge>
-                    <span>
-                      {new Date(a.occurredAt).toLocaleString()}
-                    </span>
-                    {a.createdByName ? <span>· {a.createdByName}</span> : null}
-                  </div>
-                  <p className="text-sm whitespace-pre-wrap">{a.body}</p>
-                </li>
-              ))}
+              {activities.map((a) => {
+                const meta = a.metadata ?? {}
+                const threadId =
+                  typeof meta.threadId === "string" ? meta.threadId : null
+                const matchedEmail =
+                  typeof meta.matchedEmail === "string"
+                    ? meta.matchedEmail
+                    : typeof meta.to === "string"
+                      ? meta.to
+                      : null
+                const canReply =
+                  canWrite && a.kind === "email" && Boolean(matchedEmail)
+
+                return (
+                  <li
+                    key={a.id}
+                    className="border-l-2 border-border pl-3 space-y-0.5"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] capitalize"
+                      >
+                        {a.kind}
+                      </Badge>
+                      <span>
+                        {new Date(a.occurredAt).toLocaleString()}
+                      </span>
+                      {a.createdByName ? (
+                        <span>· {a.createdByName}</span>
+                      ) : null}
+                      {canReply ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => setReplyActivity(a)}
+                        >
+                          Reply
+                        </Button>
+                      ) : null}
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap">{a.body}</p>
+                    {threadId && typeof meta.deepLink === "string" ? (
+                      <a
+                        href={meta.deepLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-[var(--orange)] hover:underline"
+                      >
+                        Open in Gmail
+                      </a>
+                    ) : null}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </CardContent>
@@ -286,6 +351,47 @@ export function CustomerContactsPanel({
         accountId={accountId}
         contactId={meetingContact?.id}
         onScheduled={() => void reload()}
+      />
+
+      <ComposeEmailDialog
+        open={Boolean(emailContact)}
+        onOpenChange={(o) => {
+          if (!o) setEmailContact(null)
+        }}
+        toEmail={emailContact?.email}
+        accountId={accountId}
+        contactId={emailContact?.id}
+        onSent={() => void reload()}
+      />
+
+      <ComposeEmailDialog
+        open={Boolean(replyActivity)}
+        onOpenChange={(o) => {
+          if (!o) setReplyActivity(null)
+        }}
+        toEmail={
+          typeof replyActivity?.metadata?.matchedEmail === "string"
+            ? replyActivity.metadata.matchedEmail
+            : typeof replyActivity?.metadata?.to === "string"
+              ? replyActivity.metadata.to
+              : null
+        }
+        accountId={accountId}
+        contactId={replyActivity?.contactId}
+        subjectDefault={
+          typeof replyActivity?.metadata?.subject === "string"
+            ? replyActivity.metadata.subject
+            : replyActivity?.body.split("\n")[0] ?? ""
+        }
+        threadId={
+          typeof replyActivity?.metadata?.threadId === "string"
+            ? replyActivity.metadata.threadId
+            : null
+        }
+        onSent={() => {
+          setReplyActivity(null)
+          void reload()
+        }}
       />
     </div>
   )

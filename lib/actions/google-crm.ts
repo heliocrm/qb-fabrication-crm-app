@@ -12,7 +12,12 @@ import {
   isGoogleOAuthConfigured,
 } from "@/lib/google/oauth-config"
 import { isTokenEncryptionConfigured } from "@/lib/google/crypto/token-seal"
-import { syncGmailForProfile } from "@/lib/google/gmail/service"
+import {
+  profileHasGmailSend,
+  sendCrmEmail,
+  syncGmailForProfile,
+} from "@/lib/google/gmail/service"
+import { GMAIL_SEND_SCOPE } from "@/lib/google/types"
 import {
   createCrmMeeting,
   syncCalendarForProfile,
@@ -43,11 +48,21 @@ export async function getGoogleConnectionStatusAction() {
     const configured =
       isGoogleOAuthConfigured() && isTokenEncryptionConfigured()
     const connection = await getGoogleOAuthConnection(ctx.profileId)
+    const scopes = connection?.scopes ?? []
+    const canSendGmail =
+      Boolean(connection) &&
+      (await profileHasGmailSend(ctx.profileId))
     return {
       configured,
       connected: Boolean(connection),
       email: connection?.email ?? null,
-      scopes: connection?.scopes ?? [],
+      scopes,
+      canSendGmail,
+      needsSendReconnect:
+        Boolean(connection) &&
+        !scopes.some(
+          (s) => s === GMAIL_SEND_SCOPE || s.includes("gmail.send")
+        ),
       lastGmailSyncAt: connection?.lastGmailSyncAt ?? null,
       lastCalendarSyncAt: connection?.lastCalendarSyncAt ?? null,
       connectedAt: connection?.connectedAt ?? null,
@@ -122,6 +137,42 @@ export async function scheduleCrmMeetingAction(input: {
       accountId: input.accountId,
       contactId: input.contactId,
       jobId: input.jobId,
+    })
+  })
+
+  if (result.data) {
+    revalidatePath("/customers")
+    if (input.jobId) revalidatePath(`/jobs/${input.jobId}`)
+  }
+  return result
+}
+
+export async function sendCrmEmailAction(input: {
+  to: string
+  subject: string
+  bodyText: string
+  accountId?: string | null
+  contactId?: string | null
+  jobId?: string | null
+  threadId?: string | null
+  replyToMessageId?: string | null
+}) {
+  if (!input.to?.trim()) return { error: "Recipient is required" }
+  if (!input.subject?.trim()) return { error: "Subject is required" }
+  if (!input.bodyText?.trim()) return { error: "Message body is required" }
+
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    return sendCrmEmail({
+      profileId: ctx.profileId,
+      to: input.to,
+      subject: input.subject,
+      bodyText: input.bodyText,
+      accountId: input.accountId,
+      contactId: input.contactId,
+      jobId: input.jobId,
+      threadId: input.threadId,
+      replyToMessageId: input.replyToMessageId,
     })
   })
 

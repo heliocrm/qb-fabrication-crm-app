@@ -6,8 +6,12 @@ import {
   throwOnError,
 } from "@/lib/supabase/schema"
 import { upsertExternalCrmActivity } from "@/lib/supabase/services/crm-activities"
-import { touchGmailSyncAt } from "@/lib/supabase/services/google-oauth-tokens"
+import {
+  getGoogleOAuthConnection,
+  touchGmailSyncAt,
+} from "@/lib/supabase/services/google-oauth-tokens"
 import { createUserOAuthClientFromProfile } from "@/lib/google/auth/client"
+import { GMAIL_SEND_SCOPE } from "@/lib/google/types"
 
 const THREAD_CAP = 50
 const LOOKBACK_DAYS = 30
@@ -223,7 +227,152 @@ export async function syncGmailForProfile(
   }
 }
 
-/** @deprecated stub class — use syncGmailForProfile */
+function encodeRawMessage(mime: string): string {
+  return Buffer.from(mime)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "")
+}
+
+function buildMimeMessage(input: {
+  from: string
+  to: string
+  subject: string
+  bodyText: string
+  replyToMessageId?: string | null
+  references?: string | null
+}): string {
+  const lines = [
+    `From: ${input.from}`,
+    `To: ${input.to}`,
+    `Subject: ${input.subject}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/plain; charset="UTF-8"',
+  ]
+  if (input.replyToMessageId) {
+    lines.push(`In-Reply-To: ${input.replyToMessageId}`)
+    lines.push(
+      `References: ${input.references?.trim() || input.replyToMessageId}`
+    )
+  }
+  lines.push("", input.bodyText)
+  return lines.join("\r\n")
+}
+
+export async function profileHasGmailSend(profileId: string): Promise<boolean> {
+  const connection = await getGoogleOAuthConnection(profileId)
+  if (!connection) return false
+  return connection.scopes.some(
+    (s) => s === GMAIL_SEND_SCOPE || s.includes("gmail.send")
+  )
+}
+
+export interface SendCrmEmailInput {
+  profileId: string
+  to: string
+  subject: string
+  bodyText: string
+  accountId?: string | null
+  contactId?: string | null
+  jobId?: string | null
+  /** Gmail thread id for reply */
+  threadId?: string | null
+  /** RFC Message-ID of parent for In-Reply-To */
+  replyToMessageId?: string | null
+}
+
+export interface SendCrmEmailResult {
+  messageId: string
+  threadId: string | null
+  activityId: string
+}
+
+/** Send email via connected Gmail and log crm_activities kind=email */
+export async function sendCrmEmail(
+  input: SendCrmEmailInput
+): Promise<SendCrmEmailResult> {
+  const to = input.to.trim().toLowerCase()
+  if (!to || !to.includes("@")) {
+    throw new Error("A valid recipient email is required")
+  }
+  if (!input.subject.trim()) {
+    throw new Error("Subject is required")
+  }
+  if (!input.bodyText.trim()) {
+    throw new Error("Message body is required")
+  }
+
+  const canSend = await profileHasGmailSend(input.profileId)
+  if (!canSend) {
+    throw new Error(
+      "Gmail send is not authorized. Disconnect and Connect Google again in Settings to grant send access."
+    )
+  }
+
+  const connection = await getGoogleOAuthConnection(input.profileId)
+  if (!connection) {
+    throw new Error("Google Workspace is not connected. Connect in Settings.")
+  }
+
+  const auth = await createUserOAuthClientFromProfile(input.profileId)
+  const gmail = google.gmail({ version: "v1", auth })
+
+  const mime = buildMimeMessage({
+    from: connection.email,
+    to,
+    subject: input.subject.trim(),
+    bodyText: input.bodyText.trim(),
+    replyToMessageId: input.replyToMessageId,
+  })
+
+  const sent = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: {
+      raw: encodeRawMessage(mime),
+      threadId: input.threadId || undefined,
+    },
+  })
+
+  const messageId = sent.data.id
+  if (!messageId) throw new Error("Gmail did not return a message id")
+  const threadId = sent.data.threadId ?? input.threadId ?? null
+  const deepLink = threadId
+    ? `https://mail.google.com/mail/u/0/#inbox/${threadId}`
+    : null
+  const occurredAt = new Date().toISOString()
+  const body = `${input.subject.trim()}\n\n${input.bodyText.trim()}`
+
+  const activity = await upsertExternalCrmActivity({
+    accountId: input.accountId ?? null,
+    contactId: input.contactId ?? null,
+    jobId: input.jobId ?? null,
+    kind: "email",
+    body,
+    occurredAt,
+    createdBy: input.profileId,
+    externalSource: "gmail",
+    externalId: `outbound:${messageId}`,
+    metadata: {
+      subject: input.subject.trim(),
+      snippet: input.bodyText.trim().slice(0, 200),
+      threadId,
+      messageId,
+      deepLink,
+      direction: "outbound",
+      to,
+      from: connection.email,
+    },
+  })
+
+  return {
+    messageId,
+    threadId,
+    activityId: activity.id,
+  }
+}
+
+/** @deprecated use syncGmailForProfile / sendCrmEmail */
 export class GoogleGmailService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(_auth: unknown) {}
@@ -233,8 +382,6 @@ export class GoogleGmailService {
     subject: string
     bodyHtml: string
   }): Promise<{ messageId: string }> {
-    throw new Error(
-      "Outbound Gmail is not implemented yet. Use inbound Sync now in Settings."
-    )
+    throw new Error("Use sendCrmEmail() for outbound CRM mail.")
   }
 }

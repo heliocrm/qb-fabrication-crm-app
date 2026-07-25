@@ -23,6 +23,8 @@ type Status = {
   configured: boolean
   connected: boolean
   email: string | null
+  canSendGmail?: boolean
+  needsSendReconnect?: boolean
   lastGmailSyncAt: string | null
   lastCalendarSyncAt: string | null
 }
@@ -141,8 +143,8 @@ export function GoogleIntegrationsCard() {
         ) : !status.connected ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Connect Gmail (read) and Calendar (events) for this user. Tokens
-              are encrypted at rest and separate from login with Google.
+              Connect Gmail (read + send) and Calendar (events) for this user.
+              Tokens are encrypted at rest and separate from login with Google.
             </p>
             <Button render={<a href="/api/google/oauth/start" />}>
               <Mail className="size-4" data-icon="inline-start" />
@@ -161,6 +163,16 @@ export function GoogleIntegrationsCard() {
               <p className="text-xs text-muted-foreground">
                 Last Calendar sync: {formatSync(status.lastCalendarSyncAt)}
               </p>
+              {status.needsSendReconnect ? (
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                  Outbound email needs send permission. Disconnect, then Connect
+                  Google again to grant <code>gmail.send</code>.
+                </p>
+              ) : status.canSendGmail ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Outbound compose from Customer 360 is enabled.
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
