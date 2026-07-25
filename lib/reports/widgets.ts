@@ -20,6 +20,7 @@ export const REPORTS_WIDGETS: ReportsWidgetDef[] = [
   { id: "pipeline", title: "Pipeline", defaultSpan: "half" },
   { id: "delivery-schedule", title: "Delivery Schedule", defaultSpan: "third" },
   { id: "summary", title: "Summary", defaultSpan: "third" },
+  { id: "pull-reasons", title: "Material Pull Reasons", defaultSpan: "half" },
 ]
 
 export function spanClassName(span: ReportsWidgetSpan): string {

@@ -6,6 +6,13 @@ import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { MaterialCatalogPicker } from "@/components/material-requests/material-catalog-picker"
 import { createMaterialPullRequestAction } from "@/lib/actions/material-pull-requests"
 import {
@@ -30,7 +37,9 @@ export function MaterialRequestForm({
 }: MaterialRequestFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [priority, setPriority] = useState<MaterialPullPriority>("soon")
   const [reasonCode, setReasonCode] = useState<MaterialPullReasonCode>("scrap")
+  const [location, setLocation] = useState(MATERIAL_PULL_LOCATIONS[0])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -41,10 +50,7 @@ export function MaterialRequestForm({
     const quantity = Number(fd.get("quantity"))
     const unit = String(fd.get("unit") ?? "ea").trim() || "ea"
     const neededBy = String(fd.get("neededBy") ?? "").trim()
-    const location = String(fd.get("location") ?? "").trim() || null
     const notes = String(fd.get("notes") ?? "").trim() || null
-    const priority = String(fd.get("priority") ?? "soon") as MaterialPullPriority
-    const reason = String(fd.get("reasonCode") ?? "other") as MaterialPullReasonCode
     const sourceJobNumber = String(fd.get("sourceJobNumber") ?? "").trim() || null
 
     if (!jobNumber || !material || !(quantity > 0)) {
@@ -55,7 +61,7 @@ export function MaterialRequestForm({
       toast.error("Missing fields", "Needed-by date is required.")
       return
     }
-    if (isBorrowReason(reason) && !sourceJobNumber) {
+    if (isBorrowReason(reasonCode) && !sourceJobNumber) {
       toast.error("Missing fields", "Source job # is required when borrowing.")
       return
     }
@@ -67,10 +73,10 @@ export function MaterialRequestForm({
       quantity,
       unit,
       neededBy,
-      location,
+      location: location || null,
       notes,
       priority,
-      reasonCode: reason,
+      reasonCode,
       sourceJobNumber,
     })
     setIsSubmitting(false)
@@ -120,40 +126,51 @@ export function MaterialRequestForm({
           <label htmlFor="priority" className="text-sm font-medium">
             Priority
           </label>
-          <select
-            id="priority"
-            name="priority"
-            required
-            defaultValue="soon"
-            className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
+          <Select
+            value={priority}
+            onValueChange={(value) => {
+              if (value != null) setPriority(value as MaterialPullPriority)
+            }}
           >
-            {MATERIAL_PULL_PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {MATERIAL_PULL_PRIORITY_LABELS[p]}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              id="priority"
+              className="min-h-11 w-full bg-background text-foreground text-base md:text-sm"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MATERIAL_PULL_PRIORITIES.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {MATERIAL_PULL_PRIORITY_LABELS[p]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1.5">
           <label htmlFor="reasonCode" className="text-sm font-medium">
             Reason
           </label>
-          <select
-            id="reasonCode"
-            name="reasonCode"
-            required
+          <Select
             value={reasonCode}
-            onChange={(e) =>
-              setReasonCode(e.target.value as MaterialPullReasonCode)
-            }
-            className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
+            onValueChange={(value) => {
+              if (value != null) setReasonCode(value as MaterialPullReasonCode)
+            }}
           >
-            {MATERIAL_PULL_REASON_CODES.map((code) => (
-              <option key={code} value={code}>
-                {MATERIAL_PULL_REASON_LABELS[code]}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              id="reasonCode"
+              className="min-h-11 w-full bg-background text-foreground text-base md:text-sm"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MATERIAL_PULL_REASON_CODES.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {MATERIAL_PULL_REASON_LABELS[code]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -214,18 +231,26 @@ export function MaterialRequestForm({
           <label htmlFor="location" className="text-sm font-medium">
             Location
           </label>
-          <select
-            id="location"
-            name="location"
-            className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
-            defaultValue={MATERIAL_PULL_LOCATIONS[0]}
+          <Select
+            value={location}
+            onValueChange={(value) => {
+              if (value != null) setLocation(value)
+            }}
           >
-            {MATERIAL_PULL_LOCATIONS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              id="location"
+              className="min-h-11 w-full bg-background text-foreground text-base md:text-sm"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MATERIAL_PULL_LOCATIONS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
+import { requireSessionContext } from "@/lib/auth/session"
 import {
+  createOpportunity,
   listOpportunities,
   updateOpportunityStage,
 } from "@/lib/supabase/services/opportunities"
@@ -36,6 +38,28 @@ async function safeAction<T>(fn: () => Promise<T>): Promise<{ data?: T; error?: 
 
 export async function fetchOpportunitiesAction() {
   return safeAction(() => listOpportunities())
+}
+
+export async function createOpportunityAction(input: {
+  title: string
+  accountId?: string | null
+  value?: number
+  stage?: OppStage
+  probability?: number
+  closeDate?: string | null
+  assignee?: string | null
+  notes?: string | null
+}) {
+  if (!input.title?.trim()) {
+    return { error: "Title is required" }
+  }
+
+  const result = await safeAction(async () => {
+    await requireSessionContext()
+    return createOpportunity(input)
+  })
+  if (result.data) revalidateOpportunityPaths()
+  return result as { data?: Opportunity; error?: string }
 }
 
 export async function updateOpportunityStageAction(id: string, stage: OppStage) {

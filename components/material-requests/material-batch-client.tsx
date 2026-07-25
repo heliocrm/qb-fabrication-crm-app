@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   createMaterialPullBatchAction,
   markBatchPulledAction,
 } from "@/lib/actions/material-pull-requests"
@@ -379,18 +386,26 @@ export function MaterialBatchClient({
             <label htmlFor="pull-note-preset" className="text-sm font-medium">
               Completion note
             </label>
-            <select
-              id="pull-note-preset"
+            <Select
               value={notePreset}
-              onChange={(e) => setNotePreset(e.target.value)}
-              className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm shadow-xs"
+              onValueChange={(value) => {
+                if (value != null) setNotePreset(value)
+              }}
             >
-              {MATERIAL_PULL_CANNED_NOTES.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="pull-note-preset"
+                className="min-h-11 w-full bg-background text-foreground text-base md:text-sm"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MATERIAL_PULL_CANNED_NOTES.map((n) => (
+                  <SelectItem key={n} value={n}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

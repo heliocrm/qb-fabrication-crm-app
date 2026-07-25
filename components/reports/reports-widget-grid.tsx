@@ -5,6 +5,7 @@ import { JobsByStatusChart } from "@/components/reports/jobs-by-status-chart"
 import { RevenueByCustomerChart } from "@/components/reports/revenue-by-customer-chart"
 import { DeliveryScheduleCard } from "@/components/reports/delivery-schedule-card"
 import { ReportsSummaryCard } from "@/components/reports/reports-summary-card"
+import { PullReasonsChart } from "@/components/reports/pull-reasons-chart"
 import { PipelineChart } from "@/components/dashboard/pipeline-chart"
 import { REPORTS_WIDGETS, spanClassName } from "@/lib/reports/widgets"
 import type { ReportsComputedData } from "@/lib/reports/metrics"
@@ -33,6 +34,8 @@ function renderWidget(id: string, data: ReportsComputedData) {
       return <DeliveryScheduleCard data={data.deliverySchedule} />
     case "summary":
       return <ReportsSummaryCard metrics={data.metrics} />
+    case "pull-reasons":
+      return <PullReasonsChart data={data.pullReasons} />
     default:
       return null
   }
@@ -65,6 +68,10 @@ export function ReportsWidgetGrid({ data }: ReportsWidgetGridProps) {
           {renderWidget("delivery-schedule", data)}
           {renderWidget("summary", data)}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {renderWidget("pull-reasons", data)}
       </div>
     </div>
   )

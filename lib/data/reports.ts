@@ -2,8 +2,15 @@ import { loadDashboardData } from "@/lib/data/dashboard"
 import { loadCustomersData } from "@/lib/data/accounts"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { listLineItemsForReports } from "@/lib/supabase/services/line-items"
+import { listMaterialPullRequests } from "@/lib/supabase/services/material-pull-requests"
 import { jobs as mockJobs } from "@/lib/mock-data"
-import type { Job, Account, Opportunity, LineItemWipStatus } from "@/types"
+import type {
+  Job,
+  Account,
+  Opportunity,
+  LineItemWipStatus,
+  MaterialPullRequest,
+} from "@/types"
 import type { LineItemsByJob } from "@/lib/reports/filters"
 
 export interface ReportsDataset {
@@ -11,6 +18,7 @@ export interface ReportsDataset {
   opportunities: Opportunity[]
   customers: Account[]
   lineItemsByJob: LineItemsByJob
+  materialPullRequests: MaterialPullRequest[]
   source: "supabase" | "mock"
 }
 
@@ -50,19 +58,34 @@ async function loadLineItemsSummary(
   return buildLineItemsByJobFromMock(jobs.length ? jobs : mockJobs)
 }
 
+async function loadMaterialPullsForReports(
+  source: "supabase" | "mock"
+): Promise<MaterialPullRequest[]> {
+  if (source !== "supabase" || !isSupabaseConfigured()) return []
+  try {
+    return await listMaterialPullRequests({ status: "all" })
+  } catch {
+    return []
+  }
+}
+
 export async function loadReportsData(): Promise<ReportsDataset> {
   const [{ jobs, opportunities, source }, { customers }] = await Promise.all([
     loadDashboardData(),
     loadCustomersData(),
   ])
 
-  const lineItemsByJob = await loadLineItemsSummary(jobs, source)
+  const [lineItemsByJob, materialPullRequests] = await Promise.all([
+    loadLineItemsSummary(jobs, source),
+    loadMaterialPullsForReports(source),
+  ])
 
   return {
     jobs,
     opportunities,
     customers,
     lineItemsByJob,
+    materialPullRequests,
     source,
   }
 }

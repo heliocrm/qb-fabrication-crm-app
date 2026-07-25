@@ -1,8 +1,9 @@
-export { listAccounts } from "./accounts"
+export { listAccounts, createAccount, updateAccount } from "./accounts"
 export { globalSearch } from "./search"
 
 export {
   listOpportunities,
+  createOpportunity,
   updateOpportunityStage,
 } from "./opportunities"
 
@@ -69,6 +70,8 @@ export {
 } from "./travelers"
 
 export { insertActivityLog } from "./activity"
+
+export { createChangeOrder } from "./change-orders"
 
 export {
   listLatestSignoffsForJob,

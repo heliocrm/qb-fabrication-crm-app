@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   cancelMaterialPullRequestAction,
   updateMaterialPullRequestAction,
   updateMaterialPullStatusAction,
@@ -60,6 +67,15 @@ export function MaterialRequestDetail({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editing, setEditing] = useState(false)
+  const [editPriority, setEditPriority] = useState<MaterialPullPriority>(
+    request.priority
+  )
+  const [editReasonCode, setEditReasonCode] = useState<MaterialPullReasonCode>(
+    request.reasonCode
+  )
+  const [editLocation, setEditLocation] = useState(
+    request.location ?? MATERIAL_PULL_LOCATIONS[0]
+  )
 
   const canApprove = canApproveMaterialRequests(role, capabilities)
   const canAllocate = canApproveMaterialAllocation(role, capabilities)
@@ -91,9 +107,8 @@ export function MaterialRequestDetail({
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    const reasonCode = String(fd.get("reasonCode")) as MaterialPullReasonCode
     const sourceJobNumber = String(fd.get("sourceJobNumber") ?? "").trim() || null
-    if (isBorrowReason(reasonCode) && !sourceJobNumber) {
+    if (isBorrowReason(editReasonCode) && !sourceJobNumber) {
       toast.error("Missing fields", "Source job # is required when borrowing.")
       return
     }
@@ -105,14 +120,21 @@ export function MaterialRequestDetail({
           quantity: Number(fd.get("quantity")),
           unit: String(fd.get("unit") ?? "ea").trim() || "ea",
           neededBy: String(fd.get("neededBy") ?? "").trim(),
-          location: String(fd.get("location") ?? "").trim() || null,
+          location: editLocation || null,
           notes: String(fd.get("notes") ?? "").trim() || null,
-          priority: String(fd.get("priority")) as MaterialPullPriority,
-          reasonCode,
+          priority: editPriority,
+          reasonCode: editReasonCode,
           sourceJobNumber,
         }),
       "Request updated"
     )
+  }
+
+  function startEditing() {
+    setEditPriority(request.priority)
+    setEditReasonCode(request.reasonCode)
+    setEditLocation(request.location ?? MATERIAL_PULL_LOCATIONS[0])
+    setEditing(true)
   }
 
   return (
@@ -238,30 +260,43 @@ export function MaterialRequestDetail({
                   />
                 </Field>
                 <Field label="Priority">
-                  <select
-                    name="priority"
-                    defaultValue={request.priority}
-                    className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  <Select
+                    value={editPriority}
+                    onValueChange={(value) => {
+                      if (value != null) setEditPriority(value as MaterialPullPriority)
+                    }}
                   >
-                    {MATERIAL_PULL_PRIORITIES.map((p) => (
-                      <option key={p} value={p}>
-                        {MATERIAL_PULL_PRIORITY_LABELS[p]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="min-h-11 w-full bg-background text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MATERIAL_PULL_PRIORITIES.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {MATERIAL_PULL_PRIORITY_LABELS[p]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Reason">
-                  <select
-                    name="reasonCode"
-                    defaultValue={request.reasonCode}
-                    className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  <Select
+                    value={editReasonCode}
+                    onValueChange={(value) => {
+                      if (value != null)
+                        setEditReasonCode(value as MaterialPullReasonCode)
+                    }}
                   >
-                    {MATERIAL_PULL_REASON_CODES.map((c) => (
-                      <option key={c} value={c}>
-                        {MATERIAL_PULL_REASON_LABELS[c]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="min-h-11 w-full bg-background text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MATERIAL_PULL_REASON_CODES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {MATERIAL_PULL_REASON_LABELS[c]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Borrow from job #">
                   <Input
@@ -297,17 +332,23 @@ export function MaterialRequestDetail({
                   />
                 </Field>
                 <Field label="Location">
-                  <select
-                    name="location"
-                    defaultValue={request.location ?? MATERIAL_PULL_LOCATIONS[0]}
-                    className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  <Select
+                    value={editLocation}
+                    onValueChange={(value) => {
+                      if (value != null) setEditLocation(value)
+                    }}
                   >
-                    {MATERIAL_PULL_LOCATIONS.map((loc) => (
-                      <option key={loc} value={loc}>
-                        {loc}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="min-h-11 w-full bg-background text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MATERIAL_PULL_LOCATIONS.map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
               <Field label="Notes">
@@ -341,7 +382,7 @@ export function MaterialRequestDetail({
                   type="button"
                   variant="outline"
                   className="min-h-11"
-                  onClick={() => setEditing(true)}
+                  onClick={startEditing}
                 >
                   Edit
                 </Button>

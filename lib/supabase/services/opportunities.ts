@@ -9,7 +9,7 @@ import {
 } from "@/lib/supabase/schema"
 import { mapOpportunityRow } from "@/lib/supabase/mappers"
 import { ALL_STAGES } from "@/lib/opportunities-config"
-import type { Opportunity, OpportunityRow, OppStage } from "@/types"
+import type { Opportunity, OpportunityInsert, OpportunityRow, OppStage } from "@/types"
 
 type OpportunityListRow = OpportunityRow & {
   accounts: { id: string; name: string; short_name: string } | null
@@ -38,6 +38,49 @@ export async function listOpportunities(): Promise<Opportunity[]> {
   throwOnError({ data, error })
 
   return ((data ?? []) as unknown as OpportunityListRow[]).map(mapOpportunityRow)
+}
+
+export async function createOpportunity(input: {
+  title: string
+  accountId?: string | null
+  value?: number
+  stage?: OppStage
+  probability?: number
+  closeDate?: string | null
+  assignee?: string | null
+  notes?: string | null
+}): Promise<Opportunity> {
+  const supabase = await getClient()
+  const organizationId = await requireOrganizationId(supabase)
+
+  const stage = input.stage ?? "Prospecting"
+  if (!ALL_STAGES.includes(stage)) {
+    throw new Error(`Invalid stage: ${stage}`)
+  }
+
+  const probability =
+    stage === "Won" ? 100 : stage === "Lost" ? 0 : (input.probability ?? 10)
+
+  const payload: OpportunityInsert = {
+    organization_id: organizationId,
+    account_id: input.accountId ?? null,
+    title: input.title.trim(),
+    value: input.value ?? 0,
+    stage,
+    probability,
+    close_date: input.closeDate || null,
+    assignee: input.assignee?.trim() || null,
+    notes: input.notes?.trim() || null,
+  }
+
+  const { data, error } = await supabase
+    .from(Tables.opportunities)
+    .insert(payload)
+    .select(OPPORTUNITY_LIST_SELECT)
+    .single()
+
+  throwOnError({ data, error })
+  return mapOpportunityRow(data as unknown as OpportunityListRow)
 }
 
 /** Update pipeline stage; adjusts probability for Won/Lost */

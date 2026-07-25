@@ -1,3 +1,5 @@
+"use client"
+
 import { Plus, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +10,8 @@ import type { ChangeOrder, Job } from "@/types"
 
 interface JobChangeOrdersTabProps {
   job: Job
+  canWrite?: boolean
+  onLogIssue?: () => void
 }
 
 const typeStyles: Record<string, string> = {
@@ -22,7 +26,11 @@ const statusStyles: Record<string, string> = {
   Open: "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-300",
 }
 
-export function JobChangeOrdersTab({ job }: JobChangeOrdersTabProps) {
+export function JobChangeOrdersTab({
+  job,
+  canWrite = false,
+  onLogIssue,
+}: JobChangeOrdersTabProps) {
   const changeOrders = job.changeOrders
 
   return (
@@ -37,10 +45,17 @@ export function JobChangeOrdersTab({ job }: JobChangeOrdersTabProps) {
             Track BPA Rev D markups, NCRs, and field issues
           </p>
         </div>
-        <Button size="sm" variant="outline" className="gap-1.5 w-fit">
-          <Plus className="size-4" data-icon="inline-start" />
-          Log Issue
-        </Button>
+        {canWrite ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 w-fit"
+            onClick={onLogIssue}
+          >
+            <Plus className="size-4" data-icon="inline-start" />
+            Log Issue
+          </Button>
+        ) : null}
       </div>
 
       {changeOrders.length === 0 ? (
@@ -81,27 +96,35 @@ export function JobChangeOrdersTab({ job }: JobChangeOrdersTabProps) {
                   <tr
                     key={co.id}
                     className={cn(
-                      "border-b last:border-0 hover:bg-muted/20 transition-colors",
-                      i % 2 !== 0 && "bg-muted/10"
+                      "border-b last:border-0",
+                      i % 2 === 1 && "bg-muted/20"
                     )}
                   >
-                    <td className="px-5 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    <td className="px-4 py-3 pl-5 whitespace-nowrap text-muted-foreground">
                       {formatJobDate(co.date)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <Badge className={cn("text-xs border", typeStyles[co.type])}>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant="outline"
+                        className={cn("text-xs", typeStyles[co.type])}
+                      >
                         {co.type}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs max-w-sm">{co.description}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {co.impact}
+                    <td className="px-4 py-3 max-w-xs">
+                      <p className="truncate">{co.description}</p>
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold tabular-nums whitespace-nowrap hidden md:table-cell">
+                    <td className="px-4 py-3 text-muted-foreground max-w-[10rem]">
+                      <p className="truncate">{co.impact || "—"}</p>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell tabular-nums">
                       {co.value != null ? formatJobCurrency(co.value) : "—"}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      <Badge className={cn("text-xs border", statusStyles[co.status])}>
+                    <td className="px-4 py-3 pr-5">
+                      <Badge
+                        variant="outline"
+                        className={cn("text-xs", statusStyles[co.status])}
+                      >
                         {co.status}
                       </Badge>
                     </td>

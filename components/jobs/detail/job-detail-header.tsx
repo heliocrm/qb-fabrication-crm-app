@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   ChevronRight,
@@ -6,17 +9,58 @@ import {
   FileText,
   MoreHorizontal,
   Plus,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { JobStatusBadge, PriorityBadge } from "@/components/status-badge"
+import { deleteJobAction } from "@/lib/actions/jobs"
+import { toast } from "@/lib/toast"
 import type { Job } from "@/types"
 
 interface JobDetailHeaderProps {
   job: Job
+  canWrite?: boolean
   onOpenTraveler?: () => void
+  onEdit?: () => void
+  onAddTask?: () => void
+  onLogIssue?: () => void
 }
 
-export function JobDetailHeader({ job, onOpenTraveler }: JobDetailHeaderProps) {
+export function JobDetailHeader({
+  job,
+  canWrite = true,
+  onOpenTraveler,
+  onEdit,
+  onAddTask,
+  onLogIssue,
+}: JobDetailHeaderProps) {
+  const router = useRouter()
+
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        `Delete job ${job.jobNumber}? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+    const result = await deleteJobAction(job.id)
+    if (result.error) {
+      toast.error("Could not delete job", result.error)
+      return
+    }
+    toast.success("Job deleted")
+    router.push("/jobs")
+    router.refresh()
+  }
+
   return (
     <div className="border-b bg-card px-4 sm:px-6 py-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
@@ -62,20 +106,55 @@ export function JobDetailHeader({ job, onOpenTraveler }: JobDetailHeaderProps) {
               Back
             </Button>
           </Link>
-          <Button variant="outline" size="sm" className="gap-1.5">
-            <Edit className="size-4" data-icon="inline-start" />
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            className="gap-1.5 bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
-          >
-            <Plus className="size-4" data-icon="inline-start" />
-            Add Task
-          </Button>
-          <Button variant="ghost" size="icon-sm" aria-label="More actions">
-            <MoreHorizontal className="size-4" />
-          </Button>
+          {canWrite ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={onEdit}
+              >
+                <Edit className="size-4" data-icon="inline-start" />
+                Edit
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="gap-1.5 bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0"
+                onClick={onAddTask}
+              >
+                <Plus className="size-4" data-icon="inline-start" />
+                Add Task
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="More actions"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={onLogIssue}>
+                    Log issue
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => void handleDelete()}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete job
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : null}
         </div>
       </div>
     </div>

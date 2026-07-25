@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { DollarSign, Grid3X3, List, Plus, Search, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,15 @@ import { formatOppValue, isTerminalStage } from "@/lib/opportunities-config"
 import { updateOpportunityStageAction } from "@/lib/actions/opportunities"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
+import {
+  OPPORTUNITIES_VIEW_KEY,
+  readViewPref,
+  writeViewPref,
+  type OpportunitiesView,
+} from "@/lib/view-prefs"
 import type { Opportunity, OppStage } from "@/types"
+
+const OPP_VIEWS = ["kanban", "list"] as const
 
 interface OpportunitiesPageClientProps {
   initialOpportunities: Opportunity[]
@@ -25,15 +34,24 @@ export function OpportunitiesPageClient({
   loadError,
 }: OpportunitiesPageClientProps) {
   const [opps, setOpps] = useState<Opportunity[]>(initialOpportunities)
-  const [view, setView] = useState<"kanban" | "list">("kanban")
+  const [view, setView] = useState<OpportunitiesView>("kanban")
   const [search, setSearch] = useState("")
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    setView(readViewPref(OPPORTUNITIES_VIEW_KEY, OPP_VIEWS, "kanban"))
+  }, [])
 
   useEffect(() => {
     if (loadError) {
       toast.error("Could not load opportunities", loadError)
     }
   }, [loadError])
+
+  function changeView(next: OpportunitiesView) {
+    setView(next)
+    writeViewPref(OPPORTUNITIES_VIEW_KEY, next)
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -118,13 +136,15 @@ export function OpportunitiesPageClient({
             )}
           </p>
         </div>
-        <Button
-          size="sm"
-          className="gap-1.5 bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0 w-fit"
-        >
-          <Plus className="size-4" data-icon="inline-start" />
-          New Opportunity
-        </Button>
+        <Link href="/opportunities/new">
+          <Button
+            size="sm"
+            className="gap-1.5 bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0 w-fit"
+          >
+            <Plus className="size-4" data-icon="inline-start" />
+            New Opportunity
+          </Button>
+        </Link>
       </div>
 
       {loadError && (
@@ -195,7 +215,7 @@ export function OpportunitiesPageClient({
             variant={view === "kanban" ? "secondary" : "ghost"}
             size="icon"
             className="size-9 sm:size-7"
-            onClick={() => setView("kanban")}
+            onClick={() => changeView("kanban")}
             aria-label="Kanban view"
           >
             <Grid3X3 className="size-4" />
@@ -204,7 +224,7 @@ export function OpportunitiesPageClient({
             variant={view === "list" ? "secondary" : "ghost"}
             size="icon"
             className="size-9 sm:size-7"
-            onClick={() => setView("list")}
+            onClick={() => changeView("list")}
             aria-label="List view"
           >
             <List className="size-4" />

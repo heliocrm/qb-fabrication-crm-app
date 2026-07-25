@@ -1,4 +1,4 @@
-import type { Job, Opportunity } from "@/types"
+import type { Job, Opportunity, MaterialPullRequest, MaterialPullReasonCode } from "@/types"
 import { getActiveOpportunities } from "@/lib/dashboard-stats"
 import {
   getReportsMetrics,
@@ -11,7 +11,17 @@ import {
   type MonthlyDeliveryDatum,
 } from "@/lib/reports-stats"
 import { getPipelineByStage, getDashboardMetrics } from "@/lib/dashboard-stats"
+import {
+  MATERIAL_PULL_REASON_CODES,
+  MATERIAL_PULL_REASON_LABELS,
+} from "@/lib/material-pull-config"
 import type { Account } from "@/types"
+
+export interface PullReasonDatum {
+  reasonCode: MaterialPullReasonCode
+  label: string
+  count: number
+}
 
 export interface CoreReportsMetrics {
   totalJobs: number
@@ -68,12 +78,35 @@ export interface ReportsComputedData {
   pipelineByStage: ReturnType<typeof getPipelineByStage>
   totalPipeline: number
   bpaSharePct: number
+  pullReasons: PullReasonDatum[]
+}
+
+export function getPullReasonsByCode(
+  requests: MaterialPullRequest[]
+): PullReasonDatum[] {
+  const counts = Object.fromEntries(
+    MATERIAL_PULL_REASON_CODES.map((code) => [code, 0])
+  ) as Record<MaterialPullReasonCode, number>
+
+  for (const req of requests) {
+    if (req.status === "cancelled") continue
+    if (req.reasonCode in counts) {
+      counts[req.reasonCode] += 1
+    }
+  }
+
+  return MATERIAL_PULL_REASON_CODES.map((code) => ({
+    reasonCode: code,
+    label: MATERIAL_PULL_REASON_LABELS[code],
+    count: counts[code],
+  })).filter((row) => row.count > 0)
 }
 
 export function computeReportsData(
   jobs: Job[],
   opportunities: Opportunity[],
-  customers: Account[]
+  customers: Account[],
+  materialPullRequests: MaterialPullRequest[] = []
 ): ReportsComputedData {
   const metrics = getReportsMetrics(jobs, opportunities)
   const { totalPipeline, bpaSharePct } = getDashboardMetrics(jobs, opportunities)
@@ -87,5 +120,6 @@ export function computeReportsData(
     pipelineByStage: getPipelineByStage(opportunities),
     totalPipeline,
     bpaSharePct,
+    pullReasons: getPullReasonsByCode(materialPullRequests),
   }
 }

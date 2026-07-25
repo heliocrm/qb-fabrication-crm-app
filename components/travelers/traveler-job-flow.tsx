@@ -216,6 +216,16 @@ export function TravelerJobFlow({
               <Loader2 className="size-4 animate-spin" /> Reading PDF…
             </p>
           ) : null}
+          {isCrm && onClose ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full min-h-11"
+              onClick={onClose}
+            >
+              Skip for now
+            </Button>
+          ) : null}
         </div>
       ) : null}
 

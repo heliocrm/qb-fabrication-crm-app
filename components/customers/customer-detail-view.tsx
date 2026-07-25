@@ -8,6 +8,7 @@ import {
   DollarSign,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   TrendingUp,
 } from "lucide-react"
@@ -26,6 +27,8 @@ import type { Customer360 } from "@/lib/data/accounts"
 interface CustomerDetailViewProps {
   customer: Customer360
   className?: string
+  canEdit?: boolean
+  onEdit?: () => void
 }
 
 function StatBlock({
@@ -57,7 +60,12 @@ async function copyToClipboard(text: string, label: string) {
   }
 }
 
-export function CustomerDetailView({ customer, className }: CustomerDetailViewProps) {
+export function CustomerDetailView({
+  customer,
+  className,
+  canEdit,
+  onEdit,
+}: CustomerDetailViewProps) {
   const activeJobs = customer.jobs.filter((j) => j.status !== "Delivered")
   const pipelineValue = customer.opportunities
     .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
@@ -85,16 +93,24 @@ export function CustomerDetailView({ customer, className }: CustomerDetailViewPr
             </div>
           </div>
         </div>
-        <Badge
-          className={cn(
-            "w-fit text-xs border",
-            customer.status === "Active"
-              ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800"
-              : "bg-secondary text-muted-foreground"
-          )}
-        >
-          {customer.status}
-        </Badge>
+        <div className="flex items-center gap-2 shrink-0">
+          {canEdit ? (
+            <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+              <Pencil className="size-4" data-icon="inline-start" />
+              Edit
+            </Button>
+          ) : null}
+          <Badge
+            className={cn(
+              "w-fit text-xs border",
+              customer.status === "Active"
+                ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800"
+                : "bg-secondary text-muted-foreground"
+            )}
+          >
+            {customer.status}
+          </Badge>
+        </div>
       </div>
 
       {/* Contact */}

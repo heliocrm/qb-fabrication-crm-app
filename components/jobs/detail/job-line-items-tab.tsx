@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { SortableTaskItem } from "@/components/jobs/detail/sortable-task-item"
+import { AddLineItemDialog } from "@/components/jobs/detail/add-line-item-dialog"
 import {
   LINE_ITEM_WIP_STATUSES,
   TASK_CATEGORIES,
@@ -29,7 +30,7 @@ import {
   wipStatusStyles,
 } from "@/lib/job-detail-config"
 import {
-  createLineItemAction,
+  reorderTasksAction,
   toggleTaskAction,
   updateLineItemWipAction,
 } from "@/lib/actions/jobs"
@@ -64,6 +65,7 @@ export function JobLineItemsTab({
   const [signoffsByTaskId, setSignoffsByTaskId] = useState<
     Record<string, TaskSignoff>
   >({})
+  const [addLineItemOpen, setAddLineItemOpen] = useState(false)
 
   useEffect(() => {
     if (!jobId) return
@@ -144,29 +146,19 @@ export function JobLineItemsTab({
     const newIndex = catTasks.findIndex((t) => t.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
 
-    updateLineItemTasks(lineItemId, [
-      ...otherTasks,
-      ...arrayMove(catTasks, oldIndex, newIndex),
-    ])
-  }
+    const reorderedCat = arrayMove(catTasks, oldIndex, newIndex)
+    const nextTasks = [...otherTasks, ...reorderedCat]
+    const previous = lineItems
+    updateLineItemTasks(lineItemId, nextTasks)
 
-  async function handleAddLineItem() {
-    if (!jobId || !jobTemplate) {
-      toast.error("Cannot add line item", "This job has no template type set.")
-      return
-    }
-
-    const title = window.prompt("Line item title (e.g. 2 ea MK-115DC Crossarm)")
-    if (!title?.trim()) return
-
-    const result = await createLineItemAction(jobId, jobTemplate, { title: title.trim() })
-    if (result.error) {
-      toast.error("Could not add line item", result.error)
-      return
-    }
-    if (result.data) {
-      onLineItemsChange([...lineItems, result.data])
-      setExpanded((prev) => ({ ...prev, [result.data!.id]: true }))
+    if (jobId) {
+      const orderedIds = nextTasks.map((t) => t.id)
+      void reorderTasksAction(lineItemId, orderedIds, jobId).then((result) => {
+        if (result.error) {
+          onLineItemsChange(previous)
+          toast.error("Could not save task order", result.error)
+        }
+      })
     }
   }
 
@@ -186,7 +178,7 @@ export function JobLineItemsTab({
           size="sm"
           variant="outline"
           className="gap-1.5 shrink-0"
-          onClick={() => void handleAddLineItem()}
+          onClick={() => setAddLineItemOpen(true)}
           disabled={!jobId || !jobTemplate}
         >
           <Plus className="size-4" data-icon="inline-start" />
@@ -312,6 +304,19 @@ export function JobLineItemsTab({
           </CardContent>
         </Card>
       )}
+
+      {jobId && jobTemplate ? (
+        <AddLineItemDialog
+          open={addLineItemOpen}
+          onOpenChange={setAddLineItemOpen}
+          jobId={jobId}
+          jobTemplate={jobTemplate}
+          onCreated={(lineItem) => {
+            onLineItemsChange([...lineItems, lineItem])
+            setExpanded((prev) => ({ ...prev, [lineItem.id]: true }))
+          }}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,6 +1,8 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { Download } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { ReportsFilterBar } from "@/components/reports/reports-filter-bar"
 import { ReportsSavedViews } from "@/components/reports/reports-saved-views"
 import { ReportsWidgetGrid } from "@/components/reports/reports-widget-grid"
@@ -10,6 +12,8 @@ import {
   type ReportsFilters,
 } from "@/lib/reports/filters"
 import { computeReportsData } from "@/lib/reports/metrics"
+import { downloadCsv, jobsToCsv, pullReasonsToCsv } from "@/lib/reports/export-csv"
+import { toast } from "@/lib/toast"
 import type { ReportsDataset } from "@/lib/data/reports"
 import type { ReportView } from "@/types"
 
@@ -32,10 +36,39 @@ export function ReportsPageClient({ initialData, savedViews }: ReportsPageClient
       computeReportsData(
         filteredJobs,
         initialData.opportunities,
-        initialData.customers
+        initialData.customers,
+        initialData.materialPullRequests
       ),
-    [filteredJobs, initialData.opportunities, initialData.customers]
+    [
+      filteredJobs,
+      initialData.opportunities,
+      initialData.customers,
+      initialData.materialPullRequests,
+    ]
   )
+
+  function handleExportJobs() {
+    if (!filteredJobs.length) {
+      toast.error("Nothing to export", "No jobs match the current filters.")
+      return
+    }
+    const stamp = new Date().toISOString().slice(0, 10)
+    downloadCsv(`jobs-report-${stamp}.csv`, jobsToCsv(filteredJobs))
+    toast.success("Export started", `${filteredJobs.length} jobs`)
+  }
+
+  function handleExportReasons() {
+    if (!computed.pullReasons.length) {
+      toast.error("Nothing to export", "No material pull reasons to export.")
+      return
+    }
+    const stamp = new Date().toISOString().slice(0, 10)
+    downloadCsv(
+      `material-pull-reasons-${stamp}.csv`,
+      pullReasonsToCsv(computed.pullReasons)
+    )
+    toast.success("Export started", "Pull reasons CSV")
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
@@ -49,12 +82,27 @@ export function ReportsPageClient({ initialData, savedViews }: ReportsPageClient
             )}
           </p>
         </div>
-        <ReportsSavedViews
-          views={views}
-          currentFilters={filters}
-          onLoadView={setFilters}
-          onViewsChange={setViews}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={handleExportJobs}>
+            <Download className="size-4" data-icon="inline-start" />
+            Export jobs CSV
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportReasons}
+          >
+            <Download className="size-4" data-icon="inline-start" />
+            Export reasons CSV
+          </Button>
+          <ReportsSavedViews
+            views={views}
+            currentFilters={filters}
+            onLoadView={setFilters}
+            onViewsChange={setViews}
+          />
+        </div>
       </div>
 
       <ReportsFilterBar

@@ -1,12 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Search } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Plus, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { CustomerDetailView } from "@/components/customers/customer-detail-view"
+import { CustomerFormDialog } from "@/components/customers/customer-form-dialog"
 import { formatCompact } from "@/lib/dashboard-stats"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -21,12 +24,16 @@ export function CustomersPageClient({
   customers,
   dataSource,
 }: CustomersPageClientProps) {
+  const router = useRouter()
   const isMobile = useIsMobile()
+  const canWrite = dataSource === "supabase"
   const [search, setSearch] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(
     customers[0]?.id ?? null
   )
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState<Customer360 | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -60,6 +67,19 @@ export function CustomersPageClient({
             )}
           </p>
         </div>
+        {canWrite ? (
+          <Button
+            size="sm"
+            className="gap-1.5 bg-[var(--orange)] hover:bg-[var(--orange)]/90 text-white border-0 w-fit"
+            onClick={() => {
+              setEditing(null)
+              setFormOpen(true)
+            }}
+          >
+            <Plus className="size-4" data-icon="inline-start" />
+            Add customer
+          </Button>
+        ) : null}
       </div>
 
       <div className="relative max-w-sm">
@@ -129,7 +149,14 @@ export function CustomersPageClient({
               {selected ? (
                 <Card className="border shadow-sm h-full">
                   <CardContent className="p-5 sm:p-6">
-                    <CustomerDetailView customer={selected} />
+                    <CustomerDetailView
+                      customer={selected}
+                      canEdit={canWrite}
+                      onEdit={() => {
+                        setEditing(selected)
+                        setFormOpen(true)
+                      }}
+                    />
                   </CardContent>
                 </Card>
               ) : (
@@ -202,13 +229,29 @@ export function CustomersPageClient({
               </SheetHeader>
               {selected && (
                 <div className="px-4 pb-8 pt-2">
-                  <CustomerDetailView customer={selected} />
+                  <CustomerDetailView
+                    customer={selected}
+                    canEdit={canWrite}
+                    onEdit={() => {
+                      setEditing(selected)
+                      setFormOpen(true)
+                    }}
+                  />
                 </div>
               )}
             </SheetContent>
           </Sheet>
         </>
       )}
+
+      {canWrite ? (
+        <CustomerFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          customer={editing}
+          onSaved={() => router.refresh()}
+        />
+      ) : null}
     </div>
   )
 }

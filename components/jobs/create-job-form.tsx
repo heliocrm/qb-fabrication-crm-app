@@ -33,6 +33,7 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   const [extraLineItems, setExtraLineItems] = useState<ExtraLineItem[]>([])
   const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
   const [assigneeIds, setAssigneeIds] = useState<Set<string>>(new Set())
+  const [importWorkOrder, setImportWorkOrder] = useState(true)
 
   useEffect(() => {
     if (dataSource !== "supabase") return
@@ -102,8 +103,16 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
     }
 
     if (result.data) {
-      toast.success("Job created", "Line items and checklist tasks have been seeded.")
-      router.push(`/jobs/${result.data.id}`)
+      if (importWorkOrder) {
+        toast.success(
+          "Job created",
+          "Upload the work order to seed line items from the traveler."
+        )
+        router.push(`/jobs/${result.data.id}?importTraveler=1`)
+      } else {
+        toast.success("Job created", "Line items and checklist tasks have been seeded.")
+        router.push(`/jobs/${result.data.id}`)
+      }
     }
   }
 
@@ -336,6 +345,24 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
           )}
         </CardContent>
       </Card>
+
+      <label className="flex items-start gap-2.5 text-sm cursor-pointer max-w-xl">
+        <input
+          type="checkbox"
+          checked={importWorkOrder}
+          onChange={(e) => setImportWorkOrder(e.target.checked)}
+          className="mt-0.5 size-4 rounded border-input"
+        />
+        <span>
+          <span className="font-medium text-foreground">
+            Import work order after create
+          </span>
+          <span className="block text-xs text-muted-foreground mt-0.5">
+            Opens the traveler importer so line items can be populated from the WO PDF.
+            Uncheck if you are creating the job without a work order yet.
+          </span>
+        </span>
+      </label>
 
       <div className="flex flex-wrap items-center gap-3">
         <Button

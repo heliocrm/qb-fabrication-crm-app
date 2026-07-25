@@ -12,6 +12,9 @@ import { JobDocumentsTab } from "@/components/jobs/detail/job-documents-tab"
 import { JobChangeOrdersTab } from "@/components/jobs/detail/job-change-orders-tab"
 import { JobActivityTab } from "@/components/jobs/detail/job-activity-tab"
 import { JobTravelerTab } from "@/components/jobs/detail/job-traveler-tab"
+import { EditJobDialog } from "@/components/jobs/detail/edit-job-dialog"
+import { AddTaskDialog } from "@/components/jobs/detail/add-task-dialog"
+import { LogIssueDialog } from "@/components/jobs/detail/log-issue-dialog"
 import { GenerateTravelerDialog } from "@/components/travelers/generate-traveler-dialog"
 import { flattenLineItemTasks } from "@/lib/job-detail-config"
 import type { DocumentType, Job, LineItem, OrganizationRole } from "@/types"
@@ -50,11 +53,15 @@ export function JobDetailClient({
   role = "member",
 }: JobDetailClientProps) {
   const canSignOff = dataSource === "supabase" && canSignOffFloor(role)
+  const writeEnabled = canWrite && dataSource === "supabase"
   const router = useRouter()
   const searchParams = useSearchParams()
   const [lineItems, setLineItems] = useState<LineItem[]>(job.lineItems ?? [])
   const [tab, setTab] = useState<JobDetailTab>("overview")
   const [travelerOpen, setTravelerOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [addTaskOpen, setAddTaskOpen] = useState(false)
+  const [logIssueOpen, setLogIssueOpen] = useState(false)
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0)
   const [travelerRefreshKey, setTravelerRefreshKey] = useState(0)
   const [documentsTypeFilter, setDocumentsTypeFilter] = useState<
@@ -64,11 +71,35 @@ export function JobDetailClient({
   const openTasks = tasks.filter((t) => !t.completed).length
 
   useEffect(() => {
+    setLineItems(job.lineItems ?? [])
+  }, [job.lineItems])
+
+  useEffect(() => {
     const q = searchParams.get("tab")
     if (q && TAB_VALUES.includes(q as JobDetailTab)) {
       setTab(q as JobDetailTab)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (searchParams.get("importTraveler") !== "1") return
+    if (!writeEnabled) {
+      clearImportTravelerParam()
+      return
+    }
+    setTravelerOpen(true)
+    clearImportTravelerParam()
+  }, [searchParams, writeEnabled])
+
+  function clearImportTravelerParam() {
+    const params = new URLSearchParams(searchParams.toString())
+    if (!params.has("importTraveler")) return
+    params.delete("importTraveler")
+    const qs = params.toString()
+    router.replace(qs ? `/jobs/${job.id}?${qs}` : `/jobs/${job.id}`, {
+      scroll: false,
+    })
+  }
 
   function handleTravelerImported() {
     setTab("traveler")
@@ -77,11 +108,25 @@ export function JobDetailClient({
     router.refresh()
   }
 
+  function handleTravelerOpenChange(open: boolean) {
+    setTravelerOpen(open)
+    if (!open) clearImportTravelerParam()
+  }
+
+  function openLogIssue() {
+    setTab("changes")
+    setLogIssueOpen(true)
+  }
+
   return (
     <div className="flex flex-col min-h-full">
       <JobDetailHeader
         job={job}
+        canWrite={writeEnabled}
         onOpenTraveler={() => setTravelerOpen(true)}
+        onEdit={() => setEditOpen(true)}
+        onAddTask={() => setAddTaskOpen(true)}
+        onLogIssue={openLogIssue}
       />
       <JobDetailStats job={job} tasks={tasks} lineItemCount={lineItems.length} />
 
@@ -138,7 +183,7 @@ export function JobDetailClient({
             <JobLineItemsTab
               lineItems={lineItems}
               onLineItemsChange={setLineItems}
-              jobId={dataSource === "supabase" && canWrite ? job.id : undefined}
+              jobId={writeEnabled ? job.id : undefined}
               jobTemplate={job.jobTemplate}
             />
           </TabsContent>
@@ -146,7 +191,7 @@ export function JobDetailClient({
           <TabsContent value="traveler">
             <JobTravelerTab
               jobId={job.id}
-              canWrite={canWrite && dataSource === "supabase"}
+              canWrite={writeEnabled}
               canSignOff={canSignOff}
               onImport={() => setTravelerOpen(true)}
               refreshKey={travelerRefreshKey}
@@ -167,7 +212,11 @@ export function JobDetailClient({
           </TabsContent>
 
           <TabsContent value="changes">
-            <JobChangeOrdersTab job={job} />
+            <JobChangeOrdersTab
+              job={job}
+              canWrite={writeEnabled}
+              onLogIssue={openLogIssue}
+            />
           </TabsContent>
 
           <TabsContent value="activity">
@@ -178,13 +227,37 @@ export function JobDetailClient({
 
       <GenerateTravelerDialog
         open={travelerOpen}
-        onOpenChange={setTravelerOpen}
+        onOpenChange={handleTravelerOpenChange}
         jobId={job.id}
         jobNumber={job.jobNumber}
         poNumber={job.poNumber}
         description={job.description}
         onGenerated={handleTravelerImported}
       />
+
+      {writeEnabled ? (
+        <>
+          <EditJobDialog
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            job={job}
+            onSaved={() => router.refresh()}
+          />
+          <AddTaskDialog
+            open={addTaskOpen}
+            onOpenChange={setAddTaskOpen}
+            jobId={job.id}
+            lineItems={lineItems}
+            onCreated={() => router.refresh()}
+          />
+          <LogIssueDialog
+            open={logIssueOpen}
+            onOpenChange={setLogIssueOpen}
+            jobId={job.id}
+            onCreated={() => router.refresh()}
+          />
+        </>
+      ) : null}
     </div>
   )
 }
