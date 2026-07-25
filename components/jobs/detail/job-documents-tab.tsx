@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   AlertCircle,
   Download,
   ExternalLink,
   Eye,
+  FileText,
   FolderOpen,
   Loader2,
   RefreshCw,
@@ -43,6 +44,10 @@ interface JobDocumentsTabProps {
   jobId?: string
   dataSource?: "supabase" | "mock"
   readOnly?: boolean
+  onGenerateTraveler?: () => void
+  refreshKey?: number
+  typeFilter?: "all" | DocumentType
+  onTypeFilterChange?: (filter: "all" | DocumentType) => void
 }
 
 export function JobDocumentsTab({
@@ -50,12 +55,20 @@ export function JobDocumentsTab({
   jobId,
   dataSource,
   readOnly = false,
+  onGenerateTraveler,
+  refreshKey = 0,
+  typeFilter: typeFilterProp,
+  onTypeFilterChange,
 }: JobDocumentsTabProps) {
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
   const [docFilter, setDocFilter] = useState<"all" | "job" | string>("all")
-  const [typeFilter, setTypeFilter] = useState<"all" | DocumentType>("all")
+  const [internalTypeFilter, setInternalTypeFilter] = useState<
+    "all" | DocumentType
+  >("all")
   const [uploadScope, setUploadScope] = useState<"job" | string>("job")
   const [uploadDocType, setUploadDocType] = useState<"auto" | DocumentType>("auto")
+  const typeFilter = typeFilterProp ?? internalTypeFilter
+  const setTypeFilter = onTypeFilterChange ?? setInternalTypeFilter
   const effectiveJobId = jobId ?? job.id
   const useLiveDrive = dataSource === "supabase" && Boolean(jobId)
   const lineItems = job.lineItems ?? []
@@ -76,6 +89,12 @@ export function JobDocumentsTab({
     initialDocuments: job.documents,
     enabled: useLiveDrive,
   })
+
+  useEffect(() => {
+    if (refreshKey > 0) {
+      void refresh()
+    }
+  }, [refreshKey, refresh])
 
   const displayDocs = useLiveDrive ? documents : job.documents
 
@@ -200,6 +219,25 @@ export function JobDocumentsTab({
             )
           })}
         </div>
+
+        {onGenerateTraveler && !readOnly ? (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2.5">
+            <p className="text-xs text-muted-foreground flex-1 min-w-0">
+              Need a traveler? Upload a work order PDF and generate a Word file
+              into this job&apos;s Drive folder.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0 min-h-10 touch-manipulation"
+              onClick={onGenerateTraveler}
+            >
+              <FileText className="size-3.5" data-icon="inline-start" />
+              Generate traveler
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {/* Google Drive folder card */}

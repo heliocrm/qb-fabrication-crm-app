@@ -15,6 +15,7 @@ import type {
   TravelerCatalogItem,
   TravelerGeneration,
 } from "@/lib/travelers/types"
+import { cn } from "@/lib/utils"
 
 type Step = "upload" | "review" | "done"
 
@@ -23,12 +24,19 @@ export function TravelerJobFlow({
   jobNumber,
   poNumber,
   description,
+  variant = "pwa",
+  onClose,
+  onGenerated,
 }: {
   jobId: string
   jobNumber: string
   poNumber: string
   description: string
+  variant?: "pwa" | "crm"
+  onClose?: () => void
+  onGenerated?: () => void
 }) {
+  const isCrm = variant === "crm"
   const [step, setStep] = useState<Step>("upload")
   const [pending, startTransition] = useTransition()
   const [fileName, setFileName] = useState<string | null>(null)
@@ -124,27 +132,52 @@ export function TravelerJobFlow({
       setResultName(res.data.filename)
       setHistory((prev) => [res.data!.generation, ...prev])
       setStep("done")
+      onGenerated?.()
       toast.success(`Created ${res.data.filename}`)
     })
   }
 
+  const generateButton = (
+    <Button
+      type="button"
+      className="w-full min-h-12 text-base touch-manipulation"
+      onClick={generate}
+      disabled={pending}
+    >
+      {pending ? (
+        <>
+          <Loader2 className="size-4 animate-spin" /> Generating…
+        </>
+      ) : (
+        "Generate traveler"
+      )}
+    </Button>
+  )
+
   return (
-    <div className="space-y-5">
+    <div className={cn("space-y-5", isCrm && step === "review" && "pb-20")}>
       <div className="flex items-start gap-3">
-        <Link
-          href="/traveler"
-          aria-label="Back to jobs"
-          className="inline-flex"
-        >
-          <Button variant="ghost" size="icon" className="min-h-11 min-w-11">
-            <ArrowLeft className="size-5" />
-          </Button>
-        </Link>
+        {!isCrm ? (
+          <Link
+            href="/traveler"
+            aria-label="Back to jobs"
+            className="inline-flex"
+          >
+            <Button variant="ghost" size="icon" className="min-h-11 min-w-11">
+              <ArrowLeft className="size-5" />
+            </Button>
+          </Link>
+        ) : null}
         <div className="min-w-0">
           <p className="font-mono text-sm font-semibold text-[var(--orange)]">
             {jobNumber}
           </p>
-          <h1 className="text-lg font-semibold leading-snug line-clamp-2">
+          <h1
+            className={cn(
+              "font-semibold leading-snug line-clamp-2",
+              isCrm ? "text-base" : "text-lg"
+            )}
+          >
             {description}
           </h1>
         </div>
@@ -301,22 +334,7 @@ export function TravelerJobFlow({
             ))}
           </ul>
 
-          {step === "review" ? (
-            <Button
-              type="button"
-              className="w-full min-h-12 text-base touch-manipulation"
-              onClick={generate}
-              disabled={pending}
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" /> Generating…
-                </>
-              ) : (
-                "Generate traveler"
-              )}
-            </Button>
-          ) : null}
+          {step === "review" && !isCrm ? generateButton : null}
 
           {step === "done" ? (
             <div className="space-y-3 rounded-lg border bg-card p-4">
@@ -349,6 +367,15 @@ export function TravelerJobFlow({
               >
                 New from another PDF
               </Button>
+              {isCrm && onClose ? (
+                <Button
+                  type="button"
+                  className="w-full min-h-11"
+                  onClick={onClose}
+                >
+                  Done
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -387,6 +414,12 @@ export function TravelerJobFlow({
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {isCrm && step === "review" ? (
+        <div className="sticky bottom-0 -mx-1 border-t bg-popover/95 backdrop-blur px-1 pt-3 pb-1">
+          {generateButton}
         </div>
       ) : null}
     </div>

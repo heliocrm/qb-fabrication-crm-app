@@ -10,8 +10,16 @@ import { JobLineItemsTab } from "@/components/jobs/detail/job-line-items-tab"
 import { JobDocumentsTab } from "@/components/jobs/detail/job-documents-tab"
 import { JobChangeOrdersTab } from "@/components/jobs/detail/job-change-orders-tab"
 import { JobActivityTab } from "@/components/jobs/detail/job-activity-tab"
+import { GenerateTravelerDialog } from "@/components/travelers/generate-traveler-dialog"
 import { flattenLineItemTasks } from "@/lib/job-detail-config"
-import type { Job, LineItem } from "@/types"
+import type { DocumentType, Job, LineItem } from "@/types"
+
+type JobDetailTab =
+  | "overview"
+  | "line-items"
+  | "documents"
+  | "changes"
+  | "activity"
 
 interface JobDetailClientProps {
   job: Job
@@ -27,12 +35,27 @@ export function JobDetailClient({
   canManageAssignees = false,
 }: JobDetailClientProps) {
   const [lineItems, setLineItems] = useState<LineItem[]>(job.lineItems ?? [])
+  const [tab, setTab] = useState<JobDetailTab>("overview")
+  const [travelerOpen, setTravelerOpen] = useState(false)
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0)
+  const [documentsTypeFilter, setDocumentsTypeFilter] = useState<
+    "all" | DocumentType
+  >("all")
   const tasks = useMemo(() => flattenLineItemTasks(lineItems), [lineItems])
   const openTasks = tasks.filter((t) => !t.completed).length
 
+  function handleTravelerGenerated() {
+    setTab("documents")
+    setDocumentsTypeFilter("Traveler")
+    setDocumentsRefreshKey((k) => k + 1)
+  }
+
   return (
     <div className="flex flex-col min-h-full">
-      <JobDetailHeader job={job} />
+      <JobDetailHeader
+        job={job}
+        onOpenTraveler={() => setTravelerOpen(true)}
+      />
       <JobDetailStats job={job} tasks={tasks} lineItemCount={lineItems.length} />
 
       {dataSource === "supabase" && (
@@ -42,7 +65,11 @@ export function JobDetailClient({
       )}
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as JobDetailTab)}
+          className="space-y-6"
+        >
           <TabsList className="w-full sm:w-auto flex flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="line-items" className="gap-1.5">
@@ -94,6 +121,10 @@ export function JobDetailClient({
               jobId={dataSource === "supabase" ? job.id : undefined}
               dataSource={dataSource}
               readOnly={!canWrite}
+              onGenerateTraveler={() => setTravelerOpen(true)}
+              refreshKey={documentsRefreshKey}
+              typeFilter={documentsTypeFilter}
+              onTypeFilterChange={setDocumentsTypeFilter}
             />
           </TabsContent>
 
@@ -106,6 +137,16 @@ export function JobDetailClient({
           </TabsContent>
         </Tabs>
       </div>
+
+      <GenerateTravelerDialog
+        open={travelerOpen}
+        onOpenChange={setTravelerOpen}
+        jobId={job.id}
+        jobNumber={job.jobNumber}
+        poNumber={job.poNumber}
+        description={job.description}
+        onGenerated={handleTravelerGenerated}
+      />
     </div>
   )
 }

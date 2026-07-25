@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ChevronRight,
   Edit,
+  FileText,
   MoreHorizontal,
   Plus,
 } from "lucide-react"
@@ -12,9 +13,10 @@ import type { Job } from "@/types"
 
 interface JobDetailHeaderProps {
   job: Job
+  onOpenTraveler?: () => void
 }
 
-export function JobDetailHeader({ job }: JobDetailHeaderProps) {
+export function JobDetailHeader({ job, onOpenTraveler }: JobDetailHeaderProps) {
   return (
     <div className="border-b bg-card px-4 sm:px-6 py-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
@@ -42,15 +44,18 @@ export function JobDetailHeader({ job }: JobDetailHeaderProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Link href={`/traveler/jobs/${job.id}`}>
+          {onOpenTraveler ? (
             <Button
+              type="button"
               variant="outline"
               size="sm"
               className="gap-1.5 min-h-10 touch-manipulation"
+              onClick={onOpenTraveler}
             >
-              Traveler
+              <FileText className="size-4" data-icon="inline-start" />
+              Generate traveler
             </Button>
-          </Link>
+          ) : null}
           <Link href="/jobs">
             <Button variant="outline" size="sm" className="gap-1.5">
               <ArrowLeft className="size-4" data-icon="inline-start" />
