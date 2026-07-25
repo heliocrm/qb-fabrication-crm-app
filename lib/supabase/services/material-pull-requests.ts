@@ -8,7 +8,7 @@ import {
 import { mapMaterialPullRequestRow } from "@/lib/supabase/mappers"
 import {
   compareMaterialPullQueueOrder,
-  isBorrowReason,
+  isBorrowRequest,
   type MaterialPullChecklist,
 } from "@/lib/material-pull-config"
 import type {
@@ -111,7 +111,14 @@ export async function createMaterialPullRequest(
   const supabase = await getClient()
   const organizationId = await requireOrganizationId(supabase)
 
-  if (isBorrowReason(input.reasonCode) && !input.sourceJobNumber?.trim()) {
+  const sourceJob = input.sourceJobNumber?.trim() || null
+  if (
+    isBorrowRequest({
+      reasonCode: input.reasonCode,
+      sourceJobNumber: sourceJob,
+    }) &&
+    !sourceJob
+  ) {
     throw new Error("Source job # is required when borrowing from another job")
   }
 
@@ -140,9 +147,7 @@ export async function createMaterialPullRequest(
       notes: input.notes?.trim() || null,
       priority: input.priority,
       reason_code: input.reasonCode,
-      source_job_number: isBorrowReason(input.reasonCode)
-        ? input.sourceJobNumber?.trim() || null
-        : null,
+      source_job_number: sourceJob,
       status: "pending",
       requested_by: requestedBy,
     })
@@ -178,8 +183,12 @@ export async function updatePendingMaterialPullRequest(
     input.sourceJobNumber !== undefined
       ? input.sourceJobNumber
       : existing.sourceJobNumber
+  const sourceTrimmed = sourceJob?.trim() || null
 
-  if (isBorrowReason(reasonCode) && !sourceJob?.trim()) {
+  if (
+    isBorrowRequest({ reasonCode, sourceJobNumber: sourceTrimmed }) &&
+    !sourceTrimmed
+  ) {
     throw new Error("Source job # is required when borrowing from another job")
   }
 
@@ -198,9 +207,9 @@ export async function updatePendingMaterialPullRequest(
   if (input.notes !== undefined) updates.notes = input.notes?.trim() || null
   if (input.priority !== undefined) updates.priority = input.priority
   if (input.reasonCode !== undefined) updates.reason_code = input.reasonCode
-  updates.source_job_number = isBorrowReason(reasonCode)
-    ? sourceJob?.trim() || null
-    : null
+  if (input.sourceJobNumber !== undefined) {
+    updates.source_job_number = sourceTrimmed
+  }
 
   const { data, error } = await supabase
     .from(Tables.material_pull_requests)

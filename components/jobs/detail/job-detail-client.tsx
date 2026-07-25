@@ -220,7 +220,7 @@ export function JobDetailClient({
           </TabsContent>
 
           <TabsContent value="activity">
-            <JobActivityTab job={job} />
+            <JobActivityTab job={job} canWrite={writeEnabled} />
           </TabsContent>
         </Tabs>
       </div>

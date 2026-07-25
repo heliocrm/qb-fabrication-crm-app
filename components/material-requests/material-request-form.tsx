@@ -16,11 +16,10 @@ import {
 import { MaterialCatalogPicker } from "@/components/material-requests/material-catalog-picker"
 import { createMaterialPullRequestAction } from "@/lib/actions/material-pull-requests"
 import {
-  isBorrowReason,
   MATERIAL_PULL_LOCATIONS,
   MATERIAL_PULL_PRIORITIES,
   MATERIAL_PULL_PRIORITY_LABELS,
-  MATERIAL_PULL_REASON_CODES,
+  MATERIAL_PULL_REASON_CODES_SELECTABLE,
   MATERIAL_PULL_REASON_LABELS,
 } from "@/lib/material-pull-config"
 import { toast } from "@/lib/toast"
@@ -40,6 +39,7 @@ export function MaterialRequestForm({
   const [priority, setPriority] = useState<MaterialPullPriority>("soon")
   const [reasonCode, setReasonCode] = useState<MaterialPullReasonCode>("scrap")
   const [location, setLocation] = useState(MATERIAL_PULL_LOCATIONS[0])
+  const [isBorrowing, setIsBorrowing] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -51,7 +51,9 @@ export function MaterialRequestForm({
     const unit = String(fd.get("unit") ?? "ea").trim() || "ea"
     const neededBy = String(fd.get("neededBy") ?? "").trim()
     const notes = String(fd.get("notes") ?? "").trim() || null
-    const sourceJobNumber = String(fd.get("sourceJobNumber") ?? "").trim() || null
+    const sourceJobNumber = isBorrowing
+      ? String(fd.get("sourceJobNumber") ?? "").trim() || null
+      : null
 
     if (!jobNumber || !material || !(quantity > 0)) {
       toast.error("Missing fields", "Job #, material, and quantity are required.")
@@ -61,7 +63,7 @@ export function MaterialRequestForm({
       toast.error("Missing fields", "Needed-by date is required.")
       return
     }
-    if (isBorrowReason(reasonCode) && !sourceJobNumber) {
+    if (isBorrowing && !sourceJobNumber) {
       toast.error("Missing fields", "Source job # is required when borrowing.")
       return
     }
@@ -164,7 +166,7 @@ export function MaterialRequestForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MATERIAL_PULL_REASON_CODES.map((code) => (
+              {MATERIAL_PULL_REASON_CODES_SELECTABLE.map((code) => (
                 <SelectItem key={code} value={code}>
                   {MATERIAL_PULL_REASON_LABELS[code]}
                 </SelectItem>
@@ -174,7 +176,25 @@ export function MaterialRequestForm({
         </div>
       </div>
 
-      {isBorrowReason(reasonCode) ? (
+      <label className="flex items-start gap-2.5 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={isBorrowing}
+          onChange={(e) => setIsBorrowing(e.target.checked)}
+          className="mt-0.5 size-4 rounded border-input"
+        />
+        <span>
+          <span className="font-medium text-foreground">
+            Borrowing from another job
+          </span>
+          <span className="block text-xs text-muted-foreground mt-0.5">
+            Still pick a reason above for why you need the material. Borrowing
+            requires PM allocation approval.
+          </span>
+        </span>
+      </label>
+
+      {isBorrowing ? (
         <div className="space-y-1.5">
           <label htmlFor="sourceJobNumber" className="text-sm font-medium">
             Borrow from job #
@@ -186,9 +206,6 @@ export function MaterialRequestForm({
             required
             className="min-h-11 text-base md:text-sm"
           />
-          <p className="text-xs text-muted-foreground">
-            Needs project manager (allocation) approval before pull.
-          </p>
         </div>
       ) : null}
 

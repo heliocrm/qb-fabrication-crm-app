@@ -74,6 +74,18 @@ export { insertActivityLog } from "./activity"
 export { createChangeOrder } from "./change-orders"
 
 export {
+  listContactsByAccountId,
+  createContact,
+  updateContact,
+} from "./contacts"
+
+export {
+  listCrmActivitiesForAccount,
+  listCrmActivitiesForJob,
+  createCrmActivity,
+} from "./crm-activities"
+
+export {
   listLatestSignoffsForJob,
   listLatestSignoffsForLineItem,
   signOffFloorTask,

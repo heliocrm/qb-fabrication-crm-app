@@ -19,7 +19,7 @@ import {
 } from "@/lib/auth/permissions"
 import {
   formatNeededBy,
-  isBorrowReason,
+  isBorrowRequest,
   MATERIAL_PULL_PRIORITY_LABELS,
   MATERIAL_PULL_REASON_LABELS,
   MATERIAL_PULL_STATUS_LABELS,
@@ -160,7 +160,7 @@ export function MaterialRequestsList({
                     <Badge className={cn("shrink-0", priorityBadgeClass(r.priority))}>
                       {MATERIAL_PULL_PRIORITY_LABELS[r.priority]}
                     </Badge>
-                    {r.status === "pending" && isBorrowReason(r.reasonCode) ? (
+                    {r.status === "pending" && isBorrowRequest(r) ? (
                       <Badge variant="outline" className="shrink-0">
                         Needs PM
                       </Badge>
@@ -264,7 +264,7 @@ export function MaterialRequestsList({
                         <Badge className={statusBadgeClass(r.status)}>
                           {MATERIAL_PULL_STATUS_LABELS[r.status]}
                         </Badge>
-                        {r.status === "pending" && isBorrowReason(r.reasonCode) ? (
+                        {r.status === "pending" && isBorrowRequest(r) ? (
                           <Badge variant="outline">Needs PM</Badge>
                         ) : null}
                       </div>
@@ -336,7 +336,7 @@ function RequestActions({
   onCancel: () => void
 }) {
   const borrowPending =
-    request.status === "pending" && isBorrowReason(request.reasonCode)
+    request.status === "pending" && isBorrowRequest(request)
   const showApprove =
     request.status === "pending" &&
     (borrowPending ? canAllocate : canApprove || canAllocate)

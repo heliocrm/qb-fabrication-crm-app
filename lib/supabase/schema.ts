@@ -55,6 +55,8 @@ export const Tables = {
   task_signoffs: "task_signoffs",
   profile_floor_pins: "profile_floor_pins",
   organization_section_access: "organization_section_access",
+  contacts: "contacts",
+  crm_activities: "crm_activities",
 } as const
 
 const JOB_ASSIGNEES_SELECT = `

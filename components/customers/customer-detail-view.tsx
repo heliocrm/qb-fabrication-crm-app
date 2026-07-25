@@ -2,26 +2,21 @@
 
 import Link from "next/link"
 import {
-  Building2,
   Briefcase,
-  Copy,
   DollarSign,
-  Mail,
   MapPin,
   Pencil,
-  Phone,
   TrendingUp,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { JobStatusBadge, PriorityBadge } from "@/components/status-badge"
+import { CustomerContactsPanel } from "@/components/customers/customer-contacts-panel"
 import { formatCompact } from "@/lib/dashboard-stats"
 import { formatDeliveryDate } from "@/lib/jobs-config"
-import { formatCurrency } from "@/lib/utils"
-import { toast } from "@/lib/toast"
-import { cn } from "@/lib/utils"
+import { formatCurrency, cn } from "@/lib/utils"
 import type { Customer360 } from "@/lib/data/accounts"
 
 interface CustomerDetailViewProps {
@@ -49,15 +44,6 @@ function StatBlock({
       </p>
     </div>
   )
-}
-
-async function copyToClipboard(text: string, label: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.success(`${label} copied`)
-  } catch {
-    toast.error("Could not copy to clipboard")
-  }
 }
 
 export function CustomerDetailView({
@@ -113,55 +99,6 @@ export function CustomerDetailView({
         </div>
       </div>
 
-      {/* Contact */}
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Contact</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm min-w-0">
-              <Building2 className="size-4 text-muted-foreground shrink-0" />
-              <span className="font-medium truncate">{customer.contact}</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm min-w-0">
-              <Mail className="size-4 text-muted-foreground shrink-0" />
-              <span className="truncate">{customer.email}</span>
-            </div>
-            {customer.email && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0"
-                onClick={() => copyToClipboard(customer.email, "Email")}
-                aria-label="Copy email"
-              >
-                <Copy className="size-3.5" />
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm min-w-0">
-              <Phone className="size-4 text-muted-foreground shrink-0" />
-              <span className="truncate">{customer.phone}</span>
-            </div>
-            {customer.phone && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0"
-                onClick={() => copyToClipboard(customer.phone, "Phone")}
-                aria-label="Copy phone"
-              >
-                <Copy className="size-3.5" />
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatBlock label="All Jobs" value={String(customer.totalJobs)} icon={Briefcase} />
@@ -184,6 +121,8 @@ export function CustomerDetailView({
           </Badge>
         </div>
       )}
+
+      <CustomerContactsPanel accountId={customer.id} canWrite={Boolean(canEdit)} />
 
       <Separator />
 

@@ -59,9 +59,9 @@ Funnel: **Submission → Approval → Batch & Pull**
 
 ## Tester flows
 
-1. **Requester** (`can_request`) - `/pull` → New → Job #, material, qty, **needed-by (required)**, **priority**, **reason**, location, notes. Borrow reason also needs source job #.
+1. **Requester** (`can_request`) - `/pull` → New → Job #, material, qty, **needed-by (required)**, **priority**, **reason** (scrap / nest wrong / short staged / rush / other — not “borrow”), location, notes. If borrowing, check **Borrowing from another job** and enter **Borrow from job #** (required). Borrow is a flag (`source_job_number`), not a reason code.
 2. **Approver** (`can_approve`) - Requests board or detail → Approve pending (non-borrow).
-3. **PM** (`can_approve_allocation`) - Approve borrow / "Needs PM" items.
+3. **PM** (`can_approve_allocation`) - Approve borrow / "Needs PM" items (any request with a source job #, plus legacy rows that still have `reason_code = borrow`).
 4. **Handler** (`can_batch`) - Batch → select **approved** only → Create pull list → Print → checklist + canned note → Mark pulled. Queue sorts hot first, then need-by.
 5. **Hot notifications** - Submit priority Hot; approvers + allocation approvers get the alert (push/email).
 6. **Detail / edit** - Open a pending request → Edit fields → Save.
@@ -86,11 +86,15 @@ The Material field on `/pull/new` and CRM `/material-requests/new` uses a static
 2. Regenerate: `pnpm catalog:materials`
 3. Commit the updated `data/material-catalog.json`
 
+## Borrow vs reason
+
+**Borrowing from another job** is a checkbox that stores `source_job_number` and keeps the PM allocation-approval path. The reason dropdown captures *why* (scrap, nest wrong, short staged, customer rush, other). Legacy rows with `reason_code = 'borrow'` still count as borrows; new creates do not set that code. See also [contacts-and-activity.md](./contacts-and-activity.md).
+
 ## Backlog
 
 - [ ] **Drop locations list** - Ask shop for real drop places; replace `MATERIAL_PULL_LOCATIONS` values (column is already `location`)
 - [ ] **Admin feature flags** - see [project-backlog.md](./project-backlog.md)
-- [ ] Reason trending report (reason codes are stored now)
+- [ ] Reason trending report (reason codes are stored now; borrow flag is separate)
 
 ## Note on service worker
 

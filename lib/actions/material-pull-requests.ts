@@ -10,7 +10,7 @@ import {
   canManageMaterialRequests,
   requireSessionContext,
 } from "@/lib/auth/session"
-import { isBorrowReason } from "@/lib/material-pull-config"
+import { isBorrowRequest } from "@/lib/material-pull-config"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
 import {
@@ -99,7 +99,13 @@ export async function createMaterialPullRequestAction(input: CreateMaterialPullI
     if (!input.priority || !input.reasonCode) {
       throw new Error("Priority and reason are required")
     }
-    if (isBorrowReason(input.reasonCode) && !input.sourceJobNumber?.trim()) {
+    if (
+      isBorrowRequest({
+        reasonCode: input.reasonCode,
+        sourceJobNumber: input.sourceJobNumber,
+      }) &&
+      !input.sourceJobNumber?.trim()
+    ) {
       throw new Error("Source job # is required when borrowing from another job")
     }
     return createMaterialPullRequest(input, ctx.profileId)
@@ -146,7 +152,7 @@ export async function updateMaterialPullStatusAction(
     if (!existing) throw new Error("Request not found")
 
     if (status === "approved") {
-      const borrow = isBorrowReason(existing.reasonCode)
+      const borrow = isBorrowRequest(existing)
       if (borrow) {
         if (!canApproveMaterialAllocation(ctx.role, caps)) {
           throw new Error(

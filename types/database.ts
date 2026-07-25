@@ -1206,6 +1206,128 @@ export interface Database {
           },
         ]
       }
+      contacts: {
+        Row: {
+          id: string
+          organization_id: string
+          account_id: string
+          full_name: string
+          role_title: string | null
+          email: string | null
+          phone: string | null
+          preferred_channel: string | null
+          personal_notes: string | null
+          relationship_owner_id: string | null
+          last_contact_at: string | null
+          next_touch_at: string | null
+          next_touch_owner_id: string | null
+          is_primary: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          account_id: string
+          full_name: string
+          role_title?: string | null
+          email?: string | null
+          phone?: string | null
+          preferred_channel?: string | null
+          personal_notes?: string | null
+          relationship_owner_id?: string | null
+          last_contact_at?: string | null
+          next_touch_at?: string | null
+          next_touch_owner_id?: string | null
+          is_primary?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          account_id?: string
+          full_name?: string
+          role_title?: string | null
+          email?: string | null
+          phone?: string | null
+          preferred_channel?: string | null
+          personal_notes?: string | null
+          relationship_owner_id?: string | null
+          last_contact_at?: string | null
+          next_touch_at?: string | null
+          next_touch_owner_id?: string | null
+          is_primary?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_activities: {
+        Row: {
+          id: string
+          organization_id: string
+          account_id: string | null
+          contact_id: string | null
+          job_id: string | null
+          kind: string
+          body: string
+          occurred_at: string
+          created_by: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          account_id?: string | null
+          contact_id?: string | null
+          job_id?: string | null
+          kind?: string
+          body: string
+          occurred_at?: string
+          created_by?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          account_id?: string | null
+          contact_id?: string | null
+          job_id?: string | null
+          kind?: string
+          body?: string
+          occurred_at?: string
+          created_by?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: {

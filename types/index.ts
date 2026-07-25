@@ -117,5 +117,19 @@ export type {
 
 export type { TaskSignoff, TaskSignoffRow } from "./TaskSignoff"
 
+export type {
+  Contact,
+  ContactRow,
+  ContactInsert,
+  ContactUpdate,
+} from "./Contact"
+
+export type {
+  CrmActivity,
+  CrmActivityKind,
+  CrmActivityRow,
+  CrmActivityInsert,
+} from "./CrmActivity"
+
 // Database schema type for Supabase client generics
 export type { Database, Json } from "./database"

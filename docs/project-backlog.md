@@ -31,6 +31,14 @@ Aesthetic personalization (planned, not started):
 
 Plan: Cursor plan `avatar_and_job_covers` (Profile QB Logos + Job Cover Images).
 
+## Relationship CRM — Google + health (follow-on)
+
+Shipped: Contacts under Accounts + manual `crm_activities` notes (see [contacts-and-activity.md](./contacts-and-activity.md)). Not in this build:
+
+- Gmail OAuth pilot / thread sync into `crm_activities`
+- Calendar two-way sync
+- Relationship health / dormant queue dashboard
+
 ## Floor PIN — self-serve + email reset
 
 Today floor sign-off PINs are **admin-only** (Admin → Users: set / clear). Backlog:

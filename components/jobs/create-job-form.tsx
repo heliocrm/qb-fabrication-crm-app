@@ -7,12 +7,20 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { createJobFromTemplateAction, listOrgUsersForPickerAction } from "@/lib/actions/jobs"
+import { JOB_PRIORITIES } from "@/lib/jobs-config"
 import { JOB_TEMPLATE_OPTIONS } from "@/lib/job-templates"
 import { resolveAccountId } from "@/lib/seed-ids"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-import type { Account, JobTemplateType, ProfileSummary } from "@/types"
+import type { Account, JobTemplateType, Priority, ProfileSummary } from "@/types"
 
 interface ExtraLineItem {
   key: string
@@ -34,6 +42,8 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
   const [assigneeIds, setAssigneeIds] = useState<Set<string>>(new Set())
   const [importWorkOrder, setImportWorkOrder] = useState(true)
+  const [accountId, setAccountId] = useState("")
+  const [priority, setPriority] = useState<Priority>("Normal")
 
   useEffect(() => {
     if (dataSource !== "supabase") return
@@ -61,7 +71,6 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
     const jobNumber = String(fd.get("jobNumber") ?? "").trim()
     const poNumber = String(fd.get("poNumber") ?? "").trim()
     const description = String(fd.get("description") ?? "").trim()
-    const accountId = String(fd.get("accountId") ?? "")
 
     if (!jobNumber || !poNumber || !description) {
       toast.error("Missing required fields", "Job number, PO, and description are required.")
@@ -80,7 +89,7 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
       description,
       accountId: accountId ? resolveAccountId(accountId) : null,
       template,
-      priority: (fd.get("priority") as "Normal" | "Hot" | "Urgent") || "Normal",
+      priority,
       deliveryDate: String(fd.get("deliveryDate") ?? "") || undefined,
       startDate: String(fd.get("startDate") ?? "") || undefined,
       tonnage: fd.get("tonnage") ? Number(fd.get("tonnage")) : undefined,
@@ -146,34 +155,51 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
             <label htmlFor="accountId" className="text-xs font-medium text-muted-foreground">
               Customer
             </label>
-            <select
-              id="accountId"
-              name="accountId"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-              defaultValue=""
+            <Select
+              value={accountId || undefined}
+              onValueChange={(value) => {
+                if (value != null) setAccountId(value)
+              }}
             >
-              <option value="">Select customer…</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name} ({a.shortName})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="accountId"
+                className="w-full bg-background text-foreground"
+              >
+                <SelectValue placeholder="Select customer…" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name} ({a.shortName})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <label htmlFor="priority" className="text-xs font-medium text-muted-foreground">
               Priority
             </label>
-            <select
-              id="priority"
-              name="priority"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-              defaultValue="Normal"
+            <Select
+              value={priority}
+              onValueChange={(value) => {
+                if (value != null) setPriority(value as Priority)
+              }}
             >
-              <option value="Normal">Normal</option>
-              <option value="Hot">Hot</option>
-              <option value="Urgent">Urgent</option>
-            </select>
+              <SelectTrigger
+                id="priority"
+                className="w-full bg-background text-foreground"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {JOB_PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <label htmlFor="value" className="text-xs font-medium text-muted-foreground">

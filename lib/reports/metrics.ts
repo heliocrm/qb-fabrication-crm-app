@@ -90,16 +90,21 @@ export function getPullReasonsByCode(
 
   for (const req of requests) {
     if (req.status === "cancelled") continue
-    if (req.reasonCode in counts) {
-      counts[req.reasonCode] += 1
+    // Treat legacy reason_code=borrow as "other" for trending; borrow is a flag now.
+    const code =
+      req.reasonCode === "borrow" ? ("other" as const) : req.reasonCode
+    if (code in counts) {
+      counts[code] += 1
     }
   }
 
-  return MATERIAL_PULL_REASON_CODES.map((code) => ({
-    reasonCode: code,
-    label: MATERIAL_PULL_REASON_LABELS[code],
-    count: counts[code],
-  })).filter((row) => row.count > 0)
+  return MATERIAL_PULL_REASON_CODES.filter((c) => c !== "borrow").map(
+    (code) => ({
+      reasonCode: code,
+      label: MATERIAL_PULL_REASON_LABELS[code],
+      count: counts[code],
+    })
+  ).filter((row) => row.count > 0)
 }
 
 export function computeReportsData(

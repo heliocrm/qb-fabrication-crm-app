@@ -28,11 +28,11 @@ import {
 } from "@/lib/auth/permissions"
 import {
   formatNeededBy,
-  isBorrowReason,
+  isBorrowRequest,
+  MATERIAL_PULL_REASON_CODES_SELECTABLE,
   MATERIAL_PULL_LOCATIONS,
   MATERIAL_PULL_PRIORITIES,
   MATERIAL_PULL_PRIORITY_LABELS,
-  MATERIAL_PULL_REASON_CODES,
   MATERIAL_PULL_REASON_LABELS,
   MATERIAL_PULL_STATUS_LABELS,
   priorityBadgeClass,
@@ -76,6 +76,10 @@ export function MaterialRequestDetail({
   const [editLocation, setEditLocation] = useState(
     request.location ?? MATERIAL_PULL_LOCATIONS[0]
   )
+  const [editBorrowing, setEditBorrowing] = useState(isBorrowRequest(request))
+  const [editSourceJob, setEditSourceJob] = useState(
+    request.sourceJobNumber ?? ""
+  )
 
   const canApprove = canApproveMaterialRequests(role, capabilities)
   const canAllocate = canApproveMaterialAllocation(role, capabilities)
@@ -86,7 +90,7 @@ export function MaterialRequestDetail({
     (request.requestedBy === profileId || canManage)
 
   const borrowPending =
-    request.status === "pending" && isBorrowReason(request.reasonCode)
+    request.status === "pending" && isBorrowRequest(request)
   const showApprove =
     request.status === "pending" &&
     (borrowPending ? canAllocate : canApprove || canAllocate)
@@ -107,11 +111,15 @@ export function MaterialRequestDetail({
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    const sourceJobNumber = String(fd.get("sourceJobNumber") ?? "").trim() || null
-    if (isBorrowReason(editReasonCode) && !sourceJobNumber) {
+    const sourceJobNumber = editBorrowing
+      ? editSourceJob.trim() || null
+      : null
+    if (editBorrowing && !sourceJobNumber) {
       toast.error("Missing fields", "Source job # is required when borrowing.")
       return
     }
+    const reasonForSave =
+      editReasonCode === "borrow" ? "other" : editReasonCode
     run(
       () =>
         updateMaterialPullRequestAction(request.id, {
@@ -123,7 +131,7 @@ export function MaterialRequestDetail({
           location: editLocation || null,
           notes: String(fd.get("notes") ?? "").trim() || null,
           priority: editPriority,
-          reasonCode: editReasonCode,
+          reasonCode: reasonForSave,
           sourceJobNumber,
         }),
       "Request updated"
@@ -132,8 +140,12 @@ export function MaterialRequestDetail({
 
   function startEditing() {
     setEditPriority(request.priority)
-    setEditReasonCode(request.reasonCode)
+    setEditReasonCode(
+      request.reasonCode === "borrow" ? "other" : request.reasonCode
+    )
     setEditLocation(request.location ?? MATERIAL_PULL_LOCATIONS[0])
+    setEditBorrowing(isBorrowRequest(request))
+    setEditSourceJob(request.sourceJobNumber ?? "")
     setEditing(true)
   }
 
@@ -280,7 +292,7 @@ export function MaterialRequestDetail({
                 </Field>
                 <Field label="Reason">
                   <Select
-                    value={editReasonCode}
+                    value={editReasonCode === "borrow" ? "other" : editReasonCode}
                     onValueChange={(value) => {
                       if (value != null)
                         setEditReasonCode(value as MaterialPullReasonCode)
@@ -290,7 +302,7 @@ export function MaterialRequestDetail({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {MATERIAL_PULL_REASON_CODES.map((c) => (
+                      {MATERIAL_PULL_REASON_CODES_SELECTABLE.map((c) => (
                         <SelectItem key={c} value={c}>
                           {MATERIAL_PULL_REASON_LABELS[c]}
                         </SelectItem>
@@ -298,13 +310,27 @@ export function MaterialRequestDetail({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Borrow from job #">
-                  <Input
-                    name="sourceJobNumber"
-                    defaultValue={request.sourceJobNumber ?? ""}
-                    className="min-h-11"
-                  />
-                </Field>
+                <div className="sm:col-span-2 space-y-3">
+                  <label className="flex items-start gap-2.5 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editBorrowing}
+                      onChange={(e) => setEditBorrowing(e.target.checked)}
+                      className="mt-0.5 size-4 rounded border-input"
+                    />
+                    <span className="font-medium">Borrowing from another job</span>
+                  </label>
+                  {editBorrowing ? (
+                    <Field label="Borrow from job #">
+                      <Input
+                        value={editSourceJob}
+                        onChange={(e) => setEditSourceJob(e.target.value)}
+                        className="min-h-11"
+                        required
+                      />
+                    </Field>
+                  ) : null}
+                </div>
                 <Field label="Material">
                   <Input
                     name="material"

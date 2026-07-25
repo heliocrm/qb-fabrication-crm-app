@@ -44,12 +44,22 @@ export const MATERIAL_PULL_PRIORITY_RANK: Record<MaterialPullPriority, number> =
     low: 2,
   }
 
+/** All DB-valid reason codes (includes legacy `borrow`). */
 export const MATERIAL_PULL_REASON_CODES: MaterialPullReasonCode[] = [
   "scrap",
   "nest_wrong",
   "short_staged",
   "customer_rush",
   "borrow",
+  "other",
+]
+
+/** Reasons shown in create/edit pickers — borrow is a separate checkbox flag. */
+export const MATERIAL_PULL_REASON_CODES_SELECTABLE: MaterialPullReasonCode[] = [
+  "scrap",
+  "nest_wrong",
+  "short_staged",
+  "customer_rush",
   "other",
 ]
 
@@ -61,12 +71,22 @@ export const MATERIAL_PULL_REASON_LABELS: Record<
   nest_wrong: "Nest / BOM wrong",
   short_staged: "Short staged",
   customer_rush: "Customer rush",
-  borrow: "Borrow from another job",
+  borrow: "Borrow from another job (legacy)",
   other: "Other",
 }
 
+/** @deprecated Prefer `isBorrowRequest` — borrow is a flag via source job #. */
 export function isBorrowReason(code: MaterialPullReasonCode | null | undefined): boolean {
   return code === "borrow"
+}
+
+/** True when material is taken from another job (source set) or legacy reason_code. */
+export function isBorrowRequest(input: {
+  reasonCode?: MaterialPullReasonCode | null
+  sourceJobNumber?: string | null
+}): boolean {
+  if (input.sourceJobNumber?.trim()) return true
+  return input.reasonCode === "borrow"
 }
 
 /** Drop locations - shop equipment / areas (from floor walkthrough). */
