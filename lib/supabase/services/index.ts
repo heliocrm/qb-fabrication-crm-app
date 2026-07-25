@@ -100,6 +100,12 @@ export {
 } from "./crm-tasks"
 
 export {
+  ensureDeliveredCheckInFollowUp,
+  deliveredCheckInTitle,
+  DELIVERED_CHECKIN_TITLE_PREFIX,
+} from "./job-delivered-followup"
+
+export {
   getGoogleOAuthConnection,
   upsertGoogleOAuthToken,
   deleteGoogleOAuthToken,

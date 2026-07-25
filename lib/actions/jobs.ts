@@ -106,7 +106,40 @@ export async function createJobFromTemplateAction(input: CreateJobFromTemplateIn
 }
 
 export async function updateJobAction(id: string, updates: JobUpdate) {
-  const result = await safeAction(() => updateJob(id, updates))
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    const becomingDelivered = updates.status === "Delivered"
+    let previousStatus: string | null = null
+
+    if (becomingDelivered) {
+      const before = await getJobById(id)
+      previousStatus = before?.status ?? null
+    }
+
+    const job = await updateJob(id, updates)
+
+    if (becomingDelivered && previousStatus !== "Delivered") {
+      try {
+        const { ensureDeliveredCheckInFollowUp } = await import(
+          "@/lib/supabase/services/job-delivered-followup"
+        )
+        const followUp = await ensureDeliveredCheckInFollowUp({
+          jobId: job.id,
+          jobNumber: job.jobNumber,
+          accountId: job.accountId ?? null,
+          actorProfileId: ctx.profileId,
+        })
+        if (followUp?.accountId) {
+          revalidatePath("/customers")
+          revalidatePath("/customers/needs-a-touch")
+        }
+      } catch (err) {
+        console.error("[updateJobAction] Delivered check-in follow-up failed", err)
+      }
+    }
+
+    return job
+  })
   if (result.data) revalidateJobPaths(id)
   return result
 }

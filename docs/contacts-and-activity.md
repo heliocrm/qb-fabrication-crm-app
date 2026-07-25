@@ -82,6 +82,17 @@ Separate from relationship CRM, but linked from Customer 360.
 
 UI: `/opportunities/[id]` detail; kanban/list titles open detail; Customer 360 opps link there.
 
+### Event: Job Delivered → 30-day check-in
+
+When a job status **transitions** to `Delivered` (kanban or edit), the app creates one CRM follow-up (idempotent per job):
+
+- Title: `30-day check-in — {jobNumber}`
+- Due: status-change time + 30 days
+- Owner: primary contact `relationship_owner_id`, else the user who marked Delivered
+- Links: `job_id` + `account_id` (+ `contact_id` when resolved)
+
+Appears on Customer 360 Follow-ups / owner’s open queue. Failure does not block the job status update. No other automated triggers yet.
+
 ## UI (Customer 360 hub)
 
 - **Customers → account detail:** Contacts, email/meeting actions, **Follow-ups**, **QB Customer → Open in QuickBooks** chip (deep link + optional status note), activity, open jobs/opps (opps → detail).
