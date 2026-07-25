@@ -79,26 +79,51 @@ export async function listOrgUsers(): Promise<OrgUser[]> {
 
   throwOnError({ data: profiles, error })
 
+  const pinIds = await loadFloorPinProfileIds(organizationId)
   const users: OrgUser[] = []
   for (const row of (profiles ?? []) as ProfileRow[]) {
     const { data: authUser } = await admin.auth.admin.getUserById(row.user_id)
-    users.push({
-      id: row.id,
-      userId: row.user_id,
-      organizationId: row.organization_id,
-      fullName: row.full_name ?? "Unknown",
-      email: authUser.user?.email ?? "",
-      role: row.role as OrganizationRole,
-      isActive: row.is_active,
-      avatarInitials: row.avatar_initials ?? initialsFromName(row.full_name ?? "?"),
-      materialPullCapabilities: parseMaterialPullCapabilities(
-        row.material_pull_capabilities
-      ),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    })
+    users.push(
+      mapOrgUser(row, authUser.user?.email ?? "", pinIds.has(row.id))
+    )
   }
   return users
+}
+
+function mapOrgUser(
+  row: ProfileRow,
+  email: string,
+  hasFloorPin = false
+): OrgUser {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    organizationId: row.organization_id,
+    fullName: row.full_name ?? "Unknown",
+    email,
+    role: row.role as OrganizationRole,
+    isActive: row.is_active,
+    avatarInitials: row.avatar_initials ?? initialsFromName(row.full_name ?? "?"),
+    materialPullCapabilities: parseMaterialPullCapabilities(
+      row.material_pull_capabilities
+    ),
+    hasFloorPin,
+    isStationAccount: row.is_station_account === true,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+async function loadFloorPinProfileIds(
+  organizationId: string
+): Promise<Set<string>> {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from(Tables.profile_floor_pins)
+    .select("profile_id")
+    .eq("organization_id", organizationId)
+  if (error) throwOnError({ data: null, error })
+  return new Set((data ?? []).map((r) => r.profile_id as string))
 }
 
 export async function getOrganizationName(organizationId: string): Promise<string> {
@@ -162,21 +187,7 @@ export async function inviteOrgUser(input: {
 
   const row = profile as ProfileRow
   return {
-    user: {
-      id: row.id,
-      userId: row.user_id,
-      organizationId: row.organization_id,
-      fullName: row.full_name ?? input.fullName,
-      email: input.email,
-      role: row.role as OrganizationRole,
-      isActive: row.is_active,
-      avatarInitials: row.avatar_initials ?? initials,
-      materialPullCapabilities: parseMaterialPullCapabilities(
-        row.material_pull_capabilities
-      ),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    },
+    user: mapOrgUser(row, input.email),
     inviteLink,
   }
 }
@@ -206,6 +217,7 @@ export async function updateOrgUser(
     isActive?: boolean
     fullName?: string
     materialPullCapabilities?: MaterialPullCapabilities
+    isStationAccount?: boolean
   },
   organizationId: string
 ): Promise<OrgUser> {
@@ -247,6 +259,7 @@ export async function updateOrgUser(
     full_name?: string
     avatar_initials?: string
     material_pull_capabilities?: Json
+    is_station_account?: boolean
   } = {}
   if (updates.role !== undefined) payload.role = updates.role
   if (updates.isActive !== undefined) payload.is_active = updates.isActive
@@ -257,6 +270,9 @@ export async function updateOrgUser(
   if (updates.materialPullCapabilities !== undefined) {
     payload.material_pull_capabilities =
       updates.materialPullCapabilities as unknown as Json
+  }
+  if (updates.isStationAccount !== undefined) {
+    payload.is_station_account = updates.isStationAccount
   }
 
   const { data, error } = await supabase
@@ -273,21 +289,90 @@ export async function updateOrgUser(
   const admin = createAdminClient()
   const { data: authUser } = await admin.auth.admin.getUserById(row.user_id)
 
-  return {
-    id: row.id,
-    userId: row.user_id,
-    organizationId: row.organization_id,
-    fullName: row.full_name ?? "Unknown",
-    email: authUser.user?.email ?? "",
-    role: row.role as OrganizationRole,
-    isActive: row.is_active,
-    avatarInitials: row.avatar_initials ?? initialsFromName(row.full_name ?? "?"),
-    materialPullCapabilities: parseMaterialPullCapabilities(
-      row.material_pull_capabilities
-    ),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+  const pinIds = await loadFloorPinProfileIds(organizationId)
+  return mapOrgUser(row, authUser.user?.email ?? "", pinIds.has(row.id))
+}
+
+/** Admin-only: set floor PIN via service role (hash never exposed to authenticated clients). */
+export async function setOrgUserFloorPin(
+  profileId: string,
+  pin: string,
+  organizationId: string
+): Promise<OrgUser> {
+  const { hashFloorPin, isValidFloorPin } = await import("@/lib/floor-pin")
+  if (!isValidFloorPin(pin)) {
+    throw new Error("PIN must be 4–8 digits.")
   }
+  const admin = createAdminClient()
+  const { data: profile, error: profileError } = await admin
+    .from(Tables.profiles)
+    .select("*")
+    .eq("id", profileId)
+    .eq("organization_id", organizationId)
+    .single()
+  throwOnError({ data: profile, error: profileError })
+
+  const { error: pinError } = await admin.from(Tables.profile_floor_pins).upsert({
+    profile_id: profileId,
+    organization_id: organizationId,
+    pin_hash: hashFloorPin(pin),
+    updated_at: new Date().toISOString(),
+  })
+  if (pinError) throwOnError({ data: null, error: pinError })
+
+  const row = profile as ProfileRow
+  const { data: authUser } = await admin.auth.admin.getUserById(row.user_id)
+  return mapOrgUser(row, authUser.user?.email ?? "", true)
+}
+
+export async function clearOrgUserFloorPin(
+  profileId: string,
+  organizationId: string
+): Promise<OrgUser> {
+  const admin = createAdminClient()
+  const { data: profile, error: profileError } = await admin
+    .from(Tables.profiles)
+    .select("*")
+    .eq("id", profileId)
+    .eq("organization_id", organizationId)
+    .single()
+  throwOnError({ data: profile, error: profileError })
+
+  const { error: pinError } = await admin
+    .from(Tables.profile_floor_pins)
+    .delete()
+    .eq("profile_id", profileId)
+    .eq("organization_id", organizationId)
+  if (pinError) throwOnError({ data: null, error: pinError })
+
+  const row = profile as ProfileRow
+  const { data: authUser } = await admin.auth.admin.getUserById(row.user_id)
+  return mapOrgUser(row, authUser.user?.email ?? "", false)
+}
+
+/** Workers with a floor PIN set (for tablet picker). */
+export async function listFloorWorkersForSignoff(
+  organizationId: string
+): Promise<import("@/types").FloorWorkerOption[]> {
+  const admin = createAdminClient()
+  const pinIds = await loadFloorPinProfileIds(organizationId)
+  const { data, error } = await admin
+    .from(Tables.profiles)
+    .select("id, full_name, avatar_initials, is_active, is_station_account")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .order("full_name")
+
+  throwOnError({ data, error })
+  return ((data ?? []) as ProfileRow[])
+    .filter((row) => pinIds.has(row.id) && row.is_station_account !== true)
+    .map((row) => ({
+      id: row.id,
+      fullName: row.full_name ?? "Unknown",
+      avatarInitials:
+        row.avatar_initials ?? initialsFromName(row.full_name ?? "?"),
+      hasFloorPin: true,
+    }))
 }
 
 export async function deactivateOrgUser(

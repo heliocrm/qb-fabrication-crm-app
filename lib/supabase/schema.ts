@@ -52,6 +52,8 @@ export const Tables = {
   traveler_generations: "traveler_generations",
   travelers: "travelers",
   traveler_lines: "traveler_lines",
+  task_signoffs: "task_signoffs",
+  profile_floor_pins: "profile_floor_pins",
   organization_section_access: "organization_section_access",
 } as const
 

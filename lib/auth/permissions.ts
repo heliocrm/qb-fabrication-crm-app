@@ -5,6 +5,16 @@ export function canWriteJobs(role: OrganizationRole): boolean {
   return role === "admin" || role === "manager" || role === "member"
 }
 
+/** Shop-floor task sign-off (includes viewers on station tablets). */
+export function canSignOffFloor(role: OrganizationRole): boolean {
+  return (
+    role === "admin" ||
+    role === "manager" ||
+    role === "member" ||
+    role === "viewer"
+  )
+}
+
 export function canManageAssignees(role: OrganizationRole): boolean {
   return role === "admin" || role === "manager"
 }

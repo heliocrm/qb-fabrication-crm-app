@@ -20,6 +20,7 @@ import {
   getActiveTravelerAction,
   updateTravelerLineAction,
 } from "@/lib/actions/travelers"
+import { FloorLineChecklist } from "@/components/floor/floor-line-checklist"
 import type { Traveler } from "@/types"
 
 function downloadBase64Docx(filename: string, base64: string) {
@@ -40,11 +41,13 @@ function downloadBase64Docx(filename: string, base64: string) {
 export function JobTravelerTab({
   jobId,
   canWrite = true,
+  canSignOff = true,
   onImport,
   refreshKey = 0,
 }: {
   jobId: string
   canWrite?: boolean
+  canSignOff?: boolean
   onImport?: () => void
   refreshKey?: number
 }) {
@@ -345,6 +348,11 @@ export function JobTravelerTab({
                   </p>
                 </>
               )}
+              <FloorLineChecklist
+                jobId={jobId}
+                line={line}
+                canSignOff={canSignOff}
+              />
             </div>
           ))}
         </CardContent>

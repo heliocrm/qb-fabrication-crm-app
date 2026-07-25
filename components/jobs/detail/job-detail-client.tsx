@@ -14,7 +14,8 @@ import { JobActivityTab } from "@/components/jobs/detail/job-activity-tab"
 import { JobTravelerTab } from "@/components/jobs/detail/job-traveler-tab"
 import { GenerateTravelerDialog } from "@/components/travelers/generate-traveler-dialog"
 import { flattenLineItemTasks } from "@/lib/job-detail-config"
-import type { DocumentType, Job, LineItem } from "@/types"
+import type { DocumentType, Job, LineItem, OrganizationRole } from "@/types"
+import { canSignOffFloor } from "@/lib/auth/permissions"
 
 type JobDetailTab =
   | "overview"
@@ -38,6 +39,7 @@ interface JobDetailClientProps {
   dataSource?: "supabase" | "mock"
   canWrite?: boolean
   canManageAssignees?: boolean
+  role?: OrganizationRole
 }
 
 export function JobDetailClient({
@@ -45,7 +47,9 @@ export function JobDetailClient({
   dataSource,
   canWrite = true,
   canManageAssignees = false,
+  role = "member",
 }: JobDetailClientProps) {
+  const canSignOff = dataSource === "supabase" && canSignOffFloor(role)
   const router = useRouter()
   const searchParams = useSearchParams()
   const [lineItems, setLineItems] = useState<LineItem[]>(job.lineItems ?? [])
@@ -143,6 +147,7 @@ export function JobDetailClient({
             <JobTravelerTab
               jobId={job.id}
               canWrite={canWrite && dataSource === "supabase"}
+              canSignOff={canSignOff}
               onImport={() => setTravelerOpen(true)}
               refreshKey={travelerRefreshKey}
             />

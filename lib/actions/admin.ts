@@ -91,6 +91,7 @@ export async function updateOrgUserAction(
     isActive?: boolean
     fullName?: string
     materialPullCapabilities?: MaterialPullCapabilities
+    isStationAccount?: boolean
   }
 ) {
   const result = await safeAction(async () => {

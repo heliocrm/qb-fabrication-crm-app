@@ -50,8 +50,19 @@ export interface OrgUser {
   isActive: boolean
   avatarInitials: string
   materialPullCapabilities: MaterialPullCapabilities
+  /** PIN hash never returned — only whether a floor PIN is set. */
+  hasFloorPin: boolean
+  isStationAccount: boolean
   createdAt: string
   updatedAt: string
+}
+
+/** Active worker eligible for floor sign-off picker */
+export interface FloorWorkerOption {
+  id: string
+  fullName: string
+  avatarInitials: string
+  hasFloorPin: boolean
 }
 
 export interface ProfileRow {
@@ -65,6 +76,7 @@ export interface ProfileRow {
   avatar_url: string | null
   notification_preferences: Json
   material_pull_capabilities: Json
+  is_station_account?: boolean
   created_at: string
   updated_at: string
 }

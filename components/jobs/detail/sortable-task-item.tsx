@@ -6,16 +6,22 @@ import { Calendar, CheckCircle2, Clock, GripVertical } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SignoffBadge } from "@/components/floor/floor-signoff-dialog"
 import { taskCategoryStyles } from "@/lib/job-detail-config"
 import { cn } from "@/lib/utils"
-import type { Task } from "@/types"
+import type { Task, TaskSignoff } from "@/types"
 
 interface SortableTaskItemProps {
   task: Task
   onToggle: (id: string) => void
+  signoff?: TaskSignoff | null
 }
 
-export function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
+export function SortableTaskItem({
+  task,
+  onToggle,
+  signoff,
+}: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -59,7 +65,7 @@ export function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
         className="shrink-0"
       />
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 space-y-1">
         <p
           className={cn(
             "text-sm font-medium",
@@ -68,6 +74,7 @@ export function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
         >
           {task.title}
         </p>
+        {signoff ? <SignoffBadge signoff={signoff} /> : null}
       </div>
 
       <Badge

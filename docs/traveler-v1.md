@@ -1,7 +1,7 @@
-# Traveler (digital import)
+# Traveler (digital import + floor sign-off)
 
 Phone-first traveler **import** absorbed from Trevor’s desktop MVP, stored as an
-in-system CRM record (not Drive-first Word).
+in-system CRM record (not Drive-first Word), plus shop-floor task sign-off.
 
 ## What it does
 
@@ -15,9 +15,23 @@ in-system CRM record (not Drive-first Word).
    production `line_items` (template checklists), soft-syncs job PO / marks.
 6. Anytime: **Print** (HTML), **Email** (deep link via Resend), **Download DOCX**
    (built from DB; logged in `traveler_generations`).
+7. **Floor sign-off** on Machine / Fabrication / QA / Shipping checklist tasks:
+   pick worker + PIN + reason chips (+ optional note). Viewers may sign off;
+   they still cannot edit the job.
 
 Re-import creates a new traveler version and marks the prior active row
 `superseded`. Old production cards are not auto-deleted.
+
+## Station tablets (shared login)
+
+- Create a kiosk Auth user and mark **Station / tablet account** in Admin → Users.
+- Set a **floor PIN** on each real worker (4–8 digits).
+- Tablet stays signed in as the station account; each sign-off requires choosing
+  the worker and entering their PIN (does not switch Google OAuth sessions).
+- Personal logins default the worker picker to self; PIN is still required.
+
+Does not change Google OAuth clients or `qbfab.com` / `traveler.qbfab.com`
+redirect configuration.
 
 ## Soft-launch (like Material Pull)
 
@@ -29,38 +43,36 @@ Re-import creates a new traveler version and marks the prior active row
 
 Do not set `APP_MODE=pull` and `APP_MODE=traveler` on the same deploy.
 
-Run migrations through [`015_digital_travelers.sql`](../supabase/migrations/015_digital_travelers.sql)
-in Supabase SQL Editor (after 012–014).
+Run migrations through [`016_floor_task_signoffs.sql`](../supabase/migrations/016_floor_task_signoffs.sql)
+in Supabase SQL Editor (after 015).
 
 ## Code map
 
 | Area | Path |
 |------|------|
 | Parse WO PDF | `lib/travelers/parse-work-order.ts` |
-| Customer name map | `lib/travelers/customer-map.ts` |
-| Build `.docx` (on demand) | `lib/travelers/write-traveler.ts` |
-| Actions | `lib/actions/travelers.ts` |
-| Services | `lib/supabase/services/travelers.ts` |
+| Import / export | `lib/actions/travelers.ts` |
+| Floor sign-off | `lib/actions/floor-signoff.ts`, `lib/supabase/services/task-signoffs.ts` |
+| PIN hashing | `lib/floor-pin.ts` |
+| Reason chips | `lib/floor-signoff-reasons.ts` |
 | Job Traveler tab | `components/jobs/detail/job-traveler-tab.tsx` |
-| Import UI | `components/travelers/traveler-job-flow.tsx` |
-| Print | `/jobs/[id]/traveler/print`, `/traveler/jobs/[id]/print` |
-| Mode / middleware | `lib/traveler-mode.ts`, `lib/supabase/middleware.ts` |
+| Floor UI | `components/floor/` |
+| PWA floor panel | `components/travelers/traveler-floor-panel.tsx` |
 
 ## Data model
 
-- **`travelers`** — header (PO, customer, dates, rev, version, status)
-- **`traveler_lines`** — WO lines; optional `line_item_id` → production card
-- **`traveler_generations`** — audit log for DOCX exports only
-
-## Adding a work-order format
-
-QB-issued WOs are the primary path. Legacy triple-code-line parsing remains as
-fallback. Every field stays editable in the UI and **Add line** covers misses.
+- **`travelers`** / **`traveler_lines`** — digital traveler
+- **`traveler_generations`** — DOCX export audit
+- **`profiles.is_station_account`** — kiosk Auth profile flag
+- **`profile_floor_pins`** — PIN hashes (service role only; not readable by clients)
+- **`task_signoffs`** — append-only who/when/reasons per checklist task
+- **`activity_logs`** — human-readable feed on sign-off
 
 ## Deferred
 
-- Floor step sign-offs / heat-MTR / NCR (extreme traceability next)
-- Drawing packet combine / crop / stamp (`stamp_engine.py`)
-- Reporting dashboard on traveler volume
+- Heat # / MTR / NCR
+- Photo on sign-off
+- Hard gates blocking ship until all steps signed
+- Manager void/amend UI for sign-offs
+- Drawing packet stamp workflow
 - PowerFab sync
-- Drive as traveler source of truth (optional archive only)

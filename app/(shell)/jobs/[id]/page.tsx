@@ -30,6 +30,7 @@ export default async function JobDetailPage({
         dataSource={source}
         canWrite={canWrite}
         canManageAssignees={canManageTeam}
+        role={role}
       />
     </Suspense>
   )

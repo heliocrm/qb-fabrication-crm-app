@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   DndContext,
   closestCenter,
@@ -33,9 +33,17 @@ import {
   toggleTaskAction,
   updateLineItemWipAction,
 } from "@/lib/actions/jobs"
+import { getFloorSignoffContextAction } from "@/lib/actions/floor-signoff"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-import type { JobTemplateType, LineItem, LineItemWipStatus, Task, TaskCategory } from "@/types"
+import type {
+  JobTemplateType,
+  LineItem,
+  LineItemWipStatus,
+  Task,
+  TaskCategory,
+  TaskSignoff,
+} from "@/types"
 
 interface JobLineItemsTabProps {
   lineItems: LineItem[]
@@ -53,6 +61,16 @@ export function JobLineItemsTab({
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(lineItems.map((li) => [li.id, true]))
   )
+  const [signoffsByTaskId, setSignoffsByTaskId] = useState<
+    Record<string, TaskSignoff>
+  >({})
+
+  useEffect(() => {
+    if (!jobId) return
+    void getFloorSignoffContextAction(jobId).then((res) => {
+      if (res.data) setSignoffsByTaskId(res.data.signoffsByTaskId)
+    })
+  }, [jobId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -268,6 +286,7 @@ export function JobLineItemsTab({
                                 key={task.id}
                                 task={task}
                                 onToggle={(id) => toggleTask(lineItem.id, id)}
+                                signoff={signoffsByTaskId[task.id]}
                               />
                             ))}
                           </SortableContext>

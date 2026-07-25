@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { deactivateOrgUserAction, updateOrgUserAction } from "@/lib/actions/admin"
+import {
+  clearFloorPinAction,
+  setFloorPinAction,
+} from "@/lib/actions/floor-signoff"
 import { toast } from "@/lib/toast"
 import type { MaterialPullCapabilities, OrganizationRole, OrgUser } from "@/types"
 
@@ -52,6 +56,9 @@ export function EditUserDialog({
   const [caps, setCaps] = useState<MaterialPullCapabilities>(
     user.materialPullCapabilities
   )
+  const [isStationAccount, setIsStationAccount] = useState(user.isStationAccount)
+  const [hasFloorPin, setHasFloorPin] = useState(user.hasFloorPin)
+  const [newPin, setNewPin] = useState("")
 
   useEffect(() => {
     if (!open) return
@@ -59,6 +66,9 @@ export function EditUserDialog({
     setIsActive(user.isActive)
     setFullName(user.fullName)
     setCaps(user.materialPullCapabilities)
+    setIsStationAccount(user.isStationAccount)
+    setHasFloorPin(user.hasFloorPin)
+    setNewPin("")
   }, [open, user])
 
   async function handleSave() {
@@ -68,6 +78,7 @@ export function EditUserDialog({
       isActive,
       fullName,
       materialPullCapabilities: caps,
+      isStationAccount,
     })
     setIsSubmitting(false)
 
@@ -77,10 +88,37 @@ export function EditUserDialog({
     }
 
     if (result.data) {
-      onUpdated(result.data)
+      onUpdated({ ...result.data, hasFloorPin })
       toast.success("User updated")
       onOpenChange(false)
     }
+  }
+
+  async function handleSetPin() {
+    setIsSubmitting(true)
+    const result = await setFloorPinAction(user.id, newPin)
+    setIsSubmitting(false)
+    if (result.error) {
+      toast.error("PIN update failed", result.error)
+      return
+    }
+    setHasFloorPin(true)
+    setNewPin("")
+    onUpdated({ ...user, hasFloorPin: true, isStationAccount })
+    toast.success("Floor PIN set")
+  }
+
+  async function handleClearPin() {
+    setIsSubmitting(true)
+    const result = await clearFloorPinAction(user.id)
+    setIsSubmitting(false)
+    if (result.error) {
+      toast.error("Clear PIN failed", result.error)
+      return
+    }
+    setHasFloorPin(false)
+    onUpdated({ ...user, hasFloorPin: false, isStationAccount })
+    toast.success("Floor PIN cleared")
   }
 
   async function handleDeactivate() {
@@ -167,6 +205,60 @@ export function EditUserDialog({
                   {label}
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-3">
+            <p className="text-sm font-medium">Floor sign-off</p>
+            <p className="text-xs text-muted-foreground">
+              Station tablets stay signed in as a kiosk account; workers pick
+              themselves and enter a 4–8 digit PIN to sign off.
+            </p>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={isStationAccount}
+                onChange={(e) => setIsStationAccount(e.target.checked)}
+                className="rounded border-input"
+              />
+              Station / tablet account (cannot be the signing worker)
+            </label>
+            <p className="text-xs text-muted-foreground">
+              PIN status:{" "}
+              <span className="font-medium text-foreground">
+                {hasFloorPin ? "Set" : "Not set"}
+              </span>
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="New PIN (4–8 digits)"
+                value={newPin}
+                onChange={(e) =>
+                  setNewPin(e.target.value.replace(/\D/g, "").slice(0, 8))
+                }
+                className="font-mono"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting || newPin.length < 4}
+                onClick={handleSetPin}
+              >
+                Set PIN
+              </Button>
+              {hasFloorPin ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={isSubmitting}
+                  onClick={handleClearPin}
+                >
+                  Clear
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>

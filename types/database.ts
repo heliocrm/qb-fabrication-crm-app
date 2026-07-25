@@ -63,6 +63,7 @@ export interface Database {
           avatar_url: string | null
           notification_preferences: Json
           material_pull_capabilities: Json
+          is_station_account: boolean
           created_at: string
           updated_at: string
         }
@@ -77,6 +78,7 @@ export interface Database {
           avatar_url?: string | null
           notification_preferences?: Json
           material_pull_capabilities?: Json
+          is_station_account?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -91,6 +93,7 @@ export interface Database {
           avatar_url?: string | null
           notification_preferences?: Json
           material_pull_capabilities?: Json
+          is_station_account?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -1071,6 +1074,99 @@ export interface Database {
             columns: ["line_item_id"]
             isOneToOne: false
             referencedRelation: "line_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_floor_pins: {
+        Row: {
+          profile_id: string
+          organization_id: string
+          pin_hash: string
+          updated_at: string
+        }
+        Insert: {
+          profile_id: string
+          organization_id: string
+          pin_hash: string
+          updated_at?: string
+        }
+        Update: {
+          profile_id?: string
+          organization_id?: string
+          pin_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_floor_pins_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_signoffs: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          line_item_id: string
+          task_id: string
+          traveler_line_id: string | null
+          signed_by: string
+          session_profile_id: string
+          reason_codes: string[]
+          note: string | null
+          signed_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          line_item_id: string
+          task_id: string
+          traveler_line_id?: string | null
+          signed_by: string
+          session_profile_id: string
+          reason_codes?: string[]
+          note?: string | null
+          signed_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          line_item_id?: string
+          task_id?: string
+          traveler_line_id?: string | null
+          signed_by?: string
+          session_profile_id?: string
+          reason_codes?: string[]
+          note?: string | null
+          signed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_signoffs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_signoffs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_signoffs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]

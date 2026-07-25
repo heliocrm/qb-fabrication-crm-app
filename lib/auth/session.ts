@@ -12,6 +12,7 @@ import { DEFAULT_MATERIAL_PULL_CAPABILITIES } from "@/types/Profile"
 
 export {
   canWriteJobs,
+  canSignOffFloor,
   canManageAssignees,
   canCreateJobs,
   isAdminRole,
@@ -33,6 +34,7 @@ export interface SessionContext {
   fullName: string
   email: string | undefined
   materialPullCapabilities: MaterialPullCapabilities
+  isStationAccount: boolean
 }
 
 export async function getSessionContext(): Promise<SessionContext | null> {
@@ -51,7 +53,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
     const { data: profile } = await supabase
       .from(Tables.profiles)
       .select(
-        "id, organization_id, full_name, role, is_active, avatar_initials, material_pull_capabilities"
+        "id, organization_id, full_name, role, is_active, avatar_initials, material_pull_capabilities, is_station_account"
       )
       .eq("user_id", user.id)
       .maybeSingle()
@@ -69,6 +71,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       materialPullCapabilities: parseMaterialPullCapabilities(
         profile.material_pull_capabilities
       ),
+      isStationAccount: profile.is_station_account === true,
     }
   } catch {
     return null

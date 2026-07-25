@@ -64,6 +64,7 @@ export type {
 export type {
   ProfileSummary,
   OrgUser,
+  FloorWorkerOption,
   ProfileRow,
   JobAssigneeRow,
   OwnProfile,
@@ -113,6 +114,8 @@ export type {
   TravelerStatus,
   TravelerImportFields,
 } from "./Traveler"
+
+export type { TaskSignoff, TaskSignoffRow } from "./TaskSignoff"
 
 // Database schema type for Supabase client generics
 export type { Database, Json } from "./database"

@@ -68,6 +68,14 @@ export {
   updateTravelerLine,
 } from "./travelers"
 
+export { insertActivityLog } from "./activity"
+
+export {
+  listLatestSignoffsForJob,
+  listLatestSignoffsForLineItem,
+  signOffFloorTask,
+} from "./task-signoffs"
+
 export {
   getCurrentOrganizationId,
   requireOrganizationId,
