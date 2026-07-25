@@ -1,16 +1,17 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Building2 } from "lucide-react"
+import { SectionAccessMatrix } from "@/components/admin/section-access-matrix"
+import type { SectionAccessRow } from "@/components/admin/section-access-matrix"
 
-export function OrgSettingsPlaceholder() {
+interface OrgSettingsPanelProps {
+  sectionAccessRows: SectionAccessRow[]
+}
+
+export function OrgSettingsPanel({ sectionAccessRows }: OrgSettingsPanelProps) {
   return (
-    <Card className="border shadow-sm">
-      <CardContent className="flex flex-col items-center justify-center py-20 gap-3">
-        <Building2 className="size-12 text-muted-foreground/40" aria-hidden="true" />
-        <p className="text-sm font-medium text-foreground">Organization Settings</p>
-        <p className="text-sm text-muted-foreground text-center max-w-sm">
-          Company name, branding, integrations, and notification defaults — coming soon.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <SectionAccessMatrix initialRows={sectionAccessRows} />
+    </div>
   )
 }
+
+/** @deprecated Use OrgSettingsPanel */
+export const OrgSettingsPlaceholder = OrgSettingsPanel

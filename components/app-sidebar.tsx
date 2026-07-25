@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils"
 
 interface AppSidebarProps {
   user?: UserProfile | null
+  /** When null, show all main nav (e.g. Supabase not configured). */
+  visibleSectionKeys?: string[] | null
 }
 
 function NavLink({
@@ -63,8 +65,17 @@ function NavLink({
   )
 }
 
-export function AppSidebar({ user }: AppSidebarProps) {
+export function AppSidebar({
+  user,
+  visibleSectionKeys = null,
+}: AppSidebarProps) {
   const pathname = usePathname()
+  const navItems =
+    visibleSectionKeys == null
+      ? mainNavItems
+      : mainNavItems.filter((item) =>
+          visibleSectionKeys.includes(item.sectionKey)
+        )
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -93,7 +104,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {mainNavItems.map((item) => (
+              {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <NavLink
                     href={item.href}

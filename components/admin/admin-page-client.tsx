@@ -1,15 +1,20 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { OrgSettingsPlaceholder } from "@/components/admin/org-settings-placeholder"
+import { OrgSettingsPanel } from "@/components/admin/org-settings-placeholder"
+import type { SectionAccessRow } from "@/components/admin/section-access-matrix"
 import { UsersTable } from "@/components/admin/users-table"
 import type { OrgUser } from "@/types"
 
 interface AdminPageClientProps {
   users: OrgUser[]
+  sectionAccessRows: SectionAccessRow[]
 }
 
-export function AdminPageClient({ users }: AdminPageClientProps) {
+export function AdminPageClient({
+  users,
+  sectionAccessRows,
+}: AdminPageClientProps) {
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div>
@@ -30,7 +35,7 @@ export function AdminPageClient({ users }: AdminPageClientProps) {
         </TabsContent>
 
         <TabsContent value="org">
-          <OrgSettingsPlaceholder />
+          <OrgSettingsPanel sectionAccessRows={sectionAccessRows} />
         </TabsContent>
       </Tabs>
     </div>

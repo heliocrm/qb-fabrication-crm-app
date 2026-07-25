@@ -9,64 +9,62 @@ import {
   TrendingUp,
   type LucideIcon,
 } from "lucide-react"
+import {
+  ALL_ORGANIZATION_ROLES,
+  adminSectionDefinition,
+  getConfigurableSectionDefinitions,
+  getSectionByKey,
+  mainSectionDefinitions,
+  sectionKeyForPath,
+  type SectionAccessMode,
+  type SectionDefinition,
+} from "@/lib/section-registry"
 
-export interface NavItem {
-  label: string
-  href: string
-  icon: LucideIcon
-  description?: string
+export {
+  ALL_ORGANIZATION_ROLES,
+  getSectionByKey,
+  sectionKeyForPath,
+  type SectionAccessMode,
 }
 
-export const mainNavItems: NavItem[] = [
-  {
-    label: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-    description: "Shop overview and metrics",
-  },
-  {
-    label: "Opportunities",
-    href: "/opportunities",
-    icon: TrendingUp,
-    description: "Sales pipeline and bids",
-  },
-  {
-    label: "Jobs",
-    href: "/jobs",
-    icon: Briefcase,
-    description: "Active fabrication jobs",
-  },
-  {
-    label: "Material Requests",
-    href: "/material-requests",
-    icon: Package,
-    description: "Floor pull requests — Submission → Approval → Batch & Pull",
-  },
-  {
-    label: "Customers",
-    href: "/customers",
-    icon: Building2,
-    description: "Utility accounts and contacts",
-  },
-  {
-    label: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    description: "Analytics and exports",
-  },
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-    description: "Team and preferences",
-  },
-]
+export type { SectionDefinition }
 
-export const adminNavItem: NavItem = {
-  label: "Admin",
-  href: "/admin",
-  icon: Shield,
-  description: "User management and organization",
+export interface NavItem extends SectionDefinition {
+  icon: LucideIcon
+}
+
+const ICONS: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  opportunities: TrendingUp,
+  jobs: Briefcase,
+  "material-requests": Package,
+  customers: Building2,
+  reports: BarChart3,
+  settings: Settings,
+  admin: Shield,
+}
+
+function toNavItem(section: SectionDefinition): NavItem {
+  const icon = ICONS[section.sectionKey]
+  if (!icon) {
+    throw new Error(`Missing icon for section "${section.sectionKey}"`)
+  }
+  return { ...section, icon }
+}
+
+export const mainNavItems: NavItem[] = mainSectionDefinitions.map(toNavItem)
+
+export const adminNavItem: NavItem = toNavItem(adminSectionDefinition)
+
+export function getNavItemBySectionKey(
+  sectionKey: string
+): NavItem | undefined {
+  const section = getSectionByKey(sectionKey)
+  return section ? toNavItem(section) : undefined
+}
+
+export function getConfigurableSections(): NavItem[] {
+  return getConfigurableSectionDefinitions().map(toNavItem)
 }
 
 export function isNavActive(pathname: string, href: string): boolean {

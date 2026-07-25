@@ -15,6 +15,11 @@ import {
   setOrgUserPassword,
   updateOrgUser,
 } from "@/lib/supabase/services/profiles"
+import { upsertSectionAccess } from "@/lib/supabase/services/section-access"
+import {
+  ALL_ORGANIZATION_ROLES,
+  getConfigurableSectionDefinitions,
+} from "@/lib/section-registry"
 import { SupabaseServiceError } from "@/lib/supabase/schema"
 import type { MaterialPullCapabilities, OrganizationRole } from "@/types"
 
@@ -142,4 +147,33 @@ export async function sendOrgUserPasswordResetAction(profileId: string) {
 
     return { profileId, email }
   })
+}
+
+export async function setSectionAccessAction(input: {
+  sectionKey: string
+  role: OrganizationRole
+  enabled: boolean
+}) {
+  const result = await safeAction(async () => {
+    const ctx = await requireAdmin()
+
+    const configurable = getConfigurableSectionDefinitions()
+    if (!configurable.some((s) => s.sectionKey === input.sectionKey)) {
+      throw new Error("Unknown or non-configurable section.")
+    }
+    if (!ALL_ORGANIZATION_ROLES.includes(input.role)) {
+      throw new Error("Invalid role.")
+    }
+
+    await upsertSectionAccess({
+      organizationId: ctx.organizationId,
+      sectionKey: input.sectionKey,
+      role: input.role,
+      enabled: input.enabled,
+    })
+
+    return input
+  })
+  if (result.data) revalidatePath("/admin")
+  return result
 }

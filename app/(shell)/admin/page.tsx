@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
 import { AdminPageClient } from "@/components/admin/admin-page-client"
 import { getSessionContext, isAdminRole } from "@/lib/auth/session"
+import { loadSectionAccessMatrix } from "@/lib/auth/load-section-access"
+import { buildSectionAccessDisplay } from "@/lib/auth/section-access"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { listOrgUsers } from "@/lib/supabase/services/profiles"
 
@@ -14,7 +16,14 @@ export default async function AdminPage() {
     redirect("/")
   }
 
-  const users = await listOrgUsers()
+  const [users, matrix] = await Promise.all([
+    listOrgUsers(),
+    loadSectionAccessMatrix(ctx.organizationId),
+  ])
 
-  return <AdminPageClient users={users} />
+  const sectionAccessRows = buildSectionAccessDisplay(matrix)
+
+  return (
+    <AdminPageClient users={users} sectionAccessRows={sectionAccessRows} />
+  )
 }

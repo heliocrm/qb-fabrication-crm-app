@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { canViewSection } from "@/lib/auth/section-access"
+import { getSectionByKey, sectionKeyForPath } from "@/lib/section-registry"
 import {
   getPullHomePath,
   isPullAllowedPath,
@@ -10,6 +12,7 @@ import {
   isTravelerAllowedPath,
   isTravelerStandaloneRequest,
 } from "@/lib/traveler-mode"
+import type { OrganizationRole } from "@/types"
 
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -118,6 +121,54 @@ export async function updateSession(request: NextRequest) {
       redirectUrl.pathname = standaloneHome ?? "/"
       redirectUrl.search = ""
       return NextResponse.redirect(redirectUrl)
+    }
+  }
+
+  // Configurable section route guard (skip standalone pull/traveler hosts)
+  if (
+    user &&
+    !pullMode &&
+    !travelerMode &&
+    !isPublicAsset &&
+    !isAuthRoute
+  ) {
+    const sectionKey = sectionKeyForPath(pathname)
+    const section = sectionKey ? getSectionByKey(sectionKey) : undefined
+
+    if (section?.access === "configurable") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, is_active, organization_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      if (!profile?.is_active || !profile.organization_id) {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = "/"
+        redirectUrl.search = ""
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      const role = profile.role as OrganizationRole
+      const { data: accessRow } = await supabase
+        .from("organization_section_access")
+        .select("enabled")
+        .eq("organization_id", profile.organization_id)
+        .eq("section_key", sectionKey!)
+        .eq("role", role)
+        .maybeSingle()
+
+      const matrix =
+        accessRow != null
+          ? { [sectionKey!]: { [role]: accessRow.enabled } }
+          : {}
+
+      if (!canViewSection(role, sectionKey!, matrix)) {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = "/"
+        redirectUrl.search = ""
+        return NextResponse.redirect(redirectUrl)
+      }
     }
   }
 

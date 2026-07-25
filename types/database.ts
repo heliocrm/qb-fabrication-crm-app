@@ -919,6 +919,41 @@ export interface Database {
           },
         ]
       }
+      organization_section_access: {
+        Row: {
+          organization_id: string
+          section_key: string
+          role: string
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          organization_id: string
+          section_key: string
+          role: string
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          organization_id?: string
+          section_key?: string
+          role?: string
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_section_access_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: {

@@ -50,6 +50,7 @@ export const Tables = {
   material_pull_requests: "material_pull_requests",
   push_subscriptions: "push_subscriptions",
   traveler_generations: "traveler_generations",
+  organization_section_access: "organization_section_access",
 } as const
 
 const JOB_ASSIGNEES_SELECT = `
