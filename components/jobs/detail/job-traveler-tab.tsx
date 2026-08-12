@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import {
   Download,
+  FileStack,
   Loader2,
   Mail,
   Printer,
@@ -21,6 +22,7 @@ import {
   updateTravelerLineAction,
 } from "@/lib/actions/travelers"
 import { FloorLineChecklist } from "@/components/floor/floor-line-checklist"
+import { DrawingPacketStudio } from "@/components/drawing-packet/drawing-packet-studio"
 import type { Traveler } from "@/types"
 
 function downloadBase64Docx(filename: string, base64: string) {
@@ -56,6 +58,7 @@ export function JobTravelerTab({
   const [pending, startTransition] = useTransition()
   const [emailTo, setEmailTo] = useState("")
   const [showEmail, setShowEmail] = useState(false)
+  const [packetOpen, setPacketOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -221,6 +224,15 @@ export function JobTravelerTab({
                 )}
                 DOCX
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="min-h-10 gap-1.5"
+                onClick={() => setPacketOpen(true)}
+              >
+                <FileStack className="size-3.5" />
+                Drawing packet
+              </Button>
               {onImport ? (
                 <Button
                   type="button"
@@ -235,6 +247,15 @@ export function JobTravelerTab({
           ) : null}
         </div>
       </div>
+
+      <DrawingPacketStudio
+        open={packetOpen}
+        onOpenChange={setPacketOpen}
+        jobId={jobId}
+        poNumber={traveler.poNumber}
+        revNumber={traveler.revNumber ?? "0"}
+        orderDate={traveler.orderDate ?? ""}
+      />
 
       {showEmail ? (
         <Card className="border shadow-sm">

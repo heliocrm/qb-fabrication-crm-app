@@ -59,6 +59,8 @@ export const Tables = {
   crm_activities: "crm_activities",
   crm_tasks: "crm_tasks",
   google_oauth_tokens: "google_oauth_tokens",
+  drawing_crop_templates: "drawing_crop_templates",
+  drawing_packets: "drawing_packets",
 } as const
 
 const JOB_ASSIGNEES_SELECT = `

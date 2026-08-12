@@ -1,4 +1,5 @@
 import { resolveCustomerName } from "@/lib/travelers/customer-map"
+import { extractPdfWordsAndText, type PdfWord } from "@/lib/travelers/pdf-words"
 import type { ParsedWorkOrder, TravelerCatalogItem } from "@/lib/travelers/types"
 
 /** Alphanumeric catalog IDs (PGE/QB-style): TRNR-0501, SNST-0532, MK-0550H */
@@ -16,17 +17,31 @@ const PREAMBLE_PREFIXES = [
   "DWG",
 ]
 
+const ROW_TOLERANCE = 3.0
+
+const CATALOG_ID_TOKEN =
+  "([A-Z]{2,6}[-\\s]?\\d{3,6}[A-Z]{0,2}|\\d{5,}|N\\/A)"
+
+type ColumnCenters = {
+  line_item: number
+  catalog: number
+  description: number
+  quantity: number
+}
+
+function isValidCatalogId(value: string): boolean {
+  const v = value.trim()
+  if (!v) return false
+  if (v.toUpperCase() === "N/A") return true
+  if (ALPHA_CATALOG_ID.test(v.toUpperCase())) return true
+  if (/^\d+$/.test(v) && v.length >= 5) return true
+  return false
+}
+
 function isCodeLine(line: string): boolean {
   const stripped = line.trim()
   if (!stripped) return false
   if (/^\d+$/.test(stripped)) return true
-  if (stripped.toUpperCase() === "N/A") return true
-  return ALPHA_CATALOG_ID.test(stripped.toUpperCase())
-}
-
-function isCatalogId(value: string): boolean {
-  const stripped = value.trim()
-  if (!stripped) return false
   if (stripped.toUpperCase() === "N/A") return true
   return ALPHA_CATALOG_ID.test(stripped.toUpperCase())
 }
@@ -55,7 +70,7 @@ function isDescriptionLine(line: string): boolean {
   return true
 }
 
-function extractStructureNumber(description: string): string {
+export function extractStructureNumber(description: string): string {
   const match = description.match(MARK_IN_PARENS)
   return match?.[1]?.toUpperCase() ?? ""
 }
@@ -63,7 +78,14 @@ function extractStructureNumber(description: string): string {
 function fieldAfter(label: string, lines: string[]): string | null {
   for (const line of lines) {
     if (line.includes(label)) {
-      return line.split(label)[1]?.trim() || null
+      let rest = line.split(label)[1]?.trim() || null
+      if (!rest) return null
+      // Stop at the next common WO label on the same visual line.
+      rest = rest.split(
+        /\s{2,}(?=(?:Customer PO|Order Date|Ship Date|Ship Via|Bill To|Ship To|QB Sales Order|Contact):)/i
+      )[0]
+      rest = rest?.split(/\s+(?=(?:Customer PO|Order Date|Ship Date|Ship Via|Bill To|Ship To|QB Sales Order|Contact):)/i)[0]
+      return rest?.trim() || null
     }
   }
   return null
@@ -85,13 +107,227 @@ function extractShipToCustomer(lines: string[]): string | null {
   return null
 }
 
+function extractHeaderFromText(text: string): {
+  customerPo: string
+  orderDate: string
+  customer: string
+  qbSalesOrder?: string
+  shipDate?: string
+} {
+  const lines = text.split(/\r?\n/)
+  const customerPo =
+    fieldAfter("Customer PO:", lines)?.replace(/\s+/g, " ").trim() || "N/A"
+  const orderDate =
+    fieldAfter("Order Date:", lines)?.split(/\s{2,}|\t/)[0]?.trim() || "N/A"
+  const qbSalesOrder =
+    fieldAfter("QB Sales Order:", lines)?.trim() || undefined
+  const shipDateRaw = fieldAfter("Ship Date:", lines)
+  const shipDate = shipDateRaw
+    ? shipDateRaw.split(/Ship Via:|Contact:/i)[0]?.trim() || undefined
+    : undefined
+
+  const shipTo = extractShipToCustomer(lines)
+  const billTo = fieldAfter("Bill To:", lines)
+  let customer = "N/A"
+  if (shipTo) {
+    customer = resolveCustomerName(shipTo)
+  } else if (billTo) {
+    customer = resolveCustomerName(billTo)
+  }
+
+  return { customerPo, orderDate, customer, qbSalesOrder, shipDate }
+}
+
+function findTableHeader(
+  words: PdfWord[]
+): { headerY: number; centers: ColumnCenters } | null {
+  for (const w of words) {
+    if (w[4].toLowerCase() !== "description") continue
+    const headerY = w[1]
+    const sameRow = words.filter((x) => Math.abs(x[1] - headerY) <= ROW_TOLERANCE * 3)
+    const texts = sameRow.map((x) => x[4])
+    const hasQuantity = texts.some((t) => /^quantity$/i.test(t))
+    const hasCatalog = texts.some((t) => /^catalog$/i.test(t))
+    if (!hasQuantity || !hasCatalog) continue
+
+    const spanCenter = (...headerWords: string[]) => {
+      const matches = sameRow.filter((x) =>
+        headerWords.some((hw) => x[4].toLowerCase() === hw.toLowerCase())
+      )
+      if (!matches.length) return null
+      const left = Math.min(...matches.map((x) => x[0]))
+      const right = Math.max(...matches.map((x) => x[2]))
+      return (left + right) / 2
+    }
+
+    const centers = {
+      line_item: spanCenter("Line", "Item"),
+      catalog: spanCenter("Catalog", "ID"),
+      description: spanCenter("Description"),
+      quantity: spanCenter("Quantity"),
+    }
+    if (Object.values(centers).some((v) => v == null)) continue
+    return {
+      headerY,
+      centers: centers as ColumnCenters,
+    }
+  }
+  return null
+}
+
+function midpointBoundaries(centers: ColumnCenters): number[] {
+  const ordered = Object.values(centers).sort((a, b) => a - b)
+  const boundaries: number[] = []
+  for (let i = 0; i < ordered.length - 1; i++) {
+    boundaries.push((ordered[i]! + ordered[i + 1]!) / 2)
+  }
+  return boundaries
+}
+
+function clusterRows(words: PdfWord[]): PdfWord[][] {
+  const rows: PdfWord[][] = []
+  const sorted = [...words].sort((a, b) => a[1] - b[1] || a[0] - b[0])
+  for (const w of sorted) {
+    if (rows.length && Math.abs(w[1] - rows[rows.length - 1]![0]![1]) <= ROW_TOLERANCE) {
+      rows[rows.length - 1]!.push(w)
+    } else {
+      rows.push([w])
+    }
+  }
+  for (const row of rows) {
+    row.sort((a, b) => a[0] - b[0])
+  }
+  return rows
+}
+
+function assignColumns(
+  row: PdfWord[],
+  orderedNames: (keyof ColumnCenters)[],
+  boundaries: number[]
+): Record<keyof ColumnCenters, string> {
+  const columns: Record<keyof ColumnCenters, string[]> = {
+    line_item: [],
+    catalog: [],
+    description: [],
+    quantity: [],
+  }
+
+  for (const w of row) {
+    const wordCenter = (w[0] + w[2]) / 2
+    let zone = 0
+    while (zone < boundaries.length && wordCenter > boundaries[zone]!) {
+      zone++
+    }
+    const name = orderedNames[zone]
+    if (name) columns[name].push(w[4])
+  }
+
+  return {
+    line_item: columns.line_item.join(" ").trim(),
+    catalog: columns.catalog.join(" ").trim(),
+    description: columns.description.join(" ").trim(),
+    quantity: columns.quantity.join(" ").trim(),
+  }
+}
+
+type PositionalDraft = {
+  catalogId: string
+  descriptionParts: string[]
+  lineNumber?: string
+  quantity?: number
+}
+
+function extractPositionalItems(
+  wordsByPage: PdfWord[][]
+): TravelerCatalogItem[] {
+  const catalogItems: PositionalDraft[] = []
+  let currentItem: PositionalDraft | null = null
+
+  for (const words of wordsByPage) {
+    const header = findTableHeader(words)
+    if (!header) continue
+
+    const orderedEntries = (
+      Object.entries(header.centers) as [keyof ColumnCenters, number][]
+    ).sort((a, b) => a[1] - b[1])
+    const orderedNames = orderedEntries.map(([n]) => n)
+    const boundaries = midpointBoundaries(header.centers)
+    const belowHeader = words.filter(
+      (w) => w[1] > header.headerY + ROW_TOLERANCE
+    )
+
+    for (const row of clusterRows(belowHeader)) {
+      const cols = assignColumns(row, orderedNames, boundaries)
+      const lineTxt = cols.line_item
+      const catTxt = cols.catalog
+      const descTxt = cols.description
+      const qtyTxt = cols.quantity
+
+      if (descTxt.startsWith("***")) {
+        currentItem = null
+        continue
+      }
+
+      if (
+        !lineTxt &&
+        !catTxt &&
+        descTxt.toLowerCase().startsWith("page ")
+      ) {
+        continue
+      }
+
+      if (/^\d+$/.test(lineTxt)) {
+        currentItem = {
+          catalogId: catTxt || "N/A",
+          descriptionParts: descTxt ? [descTxt] : [],
+          lineNumber: lineTxt,
+          quantity: /^\d+(\.\d+)?$/.test(qtyTxt) ? Number(qtyTxt) : 1,
+        }
+        catalogItems.push(currentItem)
+      } else if (lineTxt.toUpperCase() === "N/A") {
+        currentItem = null
+      } else if (currentItem) {
+        if (
+          catTxt &&
+          (currentItem.catalogId === "" ||
+            currentItem.catalogId.toUpperCase() === "N/A") &&
+          isValidCatalogId(catTxt)
+        ) {
+          currentItem.catalogId = catTxt
+        }
+        if (descTxt) currentItem.descriptionParts.push(descTxt)
+      }
+    }
+  }
+
+  const items: TravelerCatalogItem[] = []
+  const seenIds = new Set<string>()
+  for (const item of catalogItems) {
+    const catalogId = item.catalogId.trim() || "N/A"
+    if (catalogId.toUpperCase() !== "N/A") {
+      if (seenIds.has(catalogId)) continue
+      seenIds.add(catalogId)
+    }
+    const description =
+      item.descriptionParts.join(" ").replace(/\s+/g, " ").trim() || "N/A"
+    items.push({
+      catalogId,
+      description,
+      structureNumber: extractStructureNumber(description),
+      lineNumber: item.lineNumber,
+      quantity: item.quantity ?? 1,
+    })
+  }
+  return items
+}
+
 function findCatalogIdPositions(lines: string[]): number[] {
   const positions: number[] = []
   for (let i = 0; i < lines.length - 2; i++) {
     const a = lines[i]!.trim()
     const b = lines[i + 1]!.trim()
     const c = lines[i + 2]!.trim()
-    if (isCodeLine(a) && isCodeLine(b) && isCodeLine(c) && isCatalogId(c)) {
+    if (isCodeLine(a) && isCodeLine(b) && isCodeLine(c) && isValidCatalogId(c)) {
       positions.push(i + 2)
     }
   }
@@ -166,19 +402,15 @@ type BareCodeRow = {
   index: number
 }
 
-/**
- * QB-issued WO table rows often land as:
- *   Description…\tLine# Qty\tCatalogID
- * or description on prior/following lines with bare `Line# Qty\tCatalogID`.
- */
 function extractQbTableItems(text: string): TravelerCatalogItem[] {
   const lines = text.split(/\r?\n/)
   const items: TravelerCatalogItem[] = []
   const claimedLineNumbers = new Set<string>()
 
-  // 1) Full rows: description + line# + qty + catalog on one line
-  const fullRowRe =
-    /^(.+?)[\t ]+(\d{1,4})[\t ]+(\d+(?:\.\d+)?)[\t ]+([A-Z]{2,6}[-\s]?\d{3,6}[A-Z]{0,2}|N\/A)\s*$/i
+  const fullRowRe = new RegExp(
+    `^(.+?)[\\t ]+(\\d{1,4})[\\t ]+(\\d+(?:\\.\\d+)?)[\\t ]+${CATALOG_ID_TOKEN}\\s*$`,
+    "i"
+  )
 
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i]!.match(fullRowRe)
@@ -193,6 +425,7 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
     }
     description = description.replace(/\s+/g, " ").trim()
     const catalogId = match[4]!.replace(/\s+/g, "-").toUpperCase()
+    if (!isValidCatalogId(catalogId)) continue
     const lineNumber = match[2]!
     claimedLineNumbers.add(lineNumber)
     items.push({
@@ -204,24 +437,26 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
     })
   }
 
-  // 2) Bare code rows: `6 9\tSNST-0552`
-  const bareRe =
-    /^(\d{1,4})[\t ]+(\d+(?:\.\d+)?)[\t ]+([A-Z]{2,6}[-\s]?\d{3,6}[A-Z]{0,2}|N\/A)\s*$/i
+  const bareRe = new RegExp(
+    `^(\\d{1,4})[\\t ]+(\\d+(?:\\.\\d+)?)[\\t ]+${CATALOG_ID_TOKEN}\\s*$`,
+    "i"
+  )
   const bareRows: BareCodeRow[] = []
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i]!.match(bareRe)
     if (!match) continue
     const lineNumber = match[1]!
     if (claimedLineNumbers.has(lineNumber)) continue
+    const catalogId = match[3]!.replace(/\s+/g, "-").toUpperCase()
+    if (!isValidCatalogId(catalogId)) continue
     bareRows.push({
       lineNumber,
       quantity: Number(match[2]) || 1,
-      catalogId: match[3]!.replace(/\s+/g, "-").toUpperCase(),
+      catalogId,
       index: i,
     })
   }
 
-  // Description candidates: lines that look like catalog descriptions
   const descCandidates: { index: number; text: string; catalogPrefix: string }[] =
     []
   const absorbedIndexes = new Set<number>()
@@ -231,7 +466,6 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
     if (!raw || raw.startsWith("***") || bareRe.test(raw) || fullRowRe.test(raw)) {
       continue
     }
-    // Mark-only lines attach to the previous description candidate
     if (/^\(MK-[A-Z0-9]+\)$/i.test(raw)) {
       const prev = descCandidates[descCandidates.length - 1]
       if (prev && !prev.text.includes(raw)) {
@@ -248,7 +482,7 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
       text = `${raw} ${lines[i + 1]!.trim()}`
       absorbedIndexes.add(i + 1)
     }
-    const prefixMatch = text.match(/^([A-Z]{2,6}[-\s]?\d{3,6}[A-Z]{0,2})/i)
+    const prefixMatch = text.match(/^([A-Z]{2,6}[-\s]?\d{3,6}[A-Z]{0,2}|\d{5,})/i)
     descCandidates.push({
       index: i,
       text: text.replace(/\s+/g, " ").trim(),
@@ -261,12 +495,10 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
   const usedDescIndexes = new Set<number>()
 
   for (const bare of bareRows) {
-    // Prefer description immediately above (within 3 lines)
     let description = "N/A"
     for (let j = bare.index - 1; j >= Math.max(0, bare.index - 3); j--) {
       const candidate = descCandidates.find((d) => d.index === j)
       if (!candidate || usedDescIndexes.has(candidate.index)) continue
-      // Skip if this candidate belongs to a different catalog and a better match exists later
       if (
         candidate.catalogPrefix &&
         candidate.catalogPrefix !== bare.catalogId &&
@@ -279,7 +511,6 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
       break
     }
 
-    // Else first unused following description that starts with this catalog ID
     if (description === "N/A") {
       const following = descCandidates.find(
         (d) =>
@@ -303,7 +534,6 @@ function extractQbTableItems(text: string): TravelerCatalogItem[] {
     })
   }
 
-  // Sort by WO line number when available
   items.sort((a, b) => {
     const an = Number(a.lineNumber) || 0
     const bn = Number(b.lineNumber) || 0
@@ -322,11 +552,10 @@ function extractLegacyTripleCodeItems(lines: string[]): TravelerCatalogItem[] {
     const qtyRaw = lines[pos - 1]!.trim()
     const lineRaw = lines[pos - 2]!.trim()
     const description = findDescriptionForCatalogId(lines, pos)
-    const structureNumber = extractStructureNumber(description)
     catalogItems.push({
       catalogId,
       description,
-      structureNumber,
+      structureNumber: extractStructureNumber(description),
       lineNumber: /^\d+$/.test(lineRaw) ? lineRaw : undefined,
       quantity: /^\d+(\.\d+)?$/.test(qtyRaw) ? Number(qtyRaw) : 1,
     })
@@ -344,28 +573,16 @@ function isQbWorkOrder(text: string): boolean {
   )
 }
 
+function finalizeCatalogIds(items: TravelerCatalogItem[]): string {
+  const real = items
+    .map((i) => i.catalogId)
+    .filter((id) => id.toUpperCase() !== "N/A")
+  return real.length ? real.join(", ") : "N/A"
+}
+
 export function extractFieldsFromText(text: string): ParsedWorkOrder {
   const lines = text.split(/\r?\n/)
-
-  const customerPo =
-    fieldAfter("Customer PO:", lines)?.replace(/\s+/g, " ").trim() || "N/A"
-  const orderDate =
-    fieldAfter("Order Date:", lines)?.split(/\s{2,}|\t/)[0]?.trim() || "N/A"
-  const qbSalesOrder =
-    fieldAfter("QB Sales Order:", lines)?.trim() || undefined
-  const shipDateRaw = fieldAfter("Ship Date:", lines)
-  const shipDate = shipDateRaw
-    ? shipDateRaw.split(/Ship Via:|Contact:/i)[0]?.trim() || undefined
-    : undefined
-
-  const shipTo = extractShipToCustomer(lines)
-  const billTo = fieldAfter("Bill To:", lines)
-  let customer = "N/A"
-  if (shipTo) {
-    customer = resolveCustomerName(shipTo)
-  } else if (billTo) {
-    customer = resolveCustomerName(billTo)
-  }
+  const header = extractHeaderFromText(text)
 
   let catalogItems: TravelerCatalogItem[] = []
   if (isQbWorkOrder(text)) {
@@ -375,42 +592,57 @@ export function extractFieldsFromText(text: string): ParsedWorkOrder {
     catalogItems = extractLegacyTripleCodeItems(lines)
   }
 
-  // Attach orphan mark-only lines to previous item when description split
-  // e.g. "(MK-0552H)" on its own line before "6 9 SNST-0552"
-  for (let i = 0; i < catalogItems.length; i++) {
-    const item = catalogItems[i]!
+  for (const item of catalogItems) {
     if (!item.structureNumber && item.description) {
       item.structureNumber = extractStructureNumber(item.description)
     }
   }
 
-  const catalogIds = catalogItems.length
-    ? catalogItems.map((i) => i.catalogId).join(", ")
-    : "N/A"
-
   return {
-    customerPo,
-    orderDate,
-    customer,
-    catalogIds,
+    ...header,
+    catalogIds: finalizeCatalogIds(catalogItems),
     catalogItems,
-    qbSalesOrder,
-    shipDate,
   }
 }
 
 export async function parseWorkOrderPdf(
   buffer: Buffer
 ): Promise<ParsedWorkOrder> {
-  // Worker must load first so @napi-rs/canvas polyfills DOMMatrix for pdfjs.
-  await import("pdf-parse/worker")
-  const { PDFParse } = await import("pdf-parse")
-  const parser = new PDFParse({ data: new Uint8Array(buffer) })
+  const { extractPdfPlainText, extractPdfWordsAndText } = await import(
+    "@/lib/travelers/pdf-words"
+  )
+
+  // pdf-parse text is best for header labels / text-order fallback.
+  let plainText = ""
   try {
-    const result = await parser.getText()
-    const text = result.text ?? ""
-    return extractFieldsFromText(text)
-  } finally {
-    await parser.destroy().catch(() => undefined)
+    plainText = await extractPdfPlainText(buffer)
+  } catch {
+    plainText = ""
   }
+
+  try {
+    const { wordsByPage } = await extractPdfWordsAndText(buffer)
+    const positionalItems = extractPositionalItems(wordsByPage)
+    if (positionalItems.length) {
+      for (const item of positionalItems) {
+        if (!item.structureNumber && item.description) {
+          item.structureNumber = extractStructureNumber(item.description)
+        }
+      }
+      const header = extractHeaderFromText(plainText || "")
+      return {
+        ...header,
+        catalogIds: finalizeCatalogIds(positionalItems),
+        catalogItems: positionalItems,
+      }
+    }
+  } catch {
+    // Fall through to text parsers.
+  }
+
+  if (plainText.trim()) {
+    return extractFieldsFromText(plainText)
+  }
+
+  return extractFieldsFromText("")
 }

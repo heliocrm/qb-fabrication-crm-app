@@ -36,8 +36,19 @@ Viewers can sign off. Viewers still **cannot** edit the job.
 |------|-----|
 | Upload WO PDF → Import traveler | admin / manager / member |
 | Review Structure # / Fill N/A | same |
-| Print · Email · Download DOCX | same |
+| Print · Email · Download DOCX | same (CRM + Traveler PWA) |
+| Drawing packet (stamp / rotate / save) | same — **Drawing packet** on traveler |
 | Re-import | New version; old traveler superseded |
+
+### Drawing packet (office)
+
+1. Open job traveler (CRM tab or `traveler.qbfab.com`).  
+2. Tap **Drawing packet**.  
+3. Select one or more drawing PDFs.  
+4. Drag to place stamp; use **Stamp → All** if needed.  
+5. Crop / margins / templates as needed for laminate holes.  
+6. **Rotate** page or **Rotation → All** for print orientation.  
+7. **Open / download PDF** to print, or **Save to Drive**.
 
 ---
 

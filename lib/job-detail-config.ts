@@ -11,6 +11,7 @@ export const TASK_CATEGORIES: TaskCategory[] = [
 
 export const DOCUMENT_CATEGORIES: DocumentType[] = [
   "Drawing",
+  "Drawing Packet",
   "PO",
   "Work Order",
   "Traveler",
@@ -46,6 +47,10 @@ export const docTypeMeta: Record<
   { icon: string; color: string }
 > = {
   Drawing: { icon: "📐", color: "bg-blue-50 border-blue-200 dark:bg-blue-950/30" },
+  "Drawing Packet": {
+    icon: "📦",
+    color: "bg-indigo-50 border-indigo-200 dark:bg-indigo-950/30",
+  },
   "Work Order": { icon: "📋", color: "bg-slate-50 border-slate-200 dark:bg-slate-900/30" },
   Traveler: { icon: "🧾", color: "bg-orange-50 border-orange-200 dark:bg-orange-950/30" },
   Inspection: { icon: "🔍", color: "bg-purple-50 border-purple-200 dark:bg-purple-950/30" },

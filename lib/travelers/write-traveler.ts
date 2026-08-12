@@ -1,3 +1,6 @@
+import fs from "node:fs"
+import path from "node:path"
+import JSZip from "jszip"
 import {
   Document,
   Packer,
@@ -12,6 +15,12 @@ import {
 import type { TravelerGenerateFields } from "@/lib/travelers/types"
 
 const WRAP_LINE_LENGTH = 55
+const MASTER_TEMPLATE_PATH = path.join(
+  process.cwd(),
+  "assets",
+  "travelers",
+  "QB_Traveler_Master_Copy.docx"
+)
 
 function cleanValue(value: string): string {
   return value.replace(/\u00a0/g, " ").split(/\s+/).join(" ").trim()
@@ -43,6 +52,135 @@ function splitIntoLines(
   }
   if (current) lines.push(current)
   return lines
+}
+
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+}
+
+function paragraphPlainText(paragraphXml: string): string {
+  return [...paragraphXml.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)]
+    .map((m) => m[1] ?? "")
+    .join("")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+}
+
+function makeValueRuns(value: string, wrap: boolean, label: string, wrapLength: number): string {
+  if (!wrap) {
+    return `<w:r><w:t xml:space="preserve"> ${escapeXml(cleanValue(value))}</w:t></w:r>`
+  }
+  const firstBudget = Math.max(wrapLength - label.length, 12)
+  const lines = splitIntoLines(value, firstBudget, wrapLength)
+  return lines
+    .map((line, i) => {
+      const prefix = i === 0 ? " " : ""
+      const br = i > 0 ? "<w:br/>" : ""
+      return `<w:r>${br}<w:t xml:space="preserve">${escapeXml(prefix + line)}</w:t></w:r>`
+    })
+    .join("")
+}
+
+/**
+ * Append value after the first paragraph whose plain text starts with `label`.
+ * Mirrors Trevor traveler_writer.fill_field.
+ */
+function fillFieldInXml(
+  xml: string,
+  label: string,
+  value: string,
+  wrap = false,
+  wrapLength = WRAP_LINE_LENGTH
+): string {
+  return xml.replace(/<w:p[\s\S]*?<\/w:p>/g, (paragraph) => {
+    const plain = paragraphPlainText(paragraph).trim()
+    if (!plain.startsWith(label)) return paragraph
+    if (plain.length > label.length + 2) {
+      // Already filled (re-export safety) — leave alone.
+      const after = plain.slice(label.length).trim()
+      if (after && after !== "0") return paragraph
+    }
+    const insert = makeValueRuns(value, wrap, label, wrapLength)
+    return paragraph.replace(/<\/w:p>/, `${insert}</w:p>`)
+  })
+}
+
+/** Replace baked-in Rev #:0 with the real rev (Trevor replace_field_value). */
+function replaceRevInXml(xml: string, revNumber: string): string {
+  return xml.replace(/<w:p[\s\S]*?<\/w:p>/g, (paragraph) => {
+    const plain = paragraphPlainText(paragraph).trim()
+    if (!plain.startsWith("Rev #:")) return paragraph
+    return paragraph.replace(
+      /(<w:t[^>]*>)([^<]*Rev #:)0(<\/w:t>)/,
+      `$1$2${escapeXml(revNumber || "0")}$3`
+    ).replace(
+      /(<w:t[^>]*>)0(<\/w:t>)/,
+      (full, open, close) => {
+        // Only when paragraph is Rev #:0 split across runs
+        if (plain === "Rev #:0" || plain.startsWith("Rev #:")) {
+          return `${open}${escapeXml(revNumber || "0")}${close}`
+        }
+        return full
+      }
+    )
+  })
+}
+
+function buildFieldValues(fields: TravelerGenerateFields) {
+  const realCatalogIds = fields.catalogItems
+    .map((i) => i.catalogId.trim())
+    .filter((id) => id && id.toUpperCase() !== "N/A")
+  const realStructures = fields.catalogItems
+    .map((i) => i.structureNumber.trim())
+    .filter((s) => s && s.toUpperCase() !== "N/A")
+
+  return {
+    customerPo: fields.customerPo,
+    orderDate: fields.orderDate,
+    customer: fields.customer,
+    revNumber: fields.revNumber || "0",
+    catalogIds: realCatalogIds.length ? realCatalogIds.join(", ") : "N/A",
+    structureNumbers: realStructures.length
+      ? realStructures.join(", ")
+      : "N/A",
+  }
+}
+
+/**
+ * Fill the official QB traveler master DOCX (Trevor traveler_writer parity).
+ */
+export async function fillTravelerMasterDocx(
+  fields: TravelerGenerateFields
+): Promise<Buffer | null> {
+  if (!fs.existsSync(MASTER_TEMPLATE_PATH)) return null
+
+  const values = buildFieldValues(fields)
+  const zip = await JSZip.loadAsync(fs.readFileSync(MASTER_TEMPLATE_PATH))
+  const docFile = zip.file("word/document.xml")
+  if (!docFile) return null
+
+  let xml = await docFile.async("string")
+  xml = fillFieldInXml(xml, "Document #: TRV-", values.customerPo)
+  xml = fillFieldInXml(xml, "Document #:", values.customerPo) // page 2 split label
+  xml = fillFieldInXml(xml, "Rev Date", values.orderDate)
+  xml = replaceRevInXml(xml, values.revNumber)
+  xml = fillFieldInXml(xml, "DATE:", values.orderDate)
+  xml = fillFieldInXml(xml, "Customer:", values.customer)
+  xml = fillFieldInXml(xml, "Job Number", values.customerPo)
+  xml = fillFieldInXml(xml, "Structure #", values.structureNumbers, true, 45)
+  xml = fillFieldInXml(xml, "Part / Assembly", values.catalogIds, true)
+  xml = fillFieldInXml(xml, "Start Date", values.orderDate)
+
+  zip.file("word/document.xml", xml)
+  const out = await zip.generateAsync({
+    type: "nodebuffer",
+    compression: "DEFLATE",
+  })
+  return Buffer.from(out)
 }
 
 function fieldParagraph(label: string, value: string, wrap = false): Paragraph {
@@ -81,18 +219,11 @@ function cell(children: Paragraph[], width = 4500): TableCell {
   })
 }
 
-/**
- * Builds a QB traveler .docx matching the fields from Trevor's MVP writer.
- * Official Word styling can be swapped later when QB_Traveler_Master_Copy.docx
- * is placed under assets/travelers/.
- */
-export async function buildTravelerDocx(
+/** Synthetic DOCX fallback when the master template is missing. */
+async function buildSyntheticTravelerDocx(
   fields: TravelerGenerateFields
 ): Promise<Buffer> {
-  const catalogIds = fields.catalogItems.map((i) => i.catalogId).join(", ")
-  const structureNumbers = fields.catalogItems
-    .map((i) => i.structureNumber.trim() || "N/A")
-    .join(", ")
+  const values = buildFieldValues(fields)
 
   const doc = new Document({
     creator: "QB Fabrication CRM",
@@ -117,19 +248,13 @@ export async function buildTravelerDocx(
                 children: [
                   cell(
                     [
-                      fieldParagraph(
-                        "Document #: TRV-",
-                        fields.customerPo
-                      ),
-                      fieldParagraph("Rev Date:", fields.orderDate),
-                      fieldParagraph("Rev #:", fields.revNumber || "0"),
+                      fieldParagraph("Document #: TRV-", values.customerPo),
+                      fieldParagraph("Rev Date:", values.orderDate),
+                      fieldParagraph("Rev #:", values.revNumber),
                     ],
                     4680
                   ),
-                  cell(
-                    [fieldParagraph("DATE:", fields.orderDate)],
-                    4680
-                  ),
+                  cell([fieldParagraph("DATE:", values.orderDate)], 4680),
                 ],
               }),
             ],
@@ -140,15 +265,12 @@ export async function buildTravelerDocx(
             rows: [
               new TableRow({
                 children: [
-                  cell(
-                    [fieldParagraph("Customer:", fields.customer)],
-                    4680
-                  ),
+                  cell([fieldParagraph("Customer:", values.customer)], 4680),
                   cell(
                     [
                       fieldParagraph(
                         "Structure #:",
-                        structureNumbers,
+                        values.structureNumbers,
                         true
                       ),
                     ],
@@ -162,13 +284,13 @@ export async function buildTravelerDocx(
                     [
                       fieldParagraph(
                         "Job Number / P.O.#:",
-                        fields.customerPo
+                        values.customerPo
                       ),
                     ],
                     4680
                   ),
                   cell(
-                    [fieldParagraph("Start Date:", fields.orderDate)],
+                    [fieldParagraph("Start Date:", values.orderDate)],
                     4680
                   ),
                 ],
@@ -179,7 +301,7 @@ export async function buildTravelerDocx(
                     [
                       fieldParagraph(
                         "Part / Assembly / Catalog ID:",
-                        catalogIds || "N/A",
+                        values.catalogIds,
                         true
                       ),
                     ],
@@ -192,11 +314,7 @@ export async function buildTravelerDocx(
           new Paragraph({ text: "", spacing: { before: 400, after: 120 } }),
           new Paragraph({
             children: [
-              new TextRun({
-                text: "Line items",
-                bold: true,
-                size: 22,
-              }),
+              new TextRun({ text: "Line items", bold: true, size: 22 }),
             ],
           }),
           ...fields.catalogItems.map(
@@ -217,6 +335,21 @@ export async function buildTravelerDocx(
   })
 
   return Buffer.from(await Packer.toBuffer(doc))
+}
+
+/**
+ * Prefer official master template fill; fall back to synthetic DOCX.
+ */
+export async function buildTravelerDocx(
+  fields: TravelerGenerateFields
+): Promise<Buffer> {
+  try {
+    const filled = await fillTravelerMasterDocx(fields)
+    if (filled) return filled
+  } catch (err) {
+    console.warn("Master traveler DOCX fill failed; using synthetic:", err)
+  }
+  return buildSyntheticTravelerDocx(fields)
 }
 
 export function travelerFilename(

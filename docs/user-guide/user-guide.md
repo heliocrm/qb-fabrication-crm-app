@@ -332,11 +332,22 @@ Re-import creates a **new version** and marks the previous active traveler **sup
 
 ### Print / email / DOCX
 
-Anytime after import:
+Anytime after import (CRM **and** Traveler PWA):
 
 - **Print** — HTML print view  
-- **Email** — deep link via Resend  
-- **Download DOCX** — built from database (logged)
+- **Email** — deep link via Resend (CRM)  
+- **Download DOCX** — fills the official Word master template when available (logged)
+
+### Drawing packet (stamp & rotate)
+
+On the job Traveler tab or Traveler PWA floor panel:
+
+1. Open **Drawing packet**.  
+2. Select one or more drawing PDFs (reorder by selection order).  
+3. Drag to place the “DRAWINGS ISSUED FOR QB FABRICATION” stamp; use **Stamp → All** for consistency.  
+4. Crop / margins / saved crop templates for laminate edge holes.  
+5. **Rotate** / **Rotation → All** for print orientation.  
+6. **Open / download PDF** to print, or **Save to Drive** (document type Drawing Packet).
 
 ### Floor sign-off
 

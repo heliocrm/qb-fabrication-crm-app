@@ -27,6 +27,7 @@ export type LineItemWipStatus = "To Do" | "Doing" | "Done"
 
 export type DocumentType =
   | "Drawing"
+  | "Drawing Packet"
   | "Work Order"
   | "Inspection"
   | "Shipping"
