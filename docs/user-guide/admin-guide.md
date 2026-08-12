@@ -150,6 +150,14 @@ Managers/admins: Settings → Trello. One-way boards → jobs (cards → line it
 
 No admin sync — users paste QBO URLs on accounts/jobs. Train that CRM does not replace QuickBooks.
 
+### Jobs housekeeping
+
+- **Quick-add customer on New Job:** Managers/admins can click **Add new customer** on `/jobs/new`, enter a company name only (short name is auto-generated), then continue creating the job. Edit email/phone later under **Customers**.
+- **Delete one job:** Job detail → **⋯** → **Delete job**. Linked Google Drive folders are moved to trash when possible; the CRM row is always removed for cleanup.
+- **Bulk delete (admin only):** On **Jobs** table view, select rows → **Delete N jobs**. Cap is 50 per batch. Linked Drive folders are trashed best-effort. Use this for test data / housekeeping — there is no recycle bin in the CRM.
+
+---
+
 ### Common support tickets
 
 | Ticket | Admin action |

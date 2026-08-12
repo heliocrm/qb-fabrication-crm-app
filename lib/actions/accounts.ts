@@ -1,9 +1,11 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireSessionContext } from "@/lib/auth/session"
+import { canCreateJobs, requireSessionContext } from "@/lib/auth/session"
+import { deriveShortName } from "@/lib/accounts/short-name"
 import {
   createAccount,
+  listAccounts,
   updateAccount,
 } from "@/lib/supabase/services/accounts"
 import { resolveAccountId } from "@/lib/seed-ids"
@@ -57,6 +59,29 @@ export async function createAccountAction(input: {
   const result = await safeAction(async () => {
     await requireSessionContext()
     return createAccount(input)
+  })
+  if (result.data) revalidateAccountPaths()
+  return result
+}
+
+/** Create account from company name only (auto short name). Used on New Job. */
+export async function createAccountQuickAction(input: { name: string }) {
+  const name = input.name?.trim()
+  if (!name) {
+    return { error: "Company name is required" }
+  }
+
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    if (!canCreateJobs(ctx.role)) {
+      throw new Error("Only managers and admins can create customers from New Job")
+    }
+    const existing = await listAccounts()
+    const shortNames = new Set(
+      existing.map((a) => a.shortName.trim().toLowerCase()).filter(Boolean)
+    )
+    const shortName = deriveShortName(name, shortNames)
+    return createAccount({ name, shortName, status: "Active" })
   })
   if (result.data) revalidateAccountPaths()
   return result

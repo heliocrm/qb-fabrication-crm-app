@@ -4,9 +4,15 @@ import { revalidatePath } from "next/cache"
 import {
   canCreateJobs,
   canWriteJobs,
+  isAdminRole,
   requireManagerOrAdmin,
   requireSessionContext,
 } from "@/lib/auth/session"
+import {
+  createDriveServiceIfConfigured,
+  isGoogleDriveFolderId,
+} from "@/lib/google"
+import { isDriveConfigured } from "@/lib/google/config"
 import {
   createJobFromDomain,
   createJobFromTemplate,
@@ -43,6 +49,8 @@ import type {
   TaskUpdate,
 } from "@/types"
 
+const BULK_DELETE_MAX = 50
+
 function revalidateJobPaths(jobId?: string) {
   revalidatePath("/jobs")
   revalidatePath("/")
@@ -66,6 +74,37 @@ async function safeAction<T>(fn: () => Promise<T>): Promise<{ data?: T; error?: 
           : "An unexpected error occurred"
     return { error: message }
   }
+}
+
+/** Best-effort trash of the job's Drive folder. Returns true if trash failed. */
+async function trashJobDriveFolderBestEffort(
+  folderId: string | null | undefined
+): Promise<boolean> {
+  if (!isDriveConfigured() || !isGoogleDriveFolderId(folderId)) {
+    return false
+  }
+  try {
+    const drive = await createDriveServiceIfConfigured()
+    if (!drive) return false
+    await drive.trashFile(folderId!)
+    return false
+  } catch (err) {
+    console.error("[jobs] Failed to trash Drive folder", folderId, err)
+    return true
+  }
+}
+
+async function deleteJobWithDriveCleanup(id: string): Promise<{
+  id: string
+  driveFailed: boolean
+}> {
+  const job = await getJobById(id)
+  if (!job) {
+    throw new Error("Job not found")
+  }
+  const driveFailed = await trashJobDriveFolderBestEffort(job.googleDriveFolderId)
+  await deleteJob(id)
+  return { id, driveFailed }
 }
 
 // ─── Queries (callable from Server Components directly via services) ─────────
@@ -147,10 +186,46 @@ export async function updateJobAction(id: string, updates: JobUpdate) {
 
 export async function deleteJobAction(id: string) {
   const result = await safeAction(async () => {
-    await deleteJob(id)
-    return { id }
+    return deleteJobWithDriveCleanup(id)
   })
   if (!result.error) revalidateJobPaths()
+  return result
+}
+
+export async function bulkDeleteJobsAction(ids: string[]) {
+  const uniqueIds = [...new Set(ids.filter((id) => typeof id === "string" && id.trim()))]
+  if (uniqueIds.length === 0) {
+    return { error: "No jobs selected" }
+  }
+  if (uniqueIds.length > BULK_DELETE_MAX) {
+    return { error: `You can delete at most ${BULK_DELETE_MAX} jobs at a time` }
+  }
+
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    if (!isAdminRole(ctx.role)) {
+      throw new Error("Only admins can bulk-delete jobs")
+    }
+
+    let deleted = 0
+    let driveFailed = 0
+    const failedIds: string[] = []
+
+    for (const id of uniqueIds) {
+      try {
+        const outcome = await deleteJobWithDriveCleanup(id)
+        deleted += 1
+        if (outcome.driveFailed) driveFailed += 1
+      } catch (err) {
+        console.error("[bulkDeleteJobsAction] Failed for job", id, err)
+        failedIds.push(id)
+      }
+    }
+
+    return { deleted, driveFailed, failedIds }
+  })
+
+  if (result.data) revalidateJobPaths()
   return result
 }
 

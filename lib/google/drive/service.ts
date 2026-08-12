@@ -156,6 +156,21 @@ export class GoogleDriveService extends GoogleWorkspaceService {
     }
   }
 
+  /** Move a file or folder to Drive trash (Shared Drive–safe). */
+  async trashFile(fileId: string): Promise<void> {
+    const drive = await this.getDrive()
+
+    try {
+      await drive.files.update({
+        fileId,
+        requestBody: { trashed: true },
+        ...DRIVE_OPTS,
+      })
+    } catch (err) {
+      throw this.wrapError(err, "trashFile")
+    }
+  }
+
   /** Direct share / view link for shop floor access */
   getShareLinks(fileId: string, mimeType?: string) {
     return {

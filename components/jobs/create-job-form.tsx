@@ -5,6 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -14,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { createAccountQuickAction } from "@/lib/actions/accounts"
 import { createJobFromTemplateAction, listOrgUsersForPickerAction } from "@/lib/actions/jobs"
 import { JOB_PRIORITIES } from "@/lib/jobs-config"
 import { JOB_TEMPLATE_OPTIONS } from "@/lib/job-templates"
@@ -34,7 +43,7 @@ interface CreateJobFormProps {
   dataSource: "supabase" | "mock"
 }
 
-export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
+export function CreateJobForm({ accounts: initialAccounts, dataSource }: CreateJobFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -43,11 +52,19 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
   const [assigneeIds, setAssigneeIds] = useState<Set<string>>(new Set())
   const [importWorkOrder, setImportWorkOrder] = useState(true)
+  const [accounts, setAccounts] = useState(initialAccounts)
   const [accountId, setAccountId] = useState("")
   const [opportunityId, setOpportunityId] = useState<string | null>(null)
   const [priority, setPriority] = useState<Priority>("Normal")
   const [prefillDescription, setPrefillDescription] = useState("")
   const [prefillValue, setPrefillValue] = useState("")
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [quickAddName, setQuickAddName] = useState("")
+  const [quickAddPending, setQuickAddPending] = useState(false)
+
+  useEffect(() => {
+    setAccounts(initialAccounts)
+  }, [initialAccounts])
 
   useEffect(() => {
     if (dataSource !== "supabase") return
@@ -69,6 +86,37 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
     if (description) setPrefillDescription(description)
     if (value) setPrefillValue(value)
   }, [searchParams, accounts])
+
+  async function handleQuickAddCustomer(e: React.FormEvent) {
+    e.preventDefault()
+    const name = quickAddName.trim()
+    if (!name) {
+      toast.error("Missing name", "Company name is required.")
+      return
+    }
+    if (dataSource !== "supabase") {
+      toast.error("Supabase not configured", "Connect Supabase to create customers.")
+      return
+    }
+
+    setQuickAddPending(true)
+    const result = await createAccountQuickAction({ name })
+    setQuickAddPending(false)
+
+    if (result.error || !result.data) {
+      toast.error("Could not create customer", result.error)
+      return
+    }
+
+    const created = result.data
+    setAccounts((prev) =>
+      [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    )
+    setAccountId(created.id)
+    setQuickAddName("")
+    setQuickAddOpen(false)
+    toast.success("Customer created", `${created.name} (${created.shortName})`)
+  }
 
   function addExtraLineItem() {
     setExtraLineItems((prev) => [
@@ -145,6 +193,7 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
       <Card className="border shadow-sm">
         <CardHeader>
@@ -183,9 +232,22 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
             <Input id="poNumber" name="poNumber" required placeholder="BPA PO 90866" className="font-mono" />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <label htmlFor="accountId" className="text-xs font-medium text-muted-foreground">
-              Customer
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="accountId" className="text-xs font-medium text-muted-foreground">
+                Customer
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs gap-1"
+                disabled={dataSource !== "supabase"}
+                onClick={() => setQuickAddOpen(true)}
+              >
+                <Plus className="size-3.5" />
+                Add new customer
+              </Button>
+            </div>
             <Select
               value={accountId || undefined}
               onValueChange={(value) => {
@@ -446,5 +508,58 @@ export function CreateJobForm({ accounts, dataSource }: CreateJobFormProps) {
         )}
       </div>
     </form>
+
+    <Dialog
+      open={quickAddOpen}
+      onOpenChange={(open) => {
+        setQuickAddOpen(open)
+        if (!open) setQuickAddName("")
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={(e) => void handleQuickAddCustomer(e)}>
+          <DialogHeader>
+            <DialogTitle>Add new customer</DialogTitle>
+            <DialogDescription>
+              Creates a customer with an auto-generated short name. You can add
+              email and other details later on Customers.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-4">
+            <label
+              htmlFor="quickAddCustomerName"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Company name *
+            </label>
+            <Input
+              id="quickAddCustomerName"
+              value={quickAddName}
+              onChange={(e) => setQuickAddName(e.target.value)}
+              placeholder="Pacific Gas & Electric"
+              autoFocus
+              disabled={quickAddPending}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={quickAddPending}
+              onClick={() => setQuickAddOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={quickAddPending || !quickAddName.trim()}>
+              {quickAddPending && (
+                <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+              )}
+              Create customer
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

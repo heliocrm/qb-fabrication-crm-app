@@ -46,7 +46,7 @@ export function JobDetailHeader({
   async function handleDelete() {
     if (
       !window.confirm(
-        `Delete job ${job.jobNumber}? This cannot be undone.`
+        `Delete job ${job.jobNumber}? Linked Google Drive folder will be moved to trash. This cannot be undone.`
       )
     ) {
       return
@@ -56,7 +56,14 @@ export function JobDetailHeader({
       toast.error("Could not delete job", result.error)
       return
     }
-    toast.success("Job deleted")
+    if (result.data?.driveFailed) {
+      toast.success(
+        "Job deleted",
+        "Drive folder could not be trashed — remove it manually if needed."
+      )
+    } else {
+      toast.success("Job deleted")
+    }
     router.push("/jobs")
     router.refresh()
   }
