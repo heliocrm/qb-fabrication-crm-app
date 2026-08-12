@@ -111,7 +111,7 @@ export function ChapterView({ chapter }: { chapter: HelpChapter }) {
         )}
       </header>
 
-      {chapter.tour && <HelpTour tour={chapter.tour} />}
+      {chapter.tour && <HelpTour tour={chapter.tour} chapterSlug={chapter.slug} />}
 
       <div className="space-y-6">
         {chapter.subsections.map((sub, index) => (

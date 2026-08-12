@@ -142,3 +142,65 @@
     @apply font-sans;
   }
 }
+
+/* Driver.js spotlight tour theming — aligns the popover with app tokens */
+.driver-popover.help-tour-popover {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px -8px oklch(0 0 0 / 0.25);
+  padding: 1rem;
+  font-family: var(--font-sans);
+  max-width: 320px;
+}
+.driver-popover.help-tour-popover .driver-popover-title {
+  color: var(--card-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.driver-popover.help-tour-popover .driver-popover-description {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.driver-popover.help-tour-popover .driver-popover-progress-text {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+.driver-popover.help-tour-popover .driver-popover-footer button {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-shadow: none;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+}
+.driver-popover.help-tour-popover .driver-popover-footer button:hover {
+  background: var(--accent);
+}
+.driver-popover.help-tour-popover .driver-popover-next-btn,
+.driver-popover.help-tour-popover .driver-popover-done-btn {
+  background: var(--orange);
+  color: white;
+  border-color: transparent;
+}
+.driver-popover.help-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.help-tour-popover .driver-popover-done-btn:hover {
+  background: var(--orange);
+  opacity: 0.9;
+}
+.driver-popover.help-tour-popover .driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: var(--card);
+}
+.driver-popover.help-tour-popover .driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: var(--card);
+}
+.driver-popover.help-tour-popover .driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: var(--card);
+}
+.driver-popover.help-tour-popover .driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: var(--card);
+}
+
