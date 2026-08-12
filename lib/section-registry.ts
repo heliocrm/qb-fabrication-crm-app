@@ -76,6 +76,14 @@ export const mainSectionDefinitions: SectionDefinition[] = [
     access: "always",
     defaultRoles: ALL_ORGANIZATION_ROLES,
   },
+  {
+    sectionKey: "help",
+    label: "Help",
+    href: "/help",
+    description: "In-app user guide and cheat sheets",
+    access: "always",
+    defaultRoles: ALL_ORGANIZATION_ROLES,
+  },
 ]
 
 export const adminSectionDefinition: SectionDefinition = {

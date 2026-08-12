@@ -2,6 +2,7 @@ import {
   BarChart3,
   Briefcase,
   Building2,
+  HelpCircle,
   LayoutDashboard,
   Package,
   Settings,
@@ -42,6 +43,7 @@ const ICONS: Record<string, LucideIcon> = {
   reports: BarChart3,
   settings: Settings,
   admin: Shield,
+  help: HelpCircle,
 }
 
 function toNavItem(section: SectionDefinition): NavItem {

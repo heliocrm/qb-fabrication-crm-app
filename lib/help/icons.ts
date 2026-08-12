@@ -1,0 +1,37 @@
+import {
+  BarChart3,
+  Bell,
+  BookOpen,
+  Briefcase,
+  Building2,
+  CircleHelp,
+  ClipboardList,
+  Link2,
+  LayoutDashboard,
+  Mail,
+  Package,
+  Rocket,
+  Shield,
+  Tablet,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react"
+import type { HelpIconName } from "@/lib/help/types"
+
+export const HELP_ICONS: Record<HelpIconName, LucideIcon> = {
+  Rocket,
+  LayoutDashboard,
+  TrendingUp,
+  Briefcase,
+  Building2,
+  Bell,
+  Mail,
+  Package,
+  ClipboardList,
+  BarChart3,
+  Link2,
+  CircleHelp,
+  BookOpen,
+  Shield,
+  Tablet,
+}
