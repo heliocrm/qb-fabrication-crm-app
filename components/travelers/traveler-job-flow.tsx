@@ -38,6 +38,7 @@ export function TravelerJobFlow({
   const [step, setStep] = useState<Step>("upload")
   const [pending, startTransition] = useTransition()
   const [fileName, setFileName] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [customer, setCustomer] = useState("")
   const [customerPo, setCustomerPo] = useState(poNumber)
   const [orderDate, setOrderDate] = useState("")
@@ -54,9 +55,32 @@ export function TravelerJobFlow({
     })
   }, [jobId])
 
+  // Revoke blob URL when it changes or on unmount.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
+  function setPreviewFromFile(file: File) {
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+  }
+
+  function clearPreview() {
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+    setFileName(null)
+  }
+
   function onFileChange(file: File | null) {
     if (!file) return
     setFileName(file.name)
+    setPreviewFromFile(file)
     const fd = new FormData()
     fd.set("file", file)
     startTransition(async () => {
@@ -86,7 +110,7 @@ export function TravelerJobFlow({
             ]
       )
       setStep("review")
-      toast.success("Work order parsed — review Structure #s")
+      toast.success("Work order parsed — confirm fields against the PDF")
     })
   }
 
@@ -162,6 +186,246 @@ export function TravelerJobFlow({
     </Button>
   )
 
+  const previewPanel = (
+    <div className="space-y-2 min-w-0">
+      <p className="text-sm font-semibold">Work order preview</p>
+      {previewUrl ? (
+        <iframe
+          title="Work order PDF"
+          src={previewUrl}
+          className="w-full h-[50vh] md:h-[70vh] rounded-md border bg-muted"
+        />
+      ) : (
+        <p className="rounded-md border bg-muted/40 p-6 text-sm text-muted-foreground">
+          PDF preview unavailable. Re-upload the work order to confirm fields.
+        </p>
+      )}
+      {fileName ? (
+        <p className="text-xs text-muted-foreground truncate">{fileName}</p>
+      ) : null}
+    </div>
+  )
+
+  const formPanel = (
+    <div className="space-y-4 min-w-0">
+      <div className="grid gap-3 rounded-lg border bg-card p-4">
+        <div className="space-y-1.5">
+          <label htmlFor="customer" className="text-sm font-medium">
+            Customer
+          </label>
+          <Input
+            id="customer"
+            className="min-h-11 text-base"
+            value={customer}
+            onChange={(e) => setCustomer(e.target.value)}
+            disabled={pending || step === "done"}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label htmlFor="po" className="text-sm font-medium">
+              PO #
+            </label>
+            <Input
+              id="po"
+              className="min-h-11 text-base font-mono"
+              value={customerPo}
+              onChange={(e) => setCustomerPo(e.target.value)}
+              disabled={pending || step === "done"}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="rev" className="text-sm font-medium">
+              Rev #
+            </label>
+            <Input
+              id="rev"
+              className="min-h-11 text-base"
+              value={revNumber}
+              onChange={(e) => setRevNumber(e.target.value)}
+              disabled={pending || step === "done"}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label htmlFor="orderDate" className="text-sm font-medium">
+              Order date
+            </label>
+            <Input
+              id="orderDate"
+              className="min-h-11 text-base"
+              value={orderDate}
+              onChange={(e) => setOrderDate(e.target.value)}
+              disabled={pending || step === "done"}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="shipDate" className="text-sm font-medium">
+              Ship date
+            </label>
+            <Input
+              id="shipDate"
+              className="min-h-11 text-base"
+              value={shipDate}
+              onChange={(e) => setShipDate(e.target.value)}
+              disabled={pending || step === "done"}
+            />
+          </div>
+        </div>
+        {qbSalesOrder ? (
+          <div className="space-y-1.5">
+            <label htmlFor="qbSo" className="text-sm font-medium">
+              QB Sales Order
+            </label>
+            <Input
+              id="qbSo"
+              className="min-h-11 text-base font-mono"
+              value={qbSalesOrder}
+              onChange={(e) => setQbSalesOrder(e.target.value)}
+              disabled={pending || step === "done"}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">Line items ({items.length})</h2>
+        {step === "review" ? (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 touch-manipulation"
+              onClick={fillNa}
+              disabled={pending}
+            >
+              Fill N/A
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="min-h-11 min-w-11"
+              onClick={addLine}
+              disabled={pending}
+              aria-label="Add line item"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <ul className="space-y-3">
+        {items.map((item, index) => (
+          <li
+            key={`${item.catalogId}-${item.lineNumber ?? index}-${index}`}
+            className="rounded-lg border bg-card p-3 space-y-2"
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                className="min-h-11 text-base font-mono"
+                placeholder="Line #"
+                value={item.lineNumber ?? ""}
+                onChange={(e) =>
+                  updateItem(index, { lineNumber: e.target.value })
+                }
+                disabled={pending || step === "done"}
+              />
+              <Input
+                className="min-h-11 text-base"
+                placeholder="Qty"
+                type="number"
+                min={1}
+                value={item.quantity ?? 1}
+                onChange={(e) =>
+                  updateItem(index, {
+                    quantity: Number(e.target.value) || 1,
+                  })
+                }
+                disabled={pending || step === "done"}
+              />
+            </div>
+            <Input
+              className="min-h-11 text-base font-mono"
+              placeholder="Catalog ID"
+              value={item.catalogId}
+              onChange={(e) =>
+                updateItem(index, { catalogId: e.target.value })
+              }
+              disabled={pending || step === "done"}
+            />
+            <Input
+              className="min-h-11 text-base"
+              placeholder="Description"
+              value={item.description}
+              onChange={(e) =>
+                updateItem(index, { description: e.target.value })
+              }
+              disabled={pending || step === "done"}
+            />
+            <div className="space-y-1">
+              <span className="text-xs font-medium">Structure #</span>
+              <Input
+                className="min-h-11 text-base"
+                placeholder="Structure #"
+                value={item.structureNumber}
+                onChange={(e) =>
+                  updateItem(index, { structureNumber: e.target.value })
+                }
+                disabled={pending || step === "done"}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {step === "review" && !isCrm ? importButton : null}
+
+      {step === "done" ? (
+        <div className="space-y-3 rounded-lg border bg-card p-4">
+          <p className="text-sm font-medium">
+            Traveler saved in CRM
+            {imported
+              ? ` · v${imported.version} · ${imported.lines.length} lines`
+              : ""}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Production line items were created and linked. Print, email, or
+            download DOCX from the Traveler tab anytime.
+          </p>
+          {!isCrm ? (
+            <Link href={`/traveler/jobs/${jobId}/print`} className="block">
+              <Button className="w-full min-h-12">Print traveler</Button>
+            </Link>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full min-h-11"
+            onClick={() => {
+              setStep("upload")
+              clearPreview()
+              setImported(null)
+            }}
+          >
+            Import another PDF
+          </Button>
+          {isCrm && onClose ? (
+            <Button
+              type="button"
+              className="w-full min-h-11"
+              onClick={onClose}
+            >
+              Done
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+
   return (
     <div className={cn("space-y-5", isCrm && step === "review" && "pb-20")}>
       <div className="flex items-start gap-3">
@@ -230,224 +494,36 @@ export function TravelerJobFlow({
       ) : null}
 
       {step === "review" || step === "done" ? (
-        <div className="space-y-4">
-          <div className="grid gap-3 rounded-lg border bg-card p-4">
-            <div className="space-y-1.5">
-              <label htmlFor="customer" className="text-sm font-medium">
-                Customer
-              </label>
-              <Input
-                id="customer"
-                className="min-h-11 text-base"
-                value={customer}
-                onChange={(e) => setCustomer(e.target.value)}
-                disabled={pending || step === "done"}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="po" className="text-sm font-medium">
-                  PO #
-                </label>
-                <Input
-                  id="po"
-                  className="min-h-11 text-base font-mono"
-                  value={customerPo}
-                  onChange={(e) => setCustomerPo(e.target.value)}
-                  disabled={pending || step === "done"}
-                />
+        <div className="grid gap-4 md:grid-cols-2 items-start">
+          {/* Mobile: collapsible preview (default open). Desktop: always visible. */}
+          <div className="min-w-0 md:contents">
+            <details open className="md:hidden rounded-lg border bg-card p-3">
+              <summary className="cursor-pointer text-sm font-semibold touch-manipulation min-h-11 flex items-center">
+                Work order preview
+                {fileName ? (
+                  <span className="ml-2 font-normal text-muted-foreground truncate">
+                    · {fileName}
+                  </span>
+                ) : null}
+              </summary>
+              <div className="pt-3">
+                {previewUrl ? (
+                  <iframe
+                    title="Work order PDF"
+                    src={previewUrl}
+                    className="w-full h-[50vh] rounded-md border bg-muted"
+                  />
+                ) : (
+                  <p className="rounded-md border bg-muted/40 p-6 text-sm text-muted-foreground">
+                    PDF preview unavailable. Re-upload the work order to confirm
+                    fields.
+                  </p>
+                )}
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="rev" className="text-sm font-medium">
-                  Rev #
-                </label>
-                <Input
-                  id="rev"
-                  className="min-h-11 text-base"
-                  value={revNumber}
-                  onChange={(e) => setRevNumber(e.target.value)}
-                  disabled={pending || step === "done"}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="orderDate" className="text-sm font-medium">
-                  Order date
-                </label>
-                <Input
-                  id="orderDate"
-                  className="min-h-11 text-base"
-                  value={orderDate}
-                  onChange={(e) => setOrderDate(e.target.value)}
-                  disabled={pending || step === "done"}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="shipDate" className="text-sm font-medium">
-                  Ship date
-                </label>
-                <Input
-                  id="shipDate"
-                  className="min-h-11 text-base"
-                  value={shipDate}
-                  onChange={(e) => setShipDate(e.target.value)}
-                  disabled={pending || step === "done"}
-                />
-              </div>
-            </div>
-            {qbSalesOrder ? (
-              <div className="space-y-1.5">
-                <label htmlFor="qbSo" className="text-sm font-medium">
-                  QB Sales Order
-                </label>
-                <Input
-                  id="qbSo"
-                  className="min-h-11 text-base font-mono"
-                  value={qbSalesOrder}
-                  onChange={(e) => setQbSalesOrder(e.target.value)}
-                  disabled={pending || step === "done"}
-                />
-              </div>
-            ) : null}
+            </details>
+            <div className="hidden md:block">{previewPanel}</div>
           </div>
-
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold">
-              Line items ({items.length})
-            </h2>
-            {step === "review" ? (
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-h-11 touch-manipulation"
-                  onClick={fillNa}
-                  disabled={pending}
-                >
-                  Fill N/A
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="min-h-11 min-w-11"
-                  onClick={addLine}
-                  disabled={pending}
-                  aria-label="Add line item"
-                >
-                  <Plus className="size-4" />
-                </Button>
-              </div>
-            ) : null}
-          </div>
-
-          <ul className="space-y-3">
-            {items.map((item, index) => (
-              <li
-                key={`${item.catalogId}-${item.lineNumber ?? index}-${index}`}
-                className="rounded-lg border bg-card p-3 space-y-2"
-              >
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    className="min-h-11 text-base font-mono"
-                    placeholder="Line #"
-                    value={item.lineNumber ?? ""}
-                    onChange={(e) =>
-                      updateItem(index, { lineNumber: e.target.value })
-                    }
-                    disabled={pending || step === "done"}
-                  />
-                  <Input
-                    className="min-h-11 text-base"
-                    placeholder="Qty"
-                    type="number"
-                    min={1}
-                    value={item.quantity ?? 1}
-                    onChange={(e) =>
-                      updateItem(index, {
-                        quantity: Number(e.target.value) || 1,
-                      })
-                    }
-                    disabled={pending || step === "done"}
-                  />
-                </div>
-                <Input
-                  className="min-h-11 text-base font-mono"
-                  placeholder="Catalog ID"
-                  value={item.catalogId}
-                  onChange={(e) =>
-                    updateItem(index, { catalogId: e.target.value })
-                  }
-                  disabled={pending || step === "done"}
-                />
-                <Input
-                  className="min-h-11 text-base"
-                  placeholder="Description"
-                  value={item.description}
-                  onChange={(e) =>
-                    updateItem(index, { description: e.target.value })
-                  }
-                  disabled={pending || step === "done"}
-                />
-                <div className="space-y-1">
-                  <span className="text-xs font-medium">Structure #</span>
-                  <Input
-                    className="min-h-11 text-base"
-                    placeholder="Structure #"
-                    value={item.structureNumber}
-                    onChange={(e) =>
-                      updateItem(index, { structureNumber: e.target.value })
-                    }
-                    disabled={pending || step === "done"}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          {step === "review" && !isCrm ? importButton : null}
-
-          {step === "done" ? (
-            <div className="space-y-3 rounded-lg border bg-card p-4">
-              <p className="text-sm font-medium">
-                Traveler saved in CRM
-                {imported
-                  ? ` · v${imported.version} · ${imported.lines.length} lines`
-                  : ""}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Production line items were created and linked. Print, email, or
-                download DOCX from the Traveler tab anytime.
-              </p>
-              {!isCrm ? (
-                <Link href={`/traveler/jobs/${jobId}/print`} className="block">
-                  <Button className="w-full min-h-12">Print traveler</Button>
-                </Link>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full min-h-11"
-                onClick={() => {
-                  setStep("upload")
-                  setFileName(null)
-                  setImported(null)
-                }}
-              >
-                Import another PDF
-              </Button>
-              {isCrm && onClose ? (
-                <Button
-                  type="button"
-                  className="w-full min-h-11"
-                  onClick={onClose}
-                >
-                  Done
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
+          {formPanel}
         </div>
       ) : null}
 

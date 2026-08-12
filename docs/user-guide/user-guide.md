@@ -326,7 +326,7 @@ Shorter steps: [cheat-sheet-material-pull.md](./cheat-sheet-material-pull.md).
 
 1. Open the job (or Traveler app → pick job).  
 2. Upload the QB work-order PDF.  
-3. Review parsed fields: Customer (Ship To), PO, Order Date, QB SO, Ship Date, catalog lines.  
+3. Review parsed fields **alongside the work-order PDF preview**: Customer (Ship To), PO, Order Date, QB SO, Ship Date, catalog lines.  
 4. Confirm **Structure #** (auto from marks like `(MK-0532R)` when found) or **Fill N/A**.  
 5. **Import traveler** — saves traveler + lines, seeds production line items / checklists, soft-syncs job PO/marks.
 

@@ -13,7 +13,7 @@ drawing-packet stamp/rotate (Trevor stamp workflow).
    Parser uses **positional table extraction** (pdf.js word boxes) with text-order
    fallback; accepts alphanumeric **and** 5+ digit numeric catalog IDs.
 4. Structure # is auto-filled from marks like `(MK-0532R)` when present; review
-   or **Fill N/A**.
+   fields **alongside the work-order PDF preview**, or **Fill N/A**.
 5. **Import traveler** → saves `travelers` + `traveler_lines`, seeds linked CRM
    production `line_items` (template checklists), soft-syncs job PO / marks.
 6. Anytime: **Print** (HTML), **Email** (deep link via Resend), **Download DOCX**

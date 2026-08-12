@@ -30,12 +30,12 @@ export function GenerateTravelerDialog({
 }: GenerateTravelerDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import traveler</DialogTitle>
           <DialogDescription>
-            Upload work order PDF → review Structure #s → save digital traveler
-            in the CRM (with linked production line items).
+            Upload a work-order PDF, confirm fields against the PDF preview,
+            then save the digital traveler (with linked production line items).
           </DialogDescription>
         </DialogHeader>
         {open ? (
