@@ -54,11 +54,13 @@ Sales/relationship follow-ups. **UI label: Follow-up / Follow-ups.**
 
 ## Google sync + outbound email
 
-See [google-oauth-crm.md](./google-oauth-crm.md). Settings → Integrations: Connect / Sync Gmail / Sync Calendar / Disconnect. Manual sync only.
+See [google-oauth-crm.md](./google-oauth-crm.md). Settings → Integrations: Connect / Sync Gmail / Sync Calendar / Enrich / **Import Google contacts** / Disconnect. Manual sync only.
 
 **Outbound:** Customer 360 contact **Email** button and activity **Reply** send via connected Gmail (`gmail.send`) and log `crm_activities` (`kind=email`, `metadata.direction=outbound`). Reconnect Google if send scope is missing.
 
 **People enrich (one-way):** Settings → **Enrich contacts** matches Google Contacts to existing CRM contacts by email and fills blank phone / role title only. Does not create CRM contacts from Google. Requires `contacts.readonly` (Disconnect → Connect if missing).
+
+**Import Google contacts:** Settings → **Import Google contacts** opens a review dialog. Creates selected CRM accounts/contacts from the connected user’s Google Contacts. Org-wide email dedupe (never duplicates). No company → pick/create account in the dialog. Relationship owner defaults to importer; reassignable per row or in bulk. Does not replace Enrich.
 
 ## Needs a touch
 
