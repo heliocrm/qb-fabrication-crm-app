@@ -168,7 +168,7 @@
   color: var(--muted-foreground);
   font-size: 0.6875rem;
 }
-.driver-popover.help-tour-popover .driver-popover-footer button {
+.driver-popover.help-tour-popover .driver-popover-footer-btn {
   background: var(--secondary);
   color: var(--secondary-foreground);
   border: 1px solid var(--border);
@@ -177,17 +177,17 @@
   font-size: 0.75rem;
   padding: 0.3rem 0.65rem;
 }
-.driver-popover.help-tour-popover .driver-popover-footer button:hover {
+.driver-popover.help-tour-popover .driver-popover-footer-btn:hover {
   background: var(--accent);
 }
-.driver-popover.help-tour-popover .driver-popover-next-btn,
-.driver-popover.help-tour-popover .driver-popover-done-btn {
+.driver-popover.help-tour-popover .driver-popover-footer-btn.driver-popover-next-btn,
+.driver-popover.help-tour-popover .driver-popover-footer-btn.driver-popover-done-btn {
   background: var(--orange);
   color: white;
   border-color: transparent;
 }
-.driver-popover.help-tour-popover .driver-popover-next-btn:hover,
-.driver-popover.help-tour-popover .driver-popover-done-btn:hover {
+.driver-popover.help-tour-popover .driver-popover-footer-btn.driver-popover-next-btn:hover,
+.driver-popover.help-tour-popover .driver-popover-footer-btn.driver-popover-done-btn:hover {
   background: var(--orange);
   opacity: 0.9;
 }
