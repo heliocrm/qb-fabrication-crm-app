@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   canCreateJobs,
+  canWriteJobs,
   requireManagerOrAdmin,
   requireSessionContext,
 } from "@/lib/auth/session"
@@ -155,19 +156,28 @@ export async function deleteJobAction(id: string) {
 
 // ─── Line item mutations ─────────────────────────────────────────────────────
 
+async function requireJobWrite() {
+  const ctx = await requireSessionContext()
+  if (!canWriteJobs(ctx.role)) {
+    throw new Error("You do not have permission to edit jobs")
+  }
+  return ctx
+}
+
 export async function createLineItemAction(
   jobId: string,
   template: JobTemplateType,
   fields: { title: string; quantity?: number; lineItemNumber?: string }
 ) {
-  const result = await safeAction(() =>
-    createLineItemWithTemplateTasks(jobId, template, {
+  const result = await safeAction(async () => {
+    await requireJobWrite()
+    return createLineItemWithTemplateTasks(jobId, template, {
       title: fields.title,
       quantity: fields.quantity ?? 1,
       lineItemNumber: fields.lineItemNumber,
       wipStatus: "To Do",
     })
-  )
+  })
   if (result.data) revalidateJobPaths(jobId)
   return result
 }
@@ -177,13 +187,17 @@ export async function updateLineItemWipAction(
   wipStatus: LineItemWipStatus,
   jobId: string
 ) {
-  const result = await safeAction(() => updateLineItem(lineItemId, { wip_status: wipStatus }))
+  const result = await safeAction(async () => {
+    await requireJobWrite()
+    return updateLineItem(lineItemId, { wip_status: wipStatus })
+  })
   if (result.data) revalidateJobPaths(jobId)
   return result
 }
 
 export async function deleteLineItemAction(lineItemId: string, jobId: string) {
   const result = await safeAction(async () => {
+    await requireJobWrite()
     await deleteLineItem(lineItemId)
     return { lineItemId }
   })
@@ -194,7 +208,10 @@ export async function deleteLineItemAction(lineItemId: string, jobId: string) {
 // ─── Task mutations ──────────────────────────────────────────────────────────
 
 export async function toggleTaskAction(taskId: string, completed: boolean, jobId: string) {
-  const result = await safeAction(() => toggleTaskCompleted(taskId, completed))
+  const result = await safeAction(async () => {
+    await requireJobWrite()
+    return toggleTaskCompleted(taskId, completed)
+  })
   if (result.data) revalidateJobPaths(jobId)
   return result
 }
@@ -204,7 +221,10 @@ export async function updateTaskAction(
   updates: TaskUpdate,
   jobId: string
 ) {
-  const result = await safeAction(() => updateTask(taskId, updates))
+  const result = await safeAction(async () => {
+    await requireJobWrite()
+    return updateTask(taskId, updates)
+  })
   if (result.data) revalidateJobPaths(jobId)
   return result
 }
@@ -212,15 +232,20 @@ export async function updateTaskAction(
 export async function createTaskAction(
   jobId: string,
   lineItemId: string,
-  task: Pick<Task, "title" | "assignee" | "dueDate" | "category">
+  task: Pick<Task, "title" | "assignee" | "dueDate" | "category"> &
+    Partial<Pick<Task, "assigneeId">>
 ) {
-  const result = await safeAction(() => createTaskFromDomain(jobId, lineItemId, task))
+  const result = await safeAction(async () => {
+    await requireJobWrite()
+    return createTaskFromDomain(jobId, lineItemId, task)
+  })
   if (result.data) revalidateJobPaths(jobId)
   return result
 }
 
 export async function deleteTaskAction(taskId: string, jobId: string) {
   const result = await safeAction(async () => {
+    await requireJobWrite()
     await deleteTask(taskId)
     return { taskId }
   })
@@ -234,7 +259,7 @@ export async function reorderTasksAction(
   jobId: string
 ) {
   const result = await safeAction(async () => {
-    await requireSessionContext()
+    await requireJobWrite()
     return reorderTasks(lineItemId, orderedTaskIds)
   })
   if (result.data) revalidateJobPaths(jobId)
@@ -252,7 +277,7 @@ export async function setJobAssigneesAction(jobId: string, profileIds: string[])
 
 export async function listOrgUsersForPickerAction() {
   return safeAction(async () => {
-    await requireManagerOrAdmin()
+    await requireJobWrite()
     return listOrgUsersForPicker()
   })
 }

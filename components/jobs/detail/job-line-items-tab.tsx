@@ -30,17 +30,21 @@ import {
   wipStatusStyles,
 } from "@/lib/job-detail-config"
 import {
+  listOrgUsersForPickerAction,
   reorderTasksAction,
   toggleTaskAction,
   updateLineItemWipAction,
+  updateTaskAction,
 } from "@/lib/actions/jobs"
 import { getFloorSignoffContextAction } from "@/lib/actions/floor-signoff"
+import type { TaskAssigneeDuePatch } from "@/components/jobs/detail/sortable-task-item"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 import type {
   JobTemplateType,
   LineItem,
   LineItemWipStatus,
+  ProfileSummary,
   Task,
   TaskCategory,
   TaskSignoff,
@@ -66,11 +70,15 @@ export function JobLineItemsTab({
     Record<string, TaskSignoff>
   >({})
   const [addLineItemOpen, setAddLineItemOpen] = useState(false)
+  const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
 
   useEffect(() => {
     if (!jobId) return
     void getFloorSignoffContextAction(jobId).then((res) => {
       if (res.data) setSignoffsByTaskId(res.data.signoffsByTaskId)
+    })
+    void listOrgUsersForPickerAction().then((res) => {
+      if (res.data) setOrgUsers(res.data)
     })
   }, [jobId])
 
@@ -111,6 +119,47 @@ export function JobLineItemsTab({
         }
       })
     }
+  }
+
+  function patchTask(lineItemId: string, taskId: string, patch: TaskAssigneeDuePatch) {
+    const lineItem = lineItems.find((li) => li.id === lineItemId)
+    const task = lineItem?.tasks.find((t) => t.id === taskId)
+    if (!lineItem || !task) return
+
+    const nextTask: Task = {
+      ...task,
+      ...(patch.assignee !== undefined ? { assignee: patch.assignee } : {}),
+      ...(patch.assigneeId !== undefined ? { assigneeId: patch.assigneeId } : {}),
+      ...(patch.dueDate !== undefined ? { dueDate: patch.dueDate } : {}),
+    }
+    const previous = lineItems
+    updateLineItemTasks(
+      lineItemId,
+      lineItem.tasks.map((t) => (t.id === taskId ? nextTask : t))
+    )
+
+    if (!jobId) return
+
+    const updates: {
+      assignee?: string | null
+      assignee_id?: string | null
+      due_date?: string | null
+    } = {}
+    if (patch.assignee !== undefined || patch.assigneeId !== undefined) {
+      updates.assignee = patch.assignee?.trim() || null
+      updates.assignee_id =
+        patch.assigneeId === undefined ? task.assigneeId ?? null : patch.assigneeId
+    }
+    if (patch.dueDate !== undefined) {
+      updates.due_date = patch.dueDate.trim() || null
+    }
+
+    void updateTaskAction(taskId, updates, jobId).then((result) => {
+      if (result.error) {
+        onLineItemsChange(previous)
+        toast.error("Could not update task", result.error)
+      }
+    })
   }
 
   function handleWipChange(lineItemId: string, wipStatus: LineItemWipStatus) {
@@ -279,6 +328,11 @@ export function JobLineItemsTab({
                                 task={task}
                                 onToggle={(id) => toggleTask(lineItem.id, id)}
                                 signoff={signoffsByTaskId[task.id]}
+                                canEdit={Boolean(jobId)}
+                                orgUsers={orgUsers}
+                                onPatch={(taskId, patch) =>
+                                  patchTask(lineItem.id, taskId, patch)
+                                }
                               />
                             ))}
                           </SortableContext>

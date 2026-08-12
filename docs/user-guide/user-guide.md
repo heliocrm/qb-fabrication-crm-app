@@ -135,7 +135,7 @@ Use list or kanban views on **Jobs**.
 | Tab | Use it for |
 |-----|------------|
 | **Overview** | Status, key fields, summary |
-| **Line Items** | Production cards / WIP checklists |
+| **Line Items** | Production cards / WIP checklists; assign people and due dates on checklist rows |
 | **Traveler** | Import WO PDF, print/email/DOCX, floor panel |
 | **Documents** | Files (often Google Drive job folder) |
 | **Changes** | Change orders, issues, NCRs |
@@ -143,7 +143,9 @@ Use list or kanban views on **Jobs**.
 
 ### Assignees
 
-Managers and admins can set who owns or works the job. Members generally edit content but do not manage the assignee list.
+Managers and admins can set who owns or works the job (shop team on Overview). Members generally edit content but do not manage the assignee list.
+
+On **Line Items**, checklist tasks support **assigning a person** and setting a **due date** inline (click the avatar or date). Empty dates show as “Set date” — not as invalid.
 
 ### Delivered → relationship follow-up
 

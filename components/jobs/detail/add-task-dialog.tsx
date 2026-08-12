@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,10 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { createTaskAction } from "@/lib/actions/jobs"
+import {
+  createTaskAction,
+  listOrgUsersForPickerAction,
+} from "@/lib/actions/jobs"
 import { TASK_CATEGORIES } from "@/lib/job-detail-config"
 import { toast } from "@/lib/toast"
-import type { LineItem, TaskCategory } from "@/types"
+import type { LineItem, ProfileSummary, TaskCategory } from "@/types"
+
+const UNASSIGNED = "__unassigned__"
 
 interface AddTaskDialogProps {
   open: boolean
@@ -42,9 +47,17 @@ export function AddTaskDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lineItemId, setLineItemId] = useState(lineItems[0]?.id ?? "")
   const [title, setTitle] = useState("")
-  const [assignee, setAssignee] = useState("")
+  const [assigneeId, setAssigneeId] = useState(UNASSIGNED)
   const [dueDate, setDueDate] = useState("")
   const [category, setCategory] = useState<TaskCategory>("Fabrication")
+  const [orgUsers, setOrgUsers] = useState<ProfileSummary[]>([])
+
+  useEffect(() => {
+    if (!open) return
+    void listOrgUsersForPickerAction().then((res) => {
+      if (res.data) setOrgUsers(res.data.filter((u) => u.isActive))
+    })
+  }, [open])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -57,10 +70,16 @@ export function AddTaskDialog({
       return
     }
 
+    const selected =
+      assigneeId !== UNASSIGNED
+        ? orgUsers.find((u) => u.id === assigneeId)
+        : undefined
+
     setIsSubmitting(true)
     const result = await createTaskAction(jobId, lineItemId, {
       title: title.trim(),
-      assignee: assignee.trim() || "Unassigned",
+      assignee: selected?.fullName ?? "",
+      assigneeId: selected?.id ?? null,
       dueDate: dueDate || "",
       category,
     })
@@ -73,7 +92,7 @@ export function AddTaskDialog({
 
     toast.success("Task added")
     setTitle("")
-    setAssignee("")
+    setAssigneeId(UNASSIGNED)
     setDueDate("")
     onOpenChange(false)
     onCreated?.()
@@ -163,15 +182,25 @@ export function AddTaskDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor="task-assignee">
-              Assignee
-            </label>
-            <Input
-              id="task-assignee"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Optional"
-            />
+            <label className="text-sm font-medium">Assignee</label>
+            <Select
+              value={assigneeId}
+              onValueChange={(v) => {
+                if (v != null) setAssigneeId(v)
+              }}
+            >
+              <SelectTrigger className="w-full bg-background text-foreground">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {orgUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button
