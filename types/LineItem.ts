@@ -13,6 +13,7 @@ export interface LineItem {
   sortOrder: number
   deliveryDate?: string
   organizationId?: string
+  trelloCardId?: string | null
   tasks: Task[]
   createdAt?: string
   updatedAt?: string
@@ -30,6 +31,7 @@ export interface LineItemRow {
   wip_status: LineItemWipStatus
   sort_order: number
   delivery_date: string | null
+  trello_card_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -44,6 +46,7 @@ export interface LineItemInsert {
   wip_status?: LineItemWipStatus
   sort_order?: number
   delivery_date?: string | null
+  trello_card_id?: string | null
 }
 
 export type LineItemUpdate = Partial<

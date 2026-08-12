@@ -142,6 +142,10 @@ Each person connects Google under **their** Settings. Admins:
 - If send/enrich/import fails: user Disconnect → Connect (needs `contacts.readonly` for Enrich/Import).
 - **Import Google contacts** creates CRM people from the signed-in user’s Google Contacts after review — not a Workspace-admin dump of other mailboxes.
 
+### Trello import
+
+Managers/admins: Settings → Trello. One-way boards → jobs (cards → line items). Requires `TRELLO_API_KEY` + `TRELLO_TOKEN` and migration `023`. Details: [trello-import.md](../trello-import.md).
+
 ### QuickBooks chips
 
 No admin sync — users paste QBO URLs on accounts/jobs. Train that CRM does not replace QuickBooks.

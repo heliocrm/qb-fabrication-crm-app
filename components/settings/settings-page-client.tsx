@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Building2, Bell, User } from "lucide-react"
 import { GoogleIntegrationsCard } from "@/components/settings/google-integrations-card"
+import { TrelloImportCard } from "@/components/settings/trello-import-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -27,9 +28,13 @@ const OPP_VIEWS = ["kanban", "list"] as const
 
 interface SettingsPageClientProps {
   isAdmin: boolean
+  isManagerOrAdmin: boolean
 }
 
-export function SettingsPageClient({ isAdmin }: SettingsPageClientProps) {
+export function SettingsPageClient({
+  isAdmin,
+  isManagerOrAdmin,
+}: SettingsPageClientProps) {
   const [jobsView, setJobsView] = useState<JobsView>("table")
   const [oppsView, setOppsView] = useState<OpportunitiesView>("kanban")
   const [ready, setReady] = useState(false)
@@ -167,6 +172,7 @@ export function SettingsPageClient({ isAdmin }: SettingsPageClientProps) {
       </Card>
 
       <GoogleIntegrationsCard />
+      <TrelloImportCard canManage={isManagerOrAdmin} />
     </div>
   )
 }

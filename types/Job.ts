@@ -59,6 +59,8 @@ export interface Job {
   /** QuickBooks deep link (estimate/invoice/job) */
   qbUrl?: string | null
   qbExternalId?: string | null
+  /** Trello board id when imported/synced */
+  trelloBoardId?: string | null
   lineItems: LineItem[]
   /** Flattened tasks across all line items (convenience for stats) */
   tasks: Task[]
@@ -95,6 +97,7 @@ export interface JobRow {
   job_template: JobTemplateType | null
   qb_url?: string | null
   qb_external_id?: string | null
+  trello_board_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -120,6 +123,7 @@ export interface JobInsert {
   job_template?: JobTemplateType | null
   qb_url?: string | null
   qb_external_id?: string | null
+  trello_board_id?: string | null
 }
 
 export type JobUpdate = Partial<Omit<JobInsert, "organization_id">>

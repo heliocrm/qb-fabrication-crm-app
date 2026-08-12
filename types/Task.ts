@@ -12,6 +12,7 @@ export interface Task {
   dueDate: string
   category: TaskCategory
   sortOrder?: number
+  trelloCheckitemId?: string | null
   createdAt?: string
   updatedAt?: string
 }
@@ -29,6 +30,7 @@ export interface TaskRow {
   due_date: string | null
   category: TaskCategory
   sort_order: number
+  trello_checkitem_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -44,6 +46,7 @@ export interface TaskInsert {
   due_date?: string | null
   category?: TaskCategory
   sort_order?: number
+  trello_checkitem_id?: string | null
 }
 
 export type TaskUpdate = Partial<

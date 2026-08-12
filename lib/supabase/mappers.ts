@@ -129,6 +129,7 @@ export function mapTaskRow(row: TaskRow): Task {
     dueDate: row.due_date ?? "",
     category: row.category,
     sortOrder: row.sort_order,
+    trelloCheckitemId: row.trello_checkitem_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -146,6 +147,7 @@ export function mapLineItemRow(row: LineItemRow, tasks: TaskRow[] = []): LineIte
     sortOrder: row.sort_order,
     deliveryDate: row.delivery_date ?? undefined,
     organizationId: row.organization_id,
+    trelloCardId: row.trello_card_id ?? null,
     tasks: tasks
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -318,6 +320,7 @@ export function mapJobRow(
     jobTemplate: row.job_template,
     qbUrl: row.qb_url ?? null,
     qbExternalId: row.qb_external_id ?? null,
+    trelloBoardId: row.trello_board_id ?? null,
     lineItems,
     tasks,
     documents,

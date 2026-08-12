@@ -258,6 +258,7 @@ export interface Database {
           job_template: JobTemplateType | null
           qb_url: string | null
           qb_external_id: string | null
+          trello_board_id: string | null
           created_at: string
           updated_at: string
         }
@@ -283,6 +284,7 @@ export interface Database {
           job_template?: JobTemplateType | null
           qb_url?: string | null
           qb_external_id?: string | null
+          trello_board_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -308,6 +310,7 @@ export interface Database {
           job_template?: JobTemplateType | null
           qb_url?: string | null
           qb_external_id?: string | null
+          trello_board_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -347,6 +350,7 @@ export interface Database {
           wip_status: LineItemWipStatus
           sort_order: number
           delivery_date: string | null
+          trello_card_id: string | null
           created_at: string
           updated_at: string
         }
@@ -361,6 +365,7 @@ export interface Database {
           wip_status?: LineItemWipStatus
           sort_order?: number
           delivery_date?: string | null
+          trello_card_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -375,6 +380,7 @@ export interface Database {
           wip_status?: LineItemWipStatus
           sort_order?: number
           delivery_date?: string | null
+          trello_card_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -408,6 +414,7 @@ export interface Database {
           due_date: string | null
           category: TaskCategory
           sort_order: number
+          trello_checkitem_id: string | null
           created_at: string
           updated_at: string
         }
@@ -423,6 +430,7 @@ export interface Database {
           due_date?: string | null
           category?: TaskCategory
           sort_order?: number
+          trello_checkitem_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -438,6 +446,7 @@ export interface Database {
           due_date?: string | null
           category?: TaskCategory
           sort_order?: number
+          trello_checkitem_id?: string | null
           created_at?: string
           updated_at?: string
         }
