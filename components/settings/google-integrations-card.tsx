@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { GoogleContactsImportDialog } from "@/components/settings/google-contacts-import-dialog"
 import {
   disconnectGoogleAction,
   enrichContactsFromGoogleAction,
@@ -45,6 +46,7 @@ export function GoogleIntegrationsCard() {
   const [busy, setBusy] = useState<
     "gmail" | "calendar" | "people" | "disconnect" | null
   >(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -141,9 +143,9 @@ export function GoogleIntegrationsCard() {
           Integrations
         </CardTitle>
         <CardDescription>
-          Connect your Google Workspace account for Gmail, Calendar, and
-          one-way Contacts enrich. Drive file storage stays on the shared
-          service account.
+          Connect your Google Workspace account for Gmail, Calendar, Contacts
+          enrich, and Google Contacts import. Drive file storage stays on the
+          shared service account.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -200,8 +202,8 @@ export function GoogleIntegrationsCard() {
                 </p>
               ) : status.canReadContacts ? (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Enrich fills blank phone/title on CRM contacts matched by
-                  email — does not import new people.
+                  Enrich fills blank phone/title on matches. Import reviews
+                  Google Contacts and can create CRM accounts and people.
                 </p>
               ) : null}
             </div>
@@ -243,6 +245,18 @@ export function GoogleIntegrationsCard() {
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => setImportOpen(true)}
+                disabled={
+                  busy !== null ||
+                  Boolean(status.needsContactsReconnect) ||
+                  !status.canReadContacts
+                }
+              >
+                Import Google contacts
+              </Button>
+              <Button
+                size="sm"
                 variant="ghost"
                 onClick={() => void handleDisconnect()}
                 disabled={busy !== null}
@@ -254,6 +268,10 @@ export function GoogleIntegrationsCard() {
                 )}
               </Button>
             </div>
+            <GoogleContactsImportDialog
+              open={importOpen}
+              onOpenChange={setImportOpen}
+            />
           </div>
         )}
       </CardContent>

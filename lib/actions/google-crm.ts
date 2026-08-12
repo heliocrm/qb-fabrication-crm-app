@@ -19,8 +19,13 @@ import {
 } from "@/lib/google/gmail/service"
 import {
   enrichCrmContactsFromGoogle,
+  importGoogleContacts,
+  listGoogleContactsForImport,
   profileHasContactsReadonly,
+  type GoogleContactImportSelection,
 } from "@/lib/google/people/service"
+import { listAccounts } from "@/lib/supabase/services/accounts"
+import { listOrgUsersForPicker } from "@/lib/supabase/services/profiles"
 import {
   CONTACTS_READONLY_SCOPE,
   GMAIL_SEND_SCOPE,
@@ -132,6 +137,49 @@ export async function enrichContactsFromGoogleAction() {
   if (result.data) {
     revalidatePath("/settings")
     revalidatePath("/customers")
+  }
+  return result
+}
+
+/** Preview Google Contacts for CRM import (classify only). */
+export async function previewGoogleContactsImportAction() {
+  return safeAction(async () => {
+    const ctx = await requireSessionContext()
+    const [preview, accounts, owners] = await Promise.all([
+      listGoogleContactsForImport(ctx.profileId),
+      listAccounts(),
+      listOrgUsersForPicker(),
+    ])
+    return {
+      ...preview,
+      accounts: accounts.map((a) => ({
+        id: a.id,
+        name: a.name,
+        shortName: a.shortName,
+      })),
+      owners,
+      currentProfileId: ctx.profileId,
+    }
+  })
+}
+
+/** Commit selected Google Contacts into CRM. */
+export async function commitGoogleContactsImportAction(
+  selections: GoogleContactImportSelection[]
+) {
+  if (!Array.isArray(selections) || selections.length === 0) {
+    return { error: "Select at least one contact to import" }
+  }
+
+  const result = await safeAction(async () => {
+    const ctx = await requireSessionContext()
+    return importGoogleContacts(ctx.profileId, selections)
+  })
+
+  if (result.data) {
+    revalidatePath("/settings")
+    revalidatePath("/customers")
+    revalidatePath("/customers/needs-a-touch")
   }
   return result
 }

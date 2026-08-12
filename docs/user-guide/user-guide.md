@@ -62,7 +62,7 @@ Left sidebar modules depend on your **role** and **section access**. Typical ite
 ### Settings
 
 - UI preferences.  
-- **Integrations → Google:** Connect, Sync Gmail, Sync Calendar, Enrich contacts, Disconnect.  
+- **Integrations → Google:** Connect, Sync Gmail, Sync Calendar, Enrich contacts, Import Google contacts, Disconnect.  
 - Org-wide user admin lives under **Admin**, not Settings.
 
 ---
@@ -235,6 +235,18 @@ Setup detail for admins: [google-oauth-crm.md](../google-oauth-crm.md).
 
 **Enrich contacts** matches Google Contacts to **existing** CRM contacts by email and fills blank phone / role title only. It does **not** create new CRM contacts from Google.
 
+### Import Google contacts
+
+**Import Google contacts** (same Settings card) opens a review list from your Google Contacts:
+
+1. Select the rows to import (recommended new rows are pre-checked).  
+2. Confirm or pick the **account** (required when Google has no company).  
+3. Set **relationship owner** per row, or use **Bulk owner → Apply to selected**.  
+4. For people already in the CRM, optionally check **Fill blank phone/title**.  
+5. **Import**.
+
+Emails that already exist anywhere in the org CRM are never duplicated. Import does not pull other users’ Google Contacts — each person connects their own account.
+
 ### Send email / schedule
 
 From Customer 360 (contact **Email**, activity **Reply**, schedule meeting):
@@ -372,6 +384,8 @@ Use reports for management review; day-to-day edits still happen on Jobs, Opport
 | Cannot edit a job | Viewers cannot edit; use a member+ seat or sign off only on floor tasks. |
 | Google send fails | Settings → Disconnect Google → Connect again (send scope). |
 | Enrich did nothing | Enrich only fills blank fields on contacts that already match by email. |
+| Import needs account | Rows with no Google company must pick or create an account in the review dialog. |
+| Import skipped duplicates | Email already exists on a CRM contact — select and enable fill blank phone/title, or skip. |
 | Cannot see Batch on Pull | Need `can_batch` (or admin). |
 | Borrow stuck | Needs `can_approve_allocation` (PM), not only `can_approve`. |
 | Floor PIN rejected | Ask admin to reset PIN; ensure you selected the correct worker on a station tablet. |

@@ -139,7 +139,8 @@ Each person connects Google under **their** Settings. Admins:
 
 - Ensure Google Cloud OAuth clients allow CRM (and traveler) redirect URLs.  
 - Point users at [User Guide § Google](./user-guide.md) and [google-oauth-crm.md](../google-oauth-crm.md).  
-- If send/enrich fails: user Disconnect → Connect.
+- If send/enrich/import fails: user Disconnect → Connect (needs `contacts.readonly` for Enrich/Import).
+- **Import Google contacts** creates CRM people from the signed-in user’s Google Contacts after review — not a Workspace-admin dump of other mailboxes.
 
 ### QuickBooks chips
 

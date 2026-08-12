@@ -28,8 +28,30 @@ If you connected before send or Contacts enrich shipped, **Disconnect → Connec
 2. **Sync Gmail now** — last 30 days; threads matching CRM contact emails → `crm_activities` (`kind=email`).
 3. **Sync Calendar now** — events ±14 days with known contact attendees → `kind=meeting`.
 4. **Enrich contacts** — match Google Contacts to existing CRM contacts by email; fill blank phone / role title only. Does **not** create CRM contacts from Google.
-5. **Schedule meeting** / **Compose email** / **Reply** on Customer 360 — create Calendar events or send mail; both log to activity.
-6. **Disconnect** deletes the stored token for this profile.
+5. **Import Google contacts** — preview People API connections, select rows, then create CRM accounts/contacts (review required). See below.
+6. **Schedule meeting** / **Compose email** / **Reply** on Customer 360 — create Calendar events or send mail; both log to activity.
+7. **Disconnect** deletes the stored token for this profile.
+
+### Import Google contacts (vs Enrich)
+
+| | Enrich | Import |
+|-|--------|--------|
+| Creates CRM contacts/accounts | No | Yes (selected rows only) |
+| Match rule | Email → existing CRM contact | Org-wide email dedupe; never duplicates |
+| UI | One-click | Review dialog (select, account, owner) |
+| Who | Any user with Google connected + `contacts.readonly` | Same |
+
+Import rules:
+
+- Email required (no-email rows are skipped).
+- If email already exists in the org CRM → `exists` (optional enrich only).
+- Company name matches an account (case-insensitive) → new contact on that account.
+- Company with no match → create account (short name derived) + contact.
+- No company → user must pick an existing account or type a new account name before import.
+- Default relationship owner = importer; per-row and bulk reassignment in the review UI.
+- Pre-selects recommended rows (`new_on_account`, `new_account`).
+
+Manual only (no cron). Same People API scope as enrich.
 
 ## Disconnect / re-consent
 
@@ -39,4 +61,4 @@ If Google returns no refresh token, remove the app under the user’s Google Acc
 
 - Refresh tokens are sealed with AES-GCM before insert into `google_oauth_tokens`.
 - RLS: users can only read/write their own token row.
-- Manual sync / enrich only (no cron / Pub/Sub).
+- Manual sync / enrich / import only (no cron / Pub/Sub).
