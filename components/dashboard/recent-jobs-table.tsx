@@ -9,8 +9,22 @@ import { getRecentJobs, formatCompact } from "@/lib/dashboard-stats"
 import { isBpaAccount } from "@/lib/seed-ids"
 import type { Job } from "@/types"
 
-export function RecentJobsTable({ jobs }: { jobs: Job[] }) {
+export function RecentJobsTable({
+  jobs,
+  canViewFinancials = false,
+}: {
+  jobs: Job[]
+  canViewFinancials?: boolean
+}) {
   const recentJobs = getRecentJobs(jobs, 6)
+  const headers = [
+    "Job / PO",
+    "Customer",
+    "Status",
+    "Delivery",
+    "Progress",
+    ...(canViewFinancials ? ["Value"] : []),
+  ]
 
   return (
     <Card className="border shadow-sm">
@@ -63,16 +77,14 @@ export function RecentJobsTable({ jobs }: { jobs: Job[] }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40">
-                  {["Job / PO", "Customer", "Status", "Delivery", "Progress", "Value"].map(
-                    (h, idx) => (
+                  {headers.map((h, idx) => (
                       <th
                         key={h}
-                        className={`text-left font-medium text-muted-foreground px-4 py-2.5 text-xs whitespace-nowrap first:pl-5 last:pr-5 ${idx === 2 ? "hidden md:table-cell" : ""} ${idx >= 3 && idx <= 4 ? "hidden lg:table-cell" : ""}`}
+                        className={`text-left font-medium text-muted-foreground px-4 py-2.5 text-xs whitespace-nowrap first:pl-5 last:pr-5 ${idx === 2 ? "hidden md:table-cell" : ""} ${h === "Delivery" || h === "Progress" ? "hidden lg:table-cell" : ""}`}
                       >
                         {h}
                       </th>
-                    )
-                  )}
+                    ))}
                 </tr>
               </thead>
               <tbody>
@@ -122,11 +134,13 @@ export function RecentJobsTable({ jobs }: { jobs: Job[] }) {
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-right whitespace-nowrap">
-                        <span className="text-xs font-semibold tabular-nums">
-                          {formatCompact(job.value)}
-                        </span>
-                      </td>
+                      {canViewFinancials ? (
+                        <td className="px-5 py-3 text-right whitespace-nowrap">
+                          <span className="text-xs font-semibold tabular-nums">
+                            {formatCompact(job.value)}
+                          </span>
+                        </td>
+                      ) : null}
                     </tr>
                   )
                 })}

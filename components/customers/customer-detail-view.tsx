@@ -24,6 +24,7 @@ interface CustomerDetailViewProps {
   customer: Customer360
   className?: string
   canEdit?: boolean
+  canViewFinancials?: boolean
   onEdit?: () => void
 }
 
@@ -51,6 +52,7 @@ export function CustomerDetailView({
   customer,
   className,
   canEdit,
+  canViewFinancials = false,
   onEdit,
 }: CustomerDetailViewProps) {
   const activeJobs = customer.jobs.filter((j) => j.status !== "Delivered")
@@ -107,11 +109,28 @@ export function CustomerDetailView({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div
+        className={cn(
+          "grid gap-3",
+          canViewFinancials ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"
+        )}
+      >
         <StatBlock label="All Jobs" value={String(customer.totalJobs)} icon={Briefcase} />
         <StatBlock label="Active" value={String(customer.activeJobs)} icon={TrendingUp} />
-        <StatBlock label="Total Value" value={formatCompact(customer.totalValue)} icon={DollarSign} />
-        <StatBlock label="YTD" value={formatCompact(customer.ytdValue)} icon={DollarSign} />
+        {canViewFinancials ? (
+          <>
+            <StatBlock
+              label="Total Value"
+              value={formatCompact(customer.totalValue)}
+              icon={DollarSign}
+            />
+            <StatBlock
+              label="YTD"
+              value={formatCompact(customer.ytdValue)}
+              icon={DollarSign}
+            />
+          </>
+        ) : null}
       </div>
 
       {pipelineValue > 0 && (
@@ -154,21 +173,22 @@ export function CustomerDetailView({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40">
-                    {["PO / Job", "Description", "Status", "Delivery", "Value"].map(
-                      (h, idx) => (
-                        <th
-                          key={h}
-                          className={cn(
-                            "text-left font-medium text-muted-foreground px-4 py-2.5 text-xs whitespace-nowrap",
-                            idx === 0 && "pl-5",
-                            idx === 4 && "pr-5",
-                            idx >= 3 && "hidden sm:table-cell"
-                          )}
-                        >
-                          {h}
-                        </th>
-                      )
-                    )}
+                    {(canViewFinancials
+                      ? ["PO / Job", "Description", "Status", "Delivery", "Value"]
+                      : ["PO / Job", "Description", "Status", "Delivery"]
+                    ).map((h, idx, arr) => (
+                      <th
+                        key={h}
+                        className={cn(
+                          "text-left font-medium text-muted-foreground px-4 py-2.5 text-xs whitespace-nowrap",
+                          idx === 0 && "pl-5",
+                          idx === arr.length - 1 && "pr-5",
+                          (h === "Delivery" || h === "Value") && "hidden sm:table-cell"
+                        )}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -202,9 +222,11 @@ export function CustomerDetailView({
                       <td className="px-4 py-2.5 text-xs text-muted-foreground hidden sm:table-cell whitespace-nowrap">
                         {job.deliveryDate ? formatDeliveryDate(job.deliveryDate) : "—"}
                       </td>
-                      <td className="px-5 py-2.5 text-xs font-semibold tabular-nums whitespace-nowrap">
-                        {formatCurrency(job.value)}
-                      </td>
+                      {canViewFinancials ? (
+                        <td className="px-5 py-2.5 text-xs font-semibold tabular-nums whitespace-nowrap">
+                          {formatCurrency(job.value)}
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>

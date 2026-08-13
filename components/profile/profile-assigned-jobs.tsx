@@ -16,9 +16,13 @@ import type { JobListItem } from "@/types"
 
 interface ProfileAssignedJobsProps {
   jobs: JobListItem[]
+  canViewFinancials?: boolean
 }
 
-export function ProfileAssignedJobs({ jobs }: ProfileAssignedJobsProps) {
+export function ProfileAssignedJobs({
+  jobs,
+  canViewFinancials = false,
+}: ProfileAssignedJobsProps) {
   if (jobs.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-8 text-center">
@@ -45,8 +49,12 @@ export function ProfileAssignedJobs({ jobs }: ProfileAssignedJobsProps) {
                 <p className="text-xs text-muted-foreground truncate">{job.description}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="truncate">{job.customer}</span>
-                  <span aria-hidden>·</span>
-                  <span className="tabular-nums shrink-0">{formatCompact(job.value)}</span>
+                  {canViewFinancials ? (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span className="tabular-nums shrink-0">{formatCompact(job.value)}</span>
+                    </>
+                  ) : null}
                 </div>
               </div>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -64,7 +72,9 @@ export function ProfileAssignedJobs({ jobs }: ProfileAssignedJobsProps) {
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden md:table-cell">Priority</TableHead>
-              <TableHead className="text-right">Value</TableHead>
+              {canViewFinancials ? (
+                <TableHead className="text-right">Value</TableHead>
+              ) : null}
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -86,9 +96,11 @@ export function ProfileAssignedJobs({ jobs }: ProfileAssignedJobsProps) {
                 <TableCell className="hidden md:table-cell">
                   <PriorityBadge priority={job.priority} />
                 </TableCell>
-                <TableCell className="text-right text-sm tabular-nums">
-                  {formatCompact(job.value)}
-                </TableCell>
+                {canViewFinancials ? (
+                  <TableCell className="text-right text-sm tabular-nums">
+                    {formatCompact(job.value)}
+                  </TableCell>
+                ) : null}
                 <TableCell>
                   <Link
                     href={`/jobs/${job.id}`}

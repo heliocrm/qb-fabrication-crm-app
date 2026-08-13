@@ -20,9 +20,14 @@ import type { ReportView } from "@/types"
 interface ReportsPageClientProps {
   initialData: ReportsDataset
   savedViews: ReportView[]
+  canViewFinancials?: boolean
 }
 
-export function ReportsPageClient({ initialData, savedViews }: ReportsPageClientProps) {
+export function ReportsPageClient({
+  initialData,
+  savedViews,
+  canViewFinancials = false,
+}: ReportsPageClientProps) {
   const [filters, setFilters] = useState<ReportsFilters>(DEFAULT_REPORTS_FILTERS)
   const [views, setViews] = useState(savedViews)
 
@@ -53,7 +58,10 @@ export function ReportsPageClient({ initialData, savedViews }: ReportsPageClient
       return
     }
     const stamp = new Date().toISOString().slice(0, 10)
-    downloadCsv(`jobs-report-${stamp}.csv`, jobsToCsv(filteredJobs))
+    downloadCsv(
+      `jobs-report-${stamp}.csv`,
+      jobsToCsv(filteredJobs, { includeValue: canViewFinancials })
+    )
     toast.success("Export started", `${filteredJobs.length} jobs`)
   }
 
@@ -113,7 +121,7 @@ export function ReportsPageClient({ initialData, savedViews }: ReportsPageClient
         totalCount={initialData.jobs.length}
       />
 
-      <ReportsWidgetGrid data={computed} />
+      <ReportsWidgetGrid data={computed} canViewFinancials={canViewFinancials} />
     </div>
   )
 }

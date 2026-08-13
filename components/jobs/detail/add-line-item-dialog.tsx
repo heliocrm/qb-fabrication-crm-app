@@ -94,8 +94,8 @@ export function AddLineItemDialog({
               <Input
                 id="li-qty"
                 type="number"
-                min={1}
-                step={1}
+                min={0}
+                step="any"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
               />

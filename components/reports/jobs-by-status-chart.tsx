@@ -25,9 +25,11 @@ const STATUS_COLORS: Record<string, string> = {
 function ChartTooltip({
   active,
   payload,
+  canViewFinancials,
 }: {
   active?: boolean
   payload?: Array<{ payload: JobsByStatusDatum }>
+  canViewFinancials: boolean
 }) {
   if (!active || !payload?.[0]) return null
   const item = payload[0].payload
@@ -35,13 +37,20 @@ function ChartTooltip({
     <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
       <p className="font-semibold">{item.status}</p>
       <p className="text-muted-foreground mt-0.5">
-        {item.count} job{item.count !== 1 ? "s" : ""} · {formatCompact(item.value)}
+        {item.count} job{item.count !== 1 ? "s" : ""}
+        {canViewFinancials ? ` · ${formatCompact(item.value)}` : ""}
       </p>
     </div>
   )
 }
 
-export function JobsByStatusChart({ data }: { data: JobsByStatusDatum[] }) {
+export function JobsByStatusChart({
+  data,
+  canViewFinancials = false,
+}: {
+  data: JobsByStatusDatum[]
+  canViewFinancials?: boolean
+}) {
   const chartData = data.map((d) => ({
     ...d,
     label: d.status === "In Progress" ? "Active" : d.status,
@@ -53,7 +62,9 @@ export function JobsByStatusChart({ data }: { data: JobsByStatusDatum[] }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">Jobs by Status</CardTitle>
         <CardDescription className="text-xs">
-          Workload distribution and value by stage
+          {canViewFinancials
+            ? "Workload distribution and value by stage"
+            : "Workload distribution by stage"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -74,7 +85,21 @@ export function JobsByStatusChart({ data }: { data: JobsByStatusDatum[] }) {
                 allowDecimals={false}
                 width={32}
               />
-              <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
+              <Tooltip
+                content={(props) => {
+                  const row = props.payload?.[0]?.payload as
+                    | JobsByStatusDatum
+                    | undefined
+                  return (
+                    <ChartTooltip
+                      active={props.active}
+                      payload={row ? [{ payload: row }] : undefined}
+                      canViewFinancials={canViewFinancials}
+                    />
+                  )
+                }}
+                cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+              />
               <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={48}>
                 {chartData.map((d) => (
                   <Cell key={d.status} fill={STATUS_COLORS[d.status] ?? "var(--muted-foreground)"} />
@@ -94,7 +119,8 @@ export function JobsByStatusChart({ data }: { data: JobsByStatusDatum[] }) {
                 <span className="font-medium">{d.status}</span>
               </div>
               <span className="text-muted-foreground tabular-nums">
-                {d.count} · {formatCompact(d.value)}
+                {d.count}
+                {canViewFinancials ? ` · ${formatCompact(d.value)}` : ""}
               </span>
             </div>
           ))}

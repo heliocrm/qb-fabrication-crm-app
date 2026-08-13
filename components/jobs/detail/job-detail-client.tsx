@@ -42,6 +42,7 @@ interface JobDetailClientProps {
   dataSource?: "supabase" | "mock"
   canWrite?: boolean
   canManageAssignees?: boolean
+  canViewFinancials?: boolean
   role?: OrganizationRole
 }
 
@@ -50,6 +51,7 @@ export function JobDetailClient({
   dataSource,
   canWrite = true,
   canManageAssignees = false,
+  canViewFinancials = false,
   role = "member",
 }: JobDetailClientProps) {
   const canSignOff = dataSource === "supabase" && canSignOffFloor(role)
@@ -128,7 +130,12 @@ export function JobDetailClient({
         onAddTask={() => setAddTaskOpen(true)}
         onLogIssue={openLogIssue}
       />
-      <JobDetailStats job={job} tasks={tasks} lineItemCount={lineItems.length} />
+      <JobDetailStats
+        job={job}
+        tasks={tasks}
+        lineItemCount={lineItems.length}
+        canViewFinancials={canViewFinancials}
+      />
 
       {dataSource === "supabase" && (
         <p className="px-4 sm:px-6 pt-2 text-xs text-[var(--orange)]">
@@ -176,6 +183,7 @@ export function JobDetailClient({
               lineItems={lineItems}
               tasks={tasks}
               canManageAssignees={canManageAssignees && dataSource === "supabase"}
+              canViewFinancials={canViewFinancials}
             />
           </TabsContent>
 
@@ -215,6 +223,7 @@ export function JobDetailClient({
             <JobChangeOrdersTab
               job={job}
               canWrite={writeEnabled}
+              canViewFinancials={canViewFinancials}
               onLogIssue={openLogIssue}
             />
           </TabsContent>
@@ -241,6 +250,7 @@ export function JobDetailClient({
             open={editOpen}
             onOpenChange={setEditOpen}
             job={job}
+            canViewFinancials={canViewFinancials}
             onSaved={() => router.refresh()}
           />
           <AddTaskDialog
@@ -254,6 +264,7 @@ export function JobDetailClient({
             open={logIssueOpen}
             onOpenChange={setLogIssueOpen}
             jobId={job.id}
+            canViewFinancials={canViewFinancials}
             onCreated={() => router.refresh()}
           />
         </>

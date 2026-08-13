@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { JobDetailClient } from "@/components/jobs/detail/job-detail-client"
 import {
   canManageAssignees,
+  canViewJobFinancials,
   canWriteJobs,
   getSessionContext,
 } from "@/lib/auth/session"
@@ -22,6 +23,7 @@ export default async function JobDetailPage({
   const role = ctx?.role ?? "member"
   const canWrite = canWriteJobs(role)
   const canManageTeam = canManageAssignees(role)
+  const canViewFinancials = canViewJobFinancials(role)
 
   return (
     <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading job…</div>}>
@@ -30,6 +32,7 @@ export default async function JobDetailPage({
         dataSource={source}
         canWrite={canWrite}
         canManageAssignees={canManageTeam}
+        canViewFinancials={canViewFinancials}
         role={role}
       />
     </Suspense>

@@ -14,15 +14,23 @@ interface JobDetailStatsProps {
   job: Job
   tasks: Task[]
   lineItemCount?: number
+  canViewFinancials?: boolean
 }
 
-export function JobDetailStats({ job, tasks, lineItemCount }: JobDetailStatsProps) {
+export function JobDetailStats({
+  job,
+  tasks,
+  lineItemCount,
+  canViewFinancials = false,
+}: JobDetailStatsProps) {
   const completedTasks = tasks.filter((t) => t.completed).length
   const totalTasks = tasks.length
 
   const stats = [
     { icon: Weight, label: "Tonnage", value: `${job.tonnage} T` },
-    { icon: Tag, label: "Value", value: formatJobCurrency(job.value) },
+    ...(canViewFinancials
+      ? [{ icon: Tag, label: "Value", value: formatJobCurrency(job.value) }]
+      : []),
     {
       icon: Calendar,
       label: "Delivery",

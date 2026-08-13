@@ -28,6 +28,7 @@ interface EditJobDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   job: Job
+  canViewFinancials?: boolean
   onSaved?: () => void
 }
 
@@ -35,6 +36,7 @@ export function EditJobDialog({
   open,
   onOpenChange,
   job,
+  canViewFinancials = false,
   onSaved,
 }: EditJobDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -82,7 +84,11 @@ export function EditJobDialog({
       start_date: startDate || null,
       delivery_date: deliveryDate || null,
       tonnage: tonnage ? Number(tonnage) : null,
-      value: value ? Number(value) : 0,
+      value: canViewFinancials
+        ? value
+          ? Number(value)
+          : 0
+        : job.value,
       notes: notes.trim() || null,
       qb_url: qbUrl.trim() || null,
       qb_external_id: qbExternalId.trim() || null,
@@ -178,19 +184,21 @@ export function EditJobDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium" htmlFor="edit-value">
-                Contract value ($)
-              </label>
-              <Input
-                id="edit-value"
-                type="number"
-                min={0}
-                step="any"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
-            </div>
+            {canViewFinancials ? (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium" htmlFor="edit-value">
+                  Contract value ($)
+                </label>
+                <Input
+                  id="edit-value"
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                />
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <label className="text-sm font-medium" htmlFor="edit-start">
                 Start date

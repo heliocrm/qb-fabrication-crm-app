@@ -23,6 +23,11 @@ export function canCreateJobs(role: OrganizationRole): boolean {
   return role === "admin" || role === "manager"
 }
 
+/** Job contract value / change-order $ — managers and admins only. */
+export function canViewJobFinancials(role: OrganizationRole): boolean {
+  return role === "admin" || role === "manager"
+}
+
 export function isAdminRole(role: OrganizationRole): boolean {
   return role === "admin"
 }

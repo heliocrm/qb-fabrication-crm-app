@@ -19,11 +19,13 @@ import type { Customer360 } from "@/lib/data/accounts"
 interface CustomersPageClientProps {
   customers: Customer360[]
   dataSource?: "supabase" | "mock"
+  canViewFinancials?: boolean
 }
 
 export function CustomersPageClient({
   customers,
   dataSource,
+  canViewFinancials = false,
 }: CustomersPageClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -147,7 +149,10 @@ export function CustomersPageClient({
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate">{customer.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {customer.activeJobs} active · {formatCompact(customer.totalValue)}
+                        {customer.activeJobs} active
+                        {canViewFinancials
+                          ? ` · ${formatCompact(customer.totalValue)}`
+                          : ""}
                       </p>
                     </div>
                     <Badge
@@ -172,6 +177,7 @@ export function CustomersPageClient({
                     <CustomerDetailView
                       customer={selected}
                       canEdit={canWrite}
+                      canViewFinancials={canViewFinancials}
                       onEdit={() => {
                         setEditing(selected)
                         setFormOpen(true)
@@ -223,7 +229,12 @@ export function CustomersPageClient({
                     {customer.status}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div
+                  className={cn(
+                    "grid gap-2 text-center",
+                    canViewFinancials ? "grid-cols-3" : "grid-cols-2"
+                  )}
+                >
                   <div>
                     <p className="text-base font-bold">{customer.totalJobs}</p>
                     <p className="text-[10px] text-muted-foreground">Jobs</p>
@@ -232,10 +243,14 @@ export function CustomersPageClient({
                     <p className="text-base font-bold">{customer.activeJobs}</p>
                     <p className="text-[10px] text-muted-foreground">Active</p>
                   </div>
-                  <div>
-                    <p className="text-base font-bold">{formatCompact(customer.ytdValue)}</p>
-                    <p className="text-[10px] text-muted-foreground">YTD</p>
-                  </div>
+                  {canViewFinancials ? (
+                    <div>
+                      <p className="text-base font-bold">
+                        {formatCompact(customer.ytdValue)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">YTD</p>
+                    </div>
+                  ) : null}
                 </div>
               </button>
             ))}
@@ -252,6 +267,7 @@ export function CustomersPageClient({
                   <CustomerDetailView
                     customer={selected}
                     canEdit={canWrite}
+                    canViewFinancials={canViewFinancials}
                     onEdit={() => {
                       setEditing(selected)
                       setFormOpen(true)

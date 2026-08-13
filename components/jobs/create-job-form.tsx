@@ -303,7 +303,7 @@ export function CreateJobForm({ accounts: initialAccounts, dataSource }: CreateJ
               name="value"
               type="number"
               min={0}
-              step={1000}
+              step="any"
               placeholder="312500"
               defaultValue={prefillValue}
               key={prefillValue || "value"}
@@ -325,7 +325,7 @@ export function CreateJobForm({ accounts: initialAccounts, dataSource }: CreateJ
             <label htmlFor="tonnage" className="text-xs font-medium text-muted-foreground">
               Tonnage
             </label>
-            <Input id="tonnage" name="tonnage" type="number" min={0} step={0.1} placeholder="18.4" />
+            <Input id="tonnage" name="tonnage" type="number" min={0} step="any" placeholder="18.4" />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <label htmlFor="notes" className="text-xs font-medium text-muted-foreground">
@@ -435,7 +435,8 @@ export function CreateJobForm({ accounts: initialAccounts, dataSource }: CreateJ
                   <label className="text-[10px] font-medium text-muted-foreground uppercase">Qty</label>
                   <Input
                     type="number"
-                    min={1}
+                    min={0}
+                    step="any"
                     value={li.quantity}
                     onChange={(e) =>
                       setExtraLineItems((prev) =>

@@ -9,18 +9,30 @@ import { PullReasonsChart } from "@/components/reports/pull-reasons-chart"
 import { PipelineChart } from "@/components/dashboard/pipeline-chart"
 import { REPORTS_WIDGETS, spanClassName } from "@/lib/reports/widgets"
 import type { ReportsComputedData } from "@/lib/reports/metrics"
+import { cn } from "@/lib/utils"
 
 interface ReportsWidgetGridProps {
   data: ReportsComputedData
+  canViewFinancials?: boolean
 }
 
-function renderWidget(id: string, data: ReportsComputedData) {
+function renderWidget(
+  id: string,
+  data: ReportsComputedData,
+  canViewFinancials: boolean
+) {
   switch (id) {
     case "core-metrics":
       return <ReportsCoreMetrics metrics={data.coreMetrics} />
     case "jobs-by-status":
-      return <JobsByStatusChart data={data.jobsByStatus} />
+      return (
+        <JobsByStatusChart
+          data={data.jobsByStatus}
+          canViewFinancials={canViewFinancials}
+        />
+      )
     case "revenue-by-customer":
+      if (!canViewFinancials) return null
       return <RevenueByCustomerChart data={data.revenueByCustomer} />
     case "pipeline":
       return (
@@ -31,7 +43,12 @@ function renderWidget(id: string, data: ReportsComputedData) {
         />
       )
     case "delivery-schedule":
-      return <DeliveryScheduleCard data={data.deliverySchedule} />
+      return (
+        <DeliveryScheduleCard
+          data={data.deliverySchedule}
+          canViewFinancials={canViewFinancials}
+        />
+      )
     case "summary":
       return <ReportsSummaryCard metrics={data.metrics} />
     case "pull-reasons":
@@ -41,37 +58,50 @@ function renderWidget(id: string, data: ReportsComputedData) {
   }
 }
 
-export function ReportsWidgetGrid({ data }: ReportsWidgetGridProps) {
+export function ReportsWidgetGrid({
+  data,
+  canViewFinancials = false,
+}: ReportsWidgetGridProps) {
   const chartWidgets = REPORTS_WIDGETS.filter((w) => w.id !== "core-metrics")
+  const statusRevenueIds = canViewFinancials
+    ? ["jobs-by-status", "revenue-by-customer"]
+    : ["jobs-by-status"]
 
   return (
     <div className="space-y-6">
       {REPORTS_WIDGETS.filter((w) => w.id === "core-metrics").map((widget) => (
-        <div key={widget.id}>{renderWidget(widget.id, data)}</div>
+        <div key={widget.id}>
+          {renderWidget(widget.id, data, canViewFinancials)}
+        </div>
       ))}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div
+        className={cn(
+          "grid gap-6",
+          canViewFinancials ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1"
+        )}
+      >
         {chartWidgets
-          .filter((w) => ["jobs-by-status", "revenue-by-customer"].includes(w.id))
+          .filter((w) => statusRevenueIds.includes(w.id))
           .map((widget) => (
             <div key={widget.id} className={spanClassName(widget.defaultSpan)}>
-              {renderWidget(widget.id, data)}
+              {renderWidget(widget.id, data, canViewFinancials)}
             </div>
           ))}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
-          {renderWidget("pipeline", data)}
+          {renderWidget("pipeline", data, canViewFinancials)}
         </div>
         <div className="space-y-6">
-          {renderWidget("delivery-schedule", data)}
-          {renderWidget("summary", data)}
+          {renderWidget("delivery-schedule", data, canViewFinancials)}
+          {renderWidget("summary", data, canViewFinancials)}
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {renderWidget("pull-reasons", data)}
+        {renderWidget("pull-reasons", data, canViewFinancials)}
       </div>
     </div>
   )

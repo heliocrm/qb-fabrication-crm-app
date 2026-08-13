@@ -14,6 +14,7 @@ interface JobListTableProps {
   selectable?: boolean
   selectedIds?: Set<string>
   onSelectionChange?: (ids: Set<string>) => void
+  canViewFinancials?: boolean
 }
 
 export function JobListTable({
@@ -21,6 +22,7 @@ export function JobListTable({
   selectable = false,
   selectedIds,
   onSelectionChange,
+  canViewFinancials = false,
 }: JobListTableProps) {
   const selected = selectedIds ?? new Set<string>()
   const allSelected = jobs.length > 0 && jobs.every((j) => selected.has(j.id))
@@ -61,7 +63,7 @@ export function JobListTable({
     "Status",
     "Urgency",
     "Delivery",
-    "Value",
+    ...(canViewFinancials ? ["Value"] : []),
   ]
 
   return (
@@ -151,11 +153,13 @@ export function JobListTable({
                 <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap hidden md:table-cell">
                   {formatDeliveryDate(job.deliveryDate)}
                 </td>
-                <td className="px-5 py-3 text-right whitespace-nowrap">
-                  <span className="text-xs font-semibold tabular-nums">
-                    {formatCurrency(job.value)}
-                  </span>
-                </td>
+                {canViewFinancials ? (
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <span className="text-xs font-semibold tabular-nums">
+                      {formatCurrency(job.value)}
+                    </span>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

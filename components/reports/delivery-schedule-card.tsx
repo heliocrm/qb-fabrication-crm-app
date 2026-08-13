@@ -5,8 +5,17 @@ import { Badge } from "@/components/ui/badge"
 import { formatCompact } from "@/lib/reports-stats"
 import type { MonthlyDeliveryDatum } from "@/lib/reports-stats"
 
-export function DeliveryScheduleCard({ data }: { data: MonthlyDeliveryDatum[] }) {
-  const maxValue = Math.max(...data.map((d) => d.value), 1)
+export function DeliveryScheduleCard({
+  data,
+  canViewFinancials = false,
+}: {
+  data: MonthlyDeliveryDatum[]
+  canViewFinancials?: boolean
+}) {
+  const maxBar = Math.max(
+    ...data.map((d) => (canViewFinancials ? d.value : d.count)),
+    1
+  )
 
   return (
     <Card className="border shadow-sm h-full">
@@ -30,15 +39,21 @@ export function DeliveryScheduleCard({ data }: { data: MonthlyDeliveryDatum[] })
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                     {item.count} job{item.count !== 1 ? "s" : ""}
                   </Badge>
-                  <span className="text-muted-foreground tabular-nums font-medium">
-                    {formatCompact(item.value)}
-                  </span>
+                  {canViewFinancials ? (
+                    <span className="text-muted-foreground tabular-nums font-medium">
+                      {formatCompact(item.value)}
+                    </span>
+                  ) : null}
                 </div>
               </div>
               <div className="h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-[var(--orange)] transition-all"
-                  style={{ width: `${Math.round((item.value / maxValue) * 100)}%` }}
+                  style={{
+                    width: `${Math.round(
+                      ((canViewFinancials ? item.value : item.count) / maxBar) * 100
+                    )}%`,
+                  }}
                 />
               </div>
             </div>

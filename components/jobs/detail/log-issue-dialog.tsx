@@ -29,6 +29,7 @@ interface LogIssueDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   jobId: string
+  canViewFinancials?: boolean
   onCreated?: () => void
 }
 
@@ -36,6 +37,7 @@ export function LogIssueDialog({
   open,
   onOpenChange,
   jobId,
+  canViewFinancials = false,
   onCreated,
 }: LogIssueDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,7 +58,7 @@ export function LogIssueDialog({
       type,
       description: description.trim(),
       impact: impact.trim() || undefined,
-      value: value ? Number(value) : null,
+      value: canViewFinancials && value ? Number(value) : null,
     })
     setIsSubmitting(false)
 
@@ -129,20 +131,22 @@ export function LogIssueDialog({
               placeholder="Schedule, rework, material…"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor="issue-value">
-              Value impact ($)
-            </label>
-            <Input
-              id="issue-value"
-              type="number"
-              min={0}
-              step="any"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
+          {canViewFinancials ? (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium" htmlFor="issue-value">
+                Value impact ($)
+              </label>
+              <Input
+                id="issue-value"
+                type="number"
+                min={0}
+                step="any"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+          ) : null}
           <DialogFooter>
             <Button
               type="button"

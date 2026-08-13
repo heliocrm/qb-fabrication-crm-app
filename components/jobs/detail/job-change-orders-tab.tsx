@@ -11,6 +11,7 @@ import type { ChangeOrder, Job } from "@/types"
 interface JobChangeOrdersTabProps {
   job: Job
   canWrite?: boolean
+  canViewFinancials?: boolean
   onLogIssue?: () => void
 }
 
@@ -29,9 +30,13 @@ const statusStyles: Record<string, string> = {
 export function JobChangeOrdersTab({
   job,
   canWrite = false,
+  canViewFinancials = false,
   onLogIssue,
 }: JobChangeOrdersTabProps) {
   const changeOrders = job.changeOrders
+  const columns = canViewFinancials
+    ? ["Date", "Type", "Description", "Impact", "Value", "Status"]
+    : ["Date", "Type", "Description", "Impact", "Status"]
 
   return (
     <div className="space-y-4">
@@ -74,21 +79,19 @@ export function JobChangeOrdersTab({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40">
-                  {["Date", "Type", "Description", "Impact", "Value", "Status"].map(
-                    (h, idx) => (
-                      <th
-                        key={h}
-                        className={cn(
-                          "text-left font-medium text-muted-foreground px-4 py-3 text-xs whitespace-nowrap",
-                          idx === 0 && "pl-5",
-                          idx === 5 && "pr-5",
-                          idx === 4 && "hidden md:table-cell"
-                        )}
-                      >
-                        {h}
-                      </th>
-                    )
-                  )}
+                  {columns.map((h, idx) => (
+                    <th
+                      key={h}
+                      className={cn(
+                        "text-left font-medium text-muted-foreground px-4 py-3 text-xs whitespace-nowrap",
+                        idx === 0 && "pl-5",
+                        idx === columns.length - 1 && "pr-5",
+                        h === "Value" && "hidden md:table-cell"
+                      )}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -117,9 +120,11 @@ export function JobChangeOrdersTab({
                     <td className="px-4 py-3 text-muted-foreground max-w-[10rem]">
                       <p className="truncate">{co.impact || "—"}</p>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell tabular-nums">
-                      {co.value != null ? formatJobCurrency(co.value) : "—"}
-                    </td>
+                    {canViewFinancials ? (
+                      <td className="px-4 py-3 hidden md:table-cell tabular-nums">
+                        {co.value != null ? formatJobCurrency(co.value) : "—"}
+                      </td>
+                    ) : null}
                     <td className="px-4 py-3 pr-5">
                       <Badge
                         variant="outline"

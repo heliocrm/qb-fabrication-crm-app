@@ -24,16 +24,19 @@ interface JobKanbanProps {
   jobs: Job[]
   onStatusChange?: (id: string, status: JobStatus) => void
   pendingIds?: Set<string>
+  canViewFinancials?: boolean
 }
 
 function JobKanbanColumn({
   status,
   jobs,
   pendingIds,
+  canViewFinancials = false,
 }: {
   status: JobStatus
   jobs: Job[]
   pendingIds?: Set<string>
+  canViewFinancials?: boolean
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   const colValue = jobs.reduce((sum, j) => sum + j.value, 0)
@@ -47,7 +50,7 @@ function JobKanbanColumn({
             {jobs.length}
           </Badge>
         </div>
-        {colValue > 0 && (
+        {canViewFinancials && colValue > 0 && (
           <span className="text-xs text-muted-foreground font-medium tabular-nums">
             {formatCurrency(colValue)}
           </span>
@@ -136,7 +139,12 @@ function DraggableJobCard({
   )
 }
 
-export function JobKanban({ jobs, onStatusChange, pendingIds }: JobKanbanProps) {
+export function JobKanban({
+  jobs,
+  onStatusChange,
+  pendingIds,
+  canViewFinancials = false,
+}: JobKanbanProps) {
   const [activeJob, setActiveJob] = useState<Job | null>(null)
 
   const sensors = useSensors(
@@ -185,6 +193,7 @@ export function JobKanban({ jobs, onStatusChange, pendingIds }: JobKanbanProps) 
             status={status}
             jobs={jobs.filter((j) => j.status === status)}
             pendingIds={pendingIds}
+            canViewFinancials={canViewFinancials}
           />
         ))}
       </div>

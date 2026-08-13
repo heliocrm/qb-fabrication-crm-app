@@ -23,6 +23,7 @@ interface JobsPageClientProps {
   initialJobs: Job[]
   dataSource?: "supabase" | "mock"
   canBulkDelete?: boolean
+  canViewFinancials?: boolean
 }
 
 const JOB_VIEWS = ["table", "kanban"] as const
@@ -31,6 +32,7 @@ export function JobsPageClient({
   initialJobs,
   dataSource,
   canBulkDelete = false,
+  canViewFinancials = false,
 }: JobsPageClientProps) {
   const router = useRouter()
   const [view, setView] = useState<JobsView>("table")
@@ -229,12 +231,14 @@ export function JobsPageClient({
             selectable={canBulkDelete}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
+            canViewFinancials={canViewFinancials}
           />
         ) : (
           <JobKanban
             jobs={filtered}
             onStatusChange={handleStatusChange}
             pendingIds={pendingIds}
+            canViewFinancials={canViewFinancials}
           />
         )}
       </div>

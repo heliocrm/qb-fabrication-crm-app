@@ -3,6 +3,7 @@ import { RecentJobsTable } from "@/components/dashboard/recent-jobs-table"
 import { PipelineChart } from "@/components/dashboard/pipeline-chart"
 import { DashboardQuickActions } from "@/components/dashboard/quick-actions"
 import { UpcomingDeliveries } from "@/components/dashboard/upcoming-deliveries"
+import { canViewJobFinancials, getSessionContext } from "@/lib/auth/session"
 import { loadDashboardData } from "@/lib/data/dashboard"
 import {
   getDashboardMetrics,
@@ -10,9 +11,13 @@ import {
 } from "@/lib/dashboard-stats"
 
 export default async function DashboardPage() {
-  const { jobs, opportunities, source } = await loadDashboardData()
+  const [{ jobs, opportunities, source }, ctx] = await Promise.all([
+    loadDashboardData(),
+    getSessionContext(),
+  ])
   const { totalPipeline, bpaSharePct } = getDashboardMetrics(jobs, opportunities)
   const pipelineData = getPipelineByStage(opportunities)
+  const canViewFinancials = canViewJobFinancials(ctx?.role ?? "member")
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -33,7 +38,7 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <RecentJobsTable jobs={jobs} />
+          <RecentJobsTable jobs={jobs} canViewFinancials={canViewFinancials} />
         </div>
 
         <div className="space-y-6">

@@ -4,6 +4,8 @@ QB Fabrication CRM uses four **organization roles**. Job titles below are guidan
 
 Menu modules (Opportunities, Jobs, Material Requests, Customers, Reports) can be turned on/off **per role** under **Admin → Organization Settings → Section access**. Dashboard and Settings are always visible. Admin is admins only.
 
+**Job contract value** (and related job `$` on list/detail/customer/change orders/reports export) is visible to **admin** and **manager** only — members and viewers never see it in the UI. Opportunity pipeline values are unchanged.
+
 Material Pull adds **capability flags** on each user (except admins, who get all pull powers). See [Admin Guide](./admin-guide.md).
 
 ---
@@ -27,6 +29,7 @@ Material Pull adds **capability flags** on each user (except admins, who get all
 | Open Admin | ✓ | — | — | — |
 | Create jobs | ✓ | ✓ | — | — |
 | Edit jobs / import travelers | ✓ | ✓ | ✓ | — |
+| View job contract value / change-order $ | ✓ | ✓ | — | — |
 | Manage job assignees | ✓ | ✓ | — | — |
 | Floor task sign-off (PIN) | ✓ | ✓ | ✓ | ✓ |
 | Needs a touch → **All** queue | ✓ | ✓ | — | — |

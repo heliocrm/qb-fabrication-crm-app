@@ -9,7 +9,11 @@ function csvEscape(value: string | number | null | undefined): string {
   return s
 }
 
-export function jobsToCsv(jobs: Job[]): string {
+export function jobsToCsv(
+  jobs: Job[],
+  options?: { includeValue?: boolean }
+): string {
+  const includeValue = options?.includeValue !== false
   const header = [
     "Job Number",
     "PO Number",
@@ -17,7 +21,7 @@ export function jobsToCsv(jobs: Job[]): string {
     "Description",
     "Status",
     "Priority",
-    "Value",
+    ...(includeValue ? ["Value"] : []),
     "Tonnage",
     "Start Date",
     "Delivery Date",
@@ -31,7 +35,7 @@ export function jobsToCsv(jobs: Job[]): string {
       j.description,
       j.status,
       j.priority,
-      j.value,
+      ...(includeValue ? [j.value] : []),
       j.tonnage,
       j.startDate,
       j.deliveryDate,

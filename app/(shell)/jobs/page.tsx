@@ -1,5 +1,9 @@
 import { JobsPageClient } from "@/components/jobs/jobs-page-client"
-import { getSessionContext, isAdminRole } from "@/lib/auth/session"
+import {
+  canViewJobFinancials,
+  getSessionContext,
+  isAdminRole,
+} from "@/lib/auth/session"
 import { loadJobs } from "@/lib/data/jobs"
 
 export default async function JobsPage() {
@@ -7,13 +11,16 @@ export default async function JobsPage() {
     loadJobs(),
     getSessionContext(),
   ])
-  const canBulkDelete = Boolean(ctx && isAdminRole(ctx.role))
+  const role = ctx?.role ?? "member"
+  const canBulkDelete = Boolean(ctx && isAdminRole(role))
+  const canViewFinancials = canViewJobFinancials(role)
 
   return (
     <JobsPageClient
       initialJobs={jobs}
       dataSource={source}
       canBulkDelete={canBulkDelete}
+      canViewFinancials={canViewFinancials}
     />
   )
 }

@@ -32,6 +32,7 @@ interface JobOverviewTabProps {
   lineItems: LineItem[]
   tasks: Task[]
   canManageAssignees?: boolean
+  canViewFinancials?: boolean
 }
 
 export function JobOverviewTab({
@@ -39,6 +40,7 @@ export function JobOverviewTab({
   lineItems,
   tasks,
   canManageAssignees = false,
+  canViewFinancials = false,
 }: JobOverviewTabProps) {
   const account = accounts.find((a) => a.id === job.customerId)
 
@@ -57,7 +59,14 @@ export function JobOverviewTab({
             {[
               { label: "PO Number", value: job.poNumber, mono: true, highlight: true },
               { label: "Job Number", value: job.jobNumber, mono: true },
-              { label: "Contract Value", value: formatJobCurrency(job.value) },
+              ...(canViewFinancials
+                ? [
+                    {
+                      label: "Contract Value",
+                      value: formatJobCurrency(job.value),
+                    },
+                  ]
+                : []),
               { label: "Start Date", value: formatJobDate(job.startDate) },
               { label: "Delivery Date", value: formatJobDate(job.deliveryDate) },
             ].map(({ label, value, mono, highlight }, i, arr) => (

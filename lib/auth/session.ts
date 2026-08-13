@@ -15,6 +15,7 @@ export {
   canSignOffFloor,
   canManageAssignees,
   canCreateJobs,
+  canViewJobFinancials,
   isAdminRole,
   canCreateMaterialRequests,
   canManageMaterialRequests,

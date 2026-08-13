@@ -22,12 +22,14 @@ interface ProfilePageClientProps {
   initialProfile: OwnProfile
   assignedJobs: JobListItem[]
   source: "supabase" | "mock"
+  canViewFinancials?: boolean
 }
 
 export function ProfilePageClient({
   initialProfile,
   assignedJobs,
   source,
+  canViewFinancials = false,
 }: ProfilePageClientProps) {
   const router = useRouter()
   const [profile, setProfile] = useState(initialProfile)
@@ -206,7 +208,7 @@ export function ProfilePageClient({
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <ProfileAssignedJobs jobs={assignedJobs} />
+              <ProfileAssignedJobs jobs={assignedJobs} canViewFinancials={canViewFinancials} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -339,7 +341,7 @@ export function ProfilePageClient({
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <ProfileAssignedJobs jobs={assignedJobs} />
+              <ProfileAssignedJobs jobs={assignedJobs} canViewFinancials={canViewFinancials} />
             </CardContent>
           </Card>
         </TabsContent>

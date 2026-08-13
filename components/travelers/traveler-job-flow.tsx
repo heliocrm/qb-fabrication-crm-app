@@ -337,7 +337,8 @@ export function TravelerJobFlow({
                 className="min-h-11 text-base"
                 placeholder="Qty"
                 type="number"
-                min={1}
+                min={0}
+                step="any"
                 value={item.quantity ?? 1}
                 onChange={(e) =>
                   updateItem(index, {
@@ -521,7 +522,9 @@ export function TravelerJobFlow({
                 )}
               </div>
             </details>
-            <div className="hidden md:block">{previewPanel}</div>
+            <div className="hidden md:block md:sticky md:top-0 md:self-start">
+              {previewPanel}
+            </div>
           </div>
           {formPanel}
         </div>
